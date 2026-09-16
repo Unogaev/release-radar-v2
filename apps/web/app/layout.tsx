@@ -3,7 +3,7 @@ import { Spectral, Inter } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { Nav } from "./Nav";
 
-const fraunces = Fraunces({ subsets: ["latin", "cyrillic"], variable: "--font-display", weight: ["400", "500", "600"] });
+const fraunces = Spectral({ subsets: ["latin", "cyrillic"], variable: "--font-display", weight: ["400", "500", "600"] });
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans" });
 
 export const metadata = {
