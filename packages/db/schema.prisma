@@ -1,0 +1,378 @@
+// packages/db/schema.prisma
+//
+// Implements spec §15 EXACTLY: 21 core tables, with the constraints called
+// out explicitly in "Ключевые ограничения":
+//   - market_sales and market_asks are separate tables (never merged)
+//   - every price has currency, source, observed_at, and variant
+//   - availability check is tied to ZIP/region and seller-of-record
+//   - release_event stores start_at_utc, source_timezone, time_precision
+//   - evidence is immutable — a new check creates a new row, never updates
+//   - decision stores rule_version and explanation
+//   - purchase is only created after explicit user confirmation or a
+//     confirmed order event
+//
+// Auth: email + password only (no magic link, no Telegram login) per the
+// user's explicit instruction — passwordHash on User, nothing else.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================== Core / Users ==============================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  preferences   UserPreferences?
+  buyerRequests BuyerRequest[]
+  purchases     Purchase[]
+  alerts        Alert[]
+  reminderEvents ReminderEvent[]
+  circleMemberships CircleMember[]
+  auditLogEntries AuditLog[]
+}
+
+model UserPreferences {
+  id                    String   @id @default(cuid())
+  user                  User     @relation(fields: [userId], references: [id])
+  userId                String   @unique
+  categories            String[]
+  brands                String[]
+  shoeSizes             String[]
+  apparelSizes          String[]
+  budgetMinor            Int?
+  budgetCurrency         String   @default("USD")
+  zip                    String?
+  city                   String?
+  purchaseCountries      String[] // legal payment/shipping jurisdictions
+  goal                   String   @default("self") // "self" | "resale" | "client"
+  minProfitMinor          Int?
+  minRoi                  Float?
+  notificationChannels   String[] // e.g. ["telegram", "webpush", "email"]
+  quietHoursStart        String? // "HH:MM" local
+  quietHoursEnd          String?
+  allowedRetailers       String[]
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// ============================== Product identity ==============================
+
+model Product {
+  id               String   @id @default(cuid())
+  brand            String
+  normalizedModel  String
+  category         String
+  createdAt        DateTime @default(now())
+
+  variants ProductVariant[]
+
+  @@index([brand, normalizedModel])
+}
+
+model ProductVariant {
+  id           String   @id @default(cuid())
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  variantLabel String // size/color/configuration — never blank
+  createdAt    DateTime @default(now())
+
+  identifiers        Identifier[]
+  offers             Offer[]
+  releaseEvents      ReleaseEvent[]
+  availabilityChecks AvailabilityCheck[]
+  evidence           Evidence[]
+  signals            Signal[]
+  decisions          Decision[]
+  marketSales        MarketSale[]
+  marketAsks         MarketAsk[]
+  buyerRequests      BuyerRequest[]
+  purchases          Purchase[]
+
+  // Product key = brand + normalized_model + exact_identifier + variant.
+  // Enforced at the application layer (packages/domain/identity/productKey.ts)
+  // since it spans Product + Identifier + variantLabel; this composite index
+  // supports fast lookup for the dedup check.
+  @@index([productId, variantLabel])
+}
+
+model Identifier {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  kind             String // "sku" | "reference" | "upc" | "dpci"
+  value            String
+
+  @@index([kind, value])
+}
+
+// ============================== Sources / Sellers / Offers ==============================
+
+model Source {
+  id            String   @id @default(cuid())
+  name          String
+  sourceClass   String // "A_truth" | "B_market" | "C_signal" (spec §9)
+  url           String
+  parseVersion  String
+  createdAt     DateTime @default(now())
+
+  availabilityChecks AvailabilityCheck[]
+  evidence           Evidence[]
+  signals            Signal[]
+  sourceHealth       SourceHealth[]
+}
+
+model Seller {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isOfficial Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  offers Offer[]
+}
+
+model Offer {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  seller           Seller         @relation(fields: [sellerId], references: [id])
+  sellerId         String
+  sellerSku        String
+  region           String
+  createdAt        DateTime       @default(now())
+
+  // Offer key = product_variant_id + seller_id + seller_sku + region
+  @@unique([productVariantId, sellerId, sellerSku, region])
+}
+
+// ============================== Release events / Availability ==============================
+
+model ReleaseEvent {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  startAtUtc       DateTime?
+  sourceTimezone   String? // IANA zone, e.g. "America/New_York"
+  timePrecision    String // "exact" | "date_only" | "tba"
+  eventStartVersion Int    @default(1) // bumped on time change (spec §13)
+  createdAt        DateTime @default(now())
+
+  reminderEvents ReminderEvent[]
+}
+
+model AvailabilityCheck {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  source           Source         @relation(fields: [sourceId], references: [id])
+  sourceId         String
+
+  metadataStatus   String?
+  visibleUiStatus  String?
+  ctaState         String? // "absent" | "disabled" | "enabled"
+  variantAvailable Boolean?
+  shippingState    String // "unavailable" | "available" | "unknown"
+  pickupState      String
+  cartState        String
+  checkoutState    String
+  sellerOfRecord   String?
+
+  zip           String? // tied to region, per spec §15 constraint
+  sessionRegion String?
+  evidenceBlobRef String? // pointer into evidence blob store (screenshot/DOM hash)
+
+  checkedAt DateTime @default(now())
+
+  @@index([productVariantId, checkedAt])
+  @@index([zip])
+}
+
+// ============================== Evidence (immutable) / Signals ==============================
+
+model Evidence {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  source           Source         @relation(fields: [sourceId], references: [id])
+  sourceId         String
+  level            String // E0_RUMOR .. E5_USER_CONFIRMED
+  rawSnapshotRef   String // hash/pointer for audit/replay
+  parseVersion     String
+  observedAt       DateTime @default(now())
+
+  // IMMUTABLE: never updated after creation. A new observation is always a
+  // new row (spec §15). No @updatedAt field on purpose.
+
+  @@index([productVariantId, observedAt])
+}
+
+model Signal {
+  id               String          @id @default(cuid())
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+  productVariantId String?
+  source           Source          @relation(fields: [sourceId], references: [id])
+  sourceId         String
+  rawText          String?
+  url              String?
+  observedAt       DateTime        @default(now())
+}
+
+// ============================== Decisions / Alerts / Reminders ==============================
+
+model Decision {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  status           String // one of the 13 DecisionStatus values
+  ruleVersion      String
+  rationale        String
+  blockedReasons   String[]
+  evidenceConfidence Int
+  createdAt        DateTime @default(now())
+
+  alerts Alert[]
+
+  @@index([productVariantId, createdAt])
+}
+
+model Alert {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  decision   Decision @relation(fields: [decisionId], references: [id])
+  decisionId String
+  channel    String // "telegram" | "webpush" | "email"
+  payload    String
+  dedupeKey  String
+  sentAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([dedupeKey])
+}
+
+model ReminderEvent {
+  id                String       @id @default(cuid())
+  user              User         @relation(fields: [userId], references: [id])
+  userId            String
+  releaseEvent      ReleaseEvent @relation(fields: [releaseEventId], references: [id])
+  releaseEventId    String
+  stage             String // "first_discovery" .. "opening_hour"
+  eventStartVersion Int
+  idempotencyKey    String       @unique // user_id:event_id:stage:event_start_version
+  sentAt            DateTime?
+  createdAt         DateTime     @default(now())
+}
+
+// ============================== Market data (sales vs asks — separate) ==============================
+
+model MarketSale {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  platform         String
+  priceMinor       Int
+  currency         String
+  observedAt       DateTime
+  createdAt        DateTime       @default(now())
+
+  @@index([productVariantId, observedAt])
+}
+
+model MarketAsk {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  platform         String
+  priceMinor       Int
+  currency         String
+  observedAt       DateTime
+  createdAt        DateTime       @default(now())
+
+  @@index([productVariantId, observedAt])
+}
+
+// ============================== Buyer requests / Purchases ==============================
+
+model BuyerRequest {
+  id                String         @id @default(cuid())
+  user              User           @relation(fields: [userId], references: [id])
+  userId            String
+  productVariant    ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId  String
+  customerCeilingMinor Int
+  currency          String   @default("USD")
+  deadline          DateTime?
+  destination       String?
+  depositState      String   @default("none") // "none" | "pending" | "received"
+  provenanceRequirements String?
+  contactOwner      String?
+  legalFlags        String[]
+  createdAt         DateTime @default(now())
+}
+
+model Purchase {
+  id               String         @id @default(cuid())
+  user             User           @relation(fields: [userId], references: [id])
+  userId           String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String
+  actualCostMinor  Int
+  currency         String   @default("USD")
+  status           String   @default("confirmed") // created only after explicit E5 confirmation
+  confirmedAt      DateTime @default(now())
+  outcome          String? // "kept" | "sold" | "cancelled"
+  actualProfitMinor Int?
+}
+
+// ============================== Circles ==============================
+
+model Circle {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members CircleMember[]
+}
+
+model CircleMember {
+  id       String @id @default(cuid())
+  circle   Circle @relation(fields: [circleId], references: [id])
+  circleId String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+
+  @@unique([circleId, userId])
+}
+
+// ============================== Ops ==============================
+
+model SourceHealth {
+  id            String   @id @default(cuid())
+  source        Source   @relation(fields: [sourceId], references: [id])
+  sourceId      String
+  status        String // "ok" | "degraded" | "down"
+  lastSuccessAt DateTime?
+  checkedAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      User?    @relation(fields: [actorId], references: [id])
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}

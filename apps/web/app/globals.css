@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: theme("colors.ink.950");
+  color: #e8e6e1;
+}
+
+/* Subtle grain-free vignette instead of a flat single color — reads as a
+   considered room, not a default dark-mode toggle. */
+.app-shell {
+  background:
+    radial-gradient(ellipse at top, rgba(192, 138, 78, 0.05), transparent 60%),
+    theme("colors.ink.950");
+}
+
+.status-badge {
+  font-family: theme("fontFamily.display");
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@release-radar/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "prisma generate --schema=../../packages/db/schema.prisma",
+    "prisma:push": "prisma db push --schema=../../packages/db/schema.prisma",
+    "seed:owner": "tsx scripts/seedOwner.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "next": "^14.2.0",
+    "next-auth": "^4.24.7",
+    "bcryptjs": "^2.4.3",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "prisma": "^5.20.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}
