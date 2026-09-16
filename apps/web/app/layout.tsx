@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Fraunces, Inter } from "next/font/google";
+import { Spectral, Inter } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { Nav } from "./Nav";
 
