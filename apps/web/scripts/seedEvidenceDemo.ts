@@ -254,7 +254,7 @@ async function main() {
     const existingSale = await prisma.marketSale.findFirst({ where: { productVariantId: variant.id } });
     if (!existingSale) {
       await prisma.marketSale.create({
-        data: { productVariantId: variant.id, platform: "StockX", priceMinor: 24999, currency: "USD" },
+        data: { productVariantId: variant.id, platform: "StockX", priceMinor: 24999, currency: "USD", observedAt: new Date() },
       });
       console.log("  + marketSale (StockX)");
     }
