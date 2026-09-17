@@ -52,12 +52,12 @@ model UserPreferences {
   budgetCurrency         String   @default("USD")
   zip                    String?
   city                   String?
-  purchaseCountries      String[] // legal payment/shipping jurisdictions
-  goal                   String   @default("self") // "self" | "resale" | "client"
+  purchaseCountries      String[]
+  goal                   String   @default("self")
   minProfitMinor          Int?
   minRoi                  Float?
-  notificationChannels   String[] // e.g. ["telegram", "webpush", "email"]
-  quietHoursStart        String? // "HH:MM" local
+  notificationChannels   String[]
+  quietHoursStart        String?
   quietHoursEnd          String?
   allowedRetailers       String[]
   createdAt              DateTime @default(now())
@@ -82,7 +82,7 @@ model ProductVariant {
   id           String   @id @default(cuid())
   product      Product  @relation(fields: [productId], references: [id])
   productId    String
-  variantLabel String // size/color/configuration — never blank
+  variantLabel String
   createdAt    DateTime @default(now())
 
   identifiers        Identifier[]
@@ -97,10 +97,6 @@ model ProductVariant {
   buyerRequests      BuyerRequest[]
   purchases          Purchase[]
 
-  // Product key = brand + normalized_model + exact_identifier + variant.
-  // Enforced at the application layer (packages/domain/identity/productKey.ts)
-  // since it spans Product + Identifier + variantLabel; this composite index
-  // supports fast lookup for the dedup check.
   @@index([productId, variantLabel])
 }
 
@@ -108,7 +104,7 @@ model Identifier {
   id               String         @id @default(cuid())
   productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
   productVariantId String
-  kind             String // "sku" | "reference" | "upc" | "dpci"
+  kind             String
   value            String
 
   @@index([kind, value])
@@ -123,6 +119,19 @@ model Source {
   url           String
   parseVersion  String
   createdAt     DateTime @default(now())
+
+  // ---- Source Registry fields (auto-collection) ----
+  category             String    @default("other")
+  officialDomain        String?
+  sourceType            String    @default("MANUAL") // RSS | API | SITEMAP | NEWSROOM | PRODUCT_LISTING | RELEASE_CALENDAR | BROWSER_VERIFICATION | SOCIAL_DISCOVERY | MARKET_SALES | MANUAL
+  trustLevel            Int       @default(3)
+  checkIntervalMinutes  Int       @default(60)
+  adapterStatus         String    @default("active") // "active" | "disabled" | "error"
+  lastCheckedAt         DateTime?
+  lastSuccessAt         DateTime?
+  lastError             String?
+  itemsDiscovered       Int       @default(0)
+  isEnabled             Boolean   @default(true)
 
   availabilityChecks AvailabilityCheck[]
   evidence           Evidence[]
@@ -149,7 +158,6 @@ model Offer {
   region           String
   createdAt        DateTime       @default(now())
 
-  // Offer key = product_variant_id + seller_id + seller_sku + region
   @@unique([productVariantId, sellerId, sellerSku, region])
 }
 
@@ -160,9 +168,9 @@ model ReleaseEvent {
   productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
   productVariantId String
   startAtUtc       DateTime?
-  sourceTimezone   String? // IANA zone, e.g. "America/New_York"
-  timePrecision    String // "exact" | "date_only" | "tba"
-  eventStartVersion Int    @default(1) // bumped on time change (spec §13)
+  sourceTimezone   String?
+  timePrecision    String
+  eventStartVersion Int    @default(1)
   createdAt        DateTime @default(now())
 
   reminderEvents ReminderEvent[]
@@ -177,17 +185,17 @@ model AvailabilityCheck {
 
   metadataStatus   String?
   visibleUiStatus  String?
-  ctaState         String? // "absent" | "disabled" | "enabled"
+  ctaState         String?
   variantAvailable Boolean?
-  shippingState    String // "unavailable" | "available" | "unknown"
+  shippingState    String
   pickupState      String
   cartState        String
   checkoutState    String
   sellerOfRecord   String?
 
-  zip           String? // tied to region, per spec §15 constraint
+  zip           String?
   sessionRegion String?
-  evidenceBlobRef String? // pointer into evidence blob store (screenshot/DOM hash)
+  evidenceBlobRef String?
 
   checkedAt DateTime @default(now())
 
@@ -203,13 +211,10 @@ model Evidence {
   productVariantId String
   source           Source         @relation(fields: [sourceId], references: [id])
   sourceId         String
-  level            String // E0_RUMOR .. E5_USER_CONFIRMED
-  rawSnapshotRef   String // hash/pointer for audit/replay
+  level            String
+  rawSnapshotRef   String
   parseVersion     String
   observedAt       DateTime @default(now())
-
-  // IMMUTABLE: never updated after creation. A new observation is always a
-  // new row (spec §15). No @updatedAt field on purpose.
 
   @@index([productVariantId, observedAt])
 }
@@ -231,7 +236,7 @@ model Decision {
   id               String         @id @default(cuid())
   productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
   productVariantId String
-  status           String // one of the 13 DecisionStatus values
+  status           String
   ruleVersion      String
   rationale        String
   blockedReasons   String[]
@@ -249,7 +254,7 @@ model Alert {
   userId     String
   decision   Decision @relation(fields: [decisionId], references: [id])
   decisionId String
-  channel    String // "telegram" | "webpush" | "email"
+  channel    String
   payload    String
   dedupeKey  String
   sentAt     DateTime?
@@ -264,9 +269,9 @@ model ReminderEvent {
   userId            String
   releaseEvent      ReleaseEvent @relation(fields: [releaseEventId], references: [id])
   releaseEventId    String
-  stage             String // "first_discovery" .. "opening_hour"
+  stage             String
   eventStartVersion Int
-  idempotencyKey    String       @unique // user_id:event_id:stage:event_start_version
+  idempotencyKey    String       @unique
   sentAt            DateTime?
   createdAt         DateTime     @default(now())
 }
@@ -311,7 +316,7 @@ model BuyerRequest {
   currency          String   @default("USD")
   deadline          DateTime?
   destination       String?
-  depositState      String   @default("none") // "none" | "pending" | "received"
+  depositState      String   @default("none")
   provenanceRequirements String?
   contactOwner      String?
   legalFlags        String[]
@@ -326,9 +331,9 @@ model Purchase {
   productVariantId String
   actualCostMinor  Int
   currency         String   @default("USD")
-  status           String   @default("confirmed") // created only after explicit E5 confirmation
+  status           String   @default("confirmed")
   confirmedAt      DateTime @default(now())
-  outcome          String? // "kept" | "sold" | "cancelled"
+  outcome          String?
   actualProfitMinor Int?
 }
 
@@ -358,7 +363,7 @@ model SourceHealth {
   id            String   @id @default(cuid())
   source        Source   @relation(fields: [sourceId], references: [id])
   sourceId      String
-  status        String // "ok" | "degraded" | "down"
+  status        String
   lastSuccessAt DateTime?
   checkedAt     DateTime @default(now())
 }

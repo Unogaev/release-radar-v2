@@ -7,22 +7,37 @@
 }
 
 body {
-  background-color: theme("colors.ink.950");
-  color: #e8e6e1;
+  background-color: theme("colors.graphite.950");
+  color: theme("colors.graphite.200");
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle grain-free vignette instead of a flat single color — reads as a
-   considered room, not a default dark-mode toggle. */
 .app-shell {
   background:
-    radial-gradient(ellipse at top, rgba(192, 138, 78, 0.05), transparent 60%),
-    theme("colors.ink.950");
+    radial-gradient(ellipse at top, rgba(200, 255, 77, 0.05), transparent 60%),
+    theme("colors.graphite.950");
 }
 
 .status-badge {
   font-family: theme("fontFamily.display");
   letter-spacing: 0.04em;
   font-size: 0.7rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
+}
+
+.text-white {
+  color: #2a2521 !important;
+}
+.bg-ink-900\/40 {
+  background-color: #fffefc !important;
+}
+.border-ink-700 {
+  border-color: rgba(180, 166, 140, 0.35) !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(20,16,10,0.03), 0 6px 20px rgba(20,16,10,0.05);
+}
+.border-ink-700:hover {
+  box-shadow: 0 2px 6px rgba(20,16,10,0.05), 0 10px 30px rgba(20,16,10,0.08);
 }

@@ -4,38 +4,50 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Deep, near-black charcoal — not pure black (flat, cheap-looking)
-        // and not a "SaaS blue" — this is meant to feel like a private room,
-        // not a public product landing page.
         ink: {
-          950: "#0a0a0c",
-          900: "#111114",
-          800: "#1a1a1f",
-          700: "#242429",
-          600: "#33333a",
+          950: "#f6f3ee",
+          900: "#efe9e0",
+          800: "#ded5c4",
+          700: "#b8ab92",
+          600: "#6b5f4d",
         },
-        // Restrained warm accent — used sparingly (primary actions, BUY_NOW),
-        // never as a decorative brand color splashed everywhere.
+        espresso: "#2a2521",
         ember: {
-          500: "#c08a4e",
-          400: "#d4a56c",
+          500: "#a97c3f",
+          400: "#c79a5e",
         },
-        // Status colors kept desaturated — urgency without looking like a
-        // consumer app's cheerful palette.
         status: {
-          buy: "#8a9a6f",
-          apply: "#8a9a6f",
-          prepare: "#c0a24e",
-          watch: "#5a5a63",
-          skip: "#6e4a4a",
-          verify: "#4e6ec0",
+          buy: "#5c6b45",
+          apply: "#5c6b45",
+          prepare: "#8a6a1e",
+          watch: "#6b6b73",
+          skip: "#7a3f3f",
+          verify: "#3f5a8a",
+        },
+        graphite: {
+          950: "#0b0c0e",
+          900: "#111214",
+          800: "#1a1c1f",
+          700: "#26282c",
+          600: "#3a3d42",
+          500: "#54585f",
+          400: "#7a7f88",
+          300: "#a8adb5",
+          200: "#d4d7dc",
+          100: "#eceef1",
+          50: "#f5f6f8",
+        },
+        lime: {
+          DEFAULT: "#c8ff4d",
+          dim: "#9fd93a",
         },
       },
       fontFamily: {
-        // Serif display for headings/status labels — gives the "private
-        // club" register instead of a typical grotesque SaaS sans.
-        display: ["'Fraunces'", "Georgia", "serif"],
+        display: ["'Inter'", "system-ui", "sans-serif"],
         sans: ["'Inter'", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(20,16,10,0.03), 0 8px 24px rgba(20,16,10,0.06)",
       },
     },
   },
