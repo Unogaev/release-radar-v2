@@ -36,7 +36,7 @@ export function SignalCard({
 
   return (
     <article className="flex flex-col bg-rr-surface transition-colors hover:bg-rr-surface-hi">
-      <ImageFrame hint={signal.imageHint} className="h-[290px]">
+      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />
         </div>

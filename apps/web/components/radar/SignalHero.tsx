@@ -38,7 +38,7 @@ export function SignalHero({
       className="grid bg-[linear-gradient(115deg,#15120e_0%,#110f0d_60%,#0e0d0c_100%)]"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}
     >
-      <ImageFrame hint={signal.imageHint} className="min-h-[540px] p-6">
+      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="min-h-[540px] p-6">
         <div className="absolute left-6 top-6 flex items-center gap-[7px]">
           <StatusBadge status={signal.status} />
           <KindBadge>{signal.kindLabel}</KindBadge>

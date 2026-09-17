@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
+import { getProductImage } from "./fetchImage";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "Сейчас" },
@@ -54,46 +55,52 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
-  const signals: Signal[] = decisions
-    .filter((d) => STATUS_MAP[d.status])
-    .map((d) => {
-      const map = STATUS_MAP[d.status];
-      const pv = d.productVariant;
-      const product = pv.product;
-      const release = pv.releaseEvents[0];
-      const check = pv.availabilityChecks[0];
-      const sale = pv.marketSales[0];
-      const ask = pv.marketAsks[0];
+  const signals: Signal[] = await Promise.all(
+    decisions
+      .filter((d) => STATUS_MAP[d.status])
+      .map(async (d) => {
+        const map = STATUS_MAP[d.status];
+        const pv = d.productVariant;
+        const product = pv.product;
+        const release = pv.releaseEvents[0];
+        const check = pv.availabilityChecks[0];
+        const sale = pv.marketSales[0];
+        const ask = pv.marketAsks[0];
 
-      const categories: RadarCategory[] = ["now"];
-      if (map.extraCategory) categories.push(map.extraCategory);
-      const mappedCat = CATEGORY_MAP[product.category];
-      if (mappedCat) categories.push(mappedCat);
+        const categories: RadarCategory[] = ["now"];
+        if (map.extraCategory) categories.push(map.extraCategory);
+        const mappedCat = CATEGORY_MAP[product.category];
+        if (mappedCat) categories.push(mappedCat);
 
-      const expectedResale = sale ? sale.priceMinor / 100 : ask ? ask.priceMinor / 100 : null;
+        const expectedResale = sale ? sale.priceMinor / 100 : ask ? ask.priceMinor / 100 : null;
+        const brand = stripDemo(product.brand);
+        const model = titleCase(product.normalizedModel);
+        const imageUrl = (await getProductImage(brand, model)) ?? undefined;
 
-      return {
-        id: d.id,
-        status: map.bucket,
-        kindLabel: map.kindLabel,
-        categories,
-        brand: stripDemo(product.brand),
-        model: titleCase(product.normalizedModel),
-        reference: pv.identifiers[0]?.value ?? "—",
-        sku: pv.identifiers[1]?.value ?? pv.identifiers[0]?.value ?? "—",
-        imageHint: `${stripDemo(product.brand)} ${titleCase(product.normalizedModel)}`,
-        retail: null,
-        cost: null,
-        expectedResale,
-        store: check?.sellerOfRecord ?? "—",
-        stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
-        primaryUrl: check?.url ?? null,
-        checkedAt: (check?.checkedAt ?? d.createdAt).toISOString(),
-        launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
-        why: d.rationale,
-        factors: d.blockedReasons.length ? d.blockedReasons : [`Confidence ${d.evidenceConfidence}%`],
-      } satisfies Signal;
-    });
+        return {
+          id: d.id,
+          status: map.bucket,
+          kindLabel: map.kindLabel,
+          categories,
+          brand,
+          model,
+          reference: pv.identifiers[0]?.value ?? "—",
+          sku: pv.identifiers[1]?.value ?? pv.identifiers[0]?.value ?? "—",
+          imageUrl,
+          imageHint: `${brand} ${model}`,
+          retail: null,
+          cost: null,
+          expectedResale,
+          store: check?.sellerOfRecord ?? "—",
+          stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
+          primaryUrl: check?.url ?? null,
+          checkedAt: (check?.checkedAt ?? d.createdAt).toISOString(),
+          launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
+          why: d.rationale,
+          factors: d.blockedReasons.length ? d.blockedReasons : [`Confidence ${d.evidenceConfidence}%`],
+        } satisfies Signal;
+      })
+  );
 
   const sourceRows = await prisma.source.findMany({
     orderBy: { lastCheckedAt: "desc" },

@@ -163,22 +163,34 @@ export function WhyBlock({
 
 export function ImageFrame({
   hint,
+  src,
   className,
   children,
 }: {
   hint?: string;
+  src?: string | null;
   className?: string;
   children?: ReactNode;
 }) {
   return (
     <div
-      className={`relative flex items-end bg-rr-frame p-[18px] ${className ?? ""}`}
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(132deg, rgba(216,184,120,0.07) 0 1px, transparent 1px 12px)",
-      }}
+      className={`relative flex items-end overflow-hidden bg-rr-frame p-[18px] ${className ?? ""}`}
+      role={src ? "img" : undefined}
+      aria-label={src ? hint : undefined}
+      style={
+        src
+          ? {
+              backgroundImage: `linear-gradient(to top, rgba(11,10,9,0.78), rgba(11,10,9,0.05) 55%), url(${src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : {
+              backgroundImage:
+                "repeating-linear-gradient(132deg, rgba(216,184,120,0.07) 0 1px, transparent 1px 12px)",
+            }
+      }
     >
-      {hint && (
+      {!src && hint && (
         <span className="font-rr-mono text-[9.5px] uppercase tracking-[0.18em] text-rr-stencil">
           {hint}
         </span>
