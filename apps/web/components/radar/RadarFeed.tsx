@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 import type { FeedPayload, RadarCategory } from "@/lib/radar/types";
 import { derive, sortSignals, totalProfit } from "@/lib/radar/derive";
 import { clockLabel, signedMoney } from "@/lib/radar/format";
@@ -40,6 +42,7 @@ export function RadarFeed({
 }) {
   const [filter, setFilter] = useState<RadarCategory>("now");
   const now = useNow();
+  const { lang, setLang } = useLanguage();
 
   const signals = payload?.signals ?? [];
 
@@ -62,7 +65,33 @@ export function RadarFeed({
             {signals.length} активных сигнала · апдейт каждые 60 с
           </div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
+          <Link
+            href="/"
+            className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint transition-colors hover:text-rr-text"
+          >
+            ← Меню
+          </Link>
+          <div className="flex items-center gap-1 rounded-full bg-[rgba(241,238,232,0.06)] p-0.5">
+            <button
+              type="button"
+              onClick={() => setLang("ru")}
+              className={`rounded-full px-2.5 py-1 font-rr-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+                lang === "ru" ? "bg-rr-text text-[#100e0c]" : "text-rr-faint hover:text-rr-text"
+              }`}
+            >
+              RU
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang("en")}
+              className={`rounded-full px-2.5 py-1 font-rr-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+                lang === "en" ? "bg-rr-text text-[#100e0c]" : "text-rr-faint hover:text-rr-text"
+              }`}
+            >
+              EN
+            </button>
+          </div>
           <span className="font-rr-mono text-[10.5px] uppercase tracking-[0.16em] text-rr-faint">
             Прибыль в ленте
           </span>
