@@ -1,28 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import "./globals.css";
+import { Playfair_Display, Inter } from "next/font/google";
+import { SessionProviderWrapper } from "./SessionProviderWrapper";
+import { Nav } from "./Nav";
 
-:root {
-  color-scheme: light;
-}
+const display = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-display", weight: ["400", "500", "600", "700"] });
+const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans" });
 
-body {
-  background-color: theme("colors.ink.950");
-  color: #2a2521;
-}
+export const metadata = {
+  title: "Release Radar",
+  description: "Personal action-first release intelligence",
+};
 
-/* Subtle warm vignette instead of a flat white background — reads as a
-   considered, expensive room, not a default light-mode toggle. */
-.app-shell {
-  background:
-    radial-gradient(ellipse at top, rgba(169, 124, 63, 0.08), transparent 60%),
-    theme("colors.ink.950");
-}
-
-.status-badge {
-  font-family: theme("fontFamily.display");
-  letter-spacing: 0.04em;
-  font-size: 0.7rem;
-  font-weight: 500;
-  text-transform: uppercase;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru" className={`${display.variable} ${inter.variable}`}>
+      <body className="app-shell font-sans min-h-screen">
+        <SessionProviderWrapper>
+          <div className="flex flex-col md:flex-row min-h-screen">
+            <Nav />
+            <main className="flex-1 p-4 md:p-8 max-w-5xl">{children}</main>
+          </div>
+        </SessionProviderWrapper>
+      </body>
+    </html>
+  );
 }
