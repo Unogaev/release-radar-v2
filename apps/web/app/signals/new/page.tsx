@@ -12,7 +12,7 @@ function Field({ label, name, type = "text", step, defaultValue, placeholder }: 
         step={step}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-ember-500"
+        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm text-black placeholder:text-ink-500 focus:outline-none focus:border-ember-500"
       />
     </div>
   );
@@ -36,7 +36,7 @@ function Select({ label, name, options, defaultValue }: {
       <select
         name={name}
         defaultValue={defaultValue}
-        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-ember-500"
+        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm text-black placeholder:text-ink-500 focus:outline-none focus:border-ember-500"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
