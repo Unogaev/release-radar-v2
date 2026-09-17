@@ -65,7 +65,7 @@ export function Nav() {
             })}
           </div>
           <Link
-            href="/signals/new"
+            href="/signals/quick"
             className="flex items-center gap-2 mt-6 px-2.5 py-2 rounded-lg text-[12px] text-graphite-500 hover:text-graphite-300 transition-colors"
           >
             <Plus size={14} />
