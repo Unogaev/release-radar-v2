@@ -200,9 +200,14 @@ const ACTION_LABELS: Record<SignalAction, { full: string; short: string }> = {
 export function ActionRow({
   onAction,
   variant = "card",
+  primaryHref,
+  disabledActions = [],
 }: {
   onAction: (action: SignalAction) => void;
   variant?: "card" | "hero";
+  /** Реальная ссылка для кнопки "Купить". Если нет — кнопка неактивна. */
+  primaryHref?: string | null;
+  disabledActions?: SignalAction[];
 }) {
   const hero = variant === "hero";
   const order: SignalAction[] = ["buy", "source", "calendar", "publish"];
@@ -211,20 +216,37 @@ export function ActionRow({
       {order.map((action) => {
         const label = hero ? ACTION_LABELS[action].full : ACTION_LABELS[action].short;
         const primary = action === "buy";
+        const disabled = disabledActions.includes(action) || (primary && !primaryHref);
+        const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
+        const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
+
+        const className = primary
+          ? `border border-rr-accent font-semibold transition-colors ${sizing} ${
+              disabled
+                ? "opacity-40 cursor-not-allowed bg-transparent text-rr-accent"
+                : "bg-rr-accent text-[#100e0c] hover:bg-rr-accent-hi"
+            }`
+          : `border border-[rgba(241,238,232,0.18)] transition-colors ${secondarySizing} ${
+              disabled
+                ? "opacity-40 cursor-not-allowed text-rr-faint"
+                : "bg-[rgba(241,238,232,0.09)] text-[#e7e3db] hover:bg-[rgba(241,238,232,0.16)]"
+            }`;
+
+        if (primary && primaryHref && !disabled) {
+          return (
+            <a key={action} href={primaryHref} target="_blank" rel="noopener noreferrer" className={className}>
+              {label}
+            </a>
+          );
+        }
+
         return (
           <button
             key={action}
             type="button"
-            onClick={() => onAction(action)}
-            className={
-              primary
-                ? `bg-rr-accent font-semibold text-[#100e0c] transition-colors hover:bg-rr-accent-hi ${
-                    hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]"
-                  }`
-                : `bg-rr-well text-[#e7e3db] transition-colors hover:bg-[rgba(241,238,232,0.13)] ${
-                    hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]"
-                  }`
-            }
+            disabled={disabled}
+            onClick={() => !disabled && onAction(action)}
+            className={className}
           >
             {label}
           </button>
