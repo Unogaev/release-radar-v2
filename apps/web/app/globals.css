@@ -9,10 +9,10 @@
 body {
   background-color: theme("colors.ink.950");
   color: #2a2521;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle warm vignette instead of a flat white background — reads as a
-   considered, expensive room, not a default light-mode toggle. */
 .app-shell {
   background:
     radial-gradient(ellipse at top, rgba(169, 124, 63, 0.08), transparent 60%),
@@ -23,14 +23,24 @@ body {
   font-family: theme("fontFamily.display");
   letter-spacing: 0.04em;
   font-size: 0.7rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
-/* The page components still use `text-white` from the old dark theme.
-   Rather than editing every page, repaint it dark here for the new
-   light theme. */
+/* Safety net: any page still using the old dark-theme classes gets
+   repainted for the new light theme automatically. */
 .text-white {
   color: #2a2521 !important;
 }
-
+.bg-ink-900\/40 {
+  background-color: #fffefc !important;
+}
+.border-ink-700 {
+  border-color: rgba(180, 166, 140, 0.35) !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(20,16,10,0.03), 0 6px 20px rgba(20,16,10,0.05);
+}
+.border-ink-700:hover {
+  box-shadow: 0 2px 6px rgba(20,16,10,0.05), 0 10px 30px rgba(20,16,10,0.08);
+}
