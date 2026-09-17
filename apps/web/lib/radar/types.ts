@@ -25,6 +25,7 @@ export interface Signal {
 
   store: string;
   stock: string;
+  primaryUrl?: string | null;
   checkedAt: string;
   launchAt: string;
 

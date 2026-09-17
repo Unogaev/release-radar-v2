@@ -87,6 +87,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         expectedResale,
         store: check?.sellerOfRecord ?? "—",
         stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
+        primaryUrl: check?.url ?? null,
         checkedAt: (check?.checkedAt ?? d.createdAt).toISOString(),
         launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
         why: d.rationale,

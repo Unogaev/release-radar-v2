@@ -87,7 +87,7 @@ export function SignalCard({
 
         {showWhy && <WhyBlock why={signal.why} factors={signal.factors} />}
 
-        <ActionRow onAction={(a) => onAction(signal.id, a)} />
+        <ActionRow onAction={(a) => onAction(signal.id, a)} primaryHref={signal.primaryUrl} />
       </div>
     </article>
   );

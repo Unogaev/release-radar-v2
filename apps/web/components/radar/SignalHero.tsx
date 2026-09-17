@@ -97,7 +97,7 @@ export function SignalHero({
 
         <WhyBlock variant="hero" why={signal.why} factors={signal.factors} />
 
-        <ActionRow variant="hero" onAction={(a) => onAction(signal.id, a)} />
+        <ActionRow variant="hero" onAction={(a) => onAction(signal.id, a)} primaryHref={signal.primaryUrl} />
       </div>
     </div>
   );
