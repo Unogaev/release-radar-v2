@@ -1,38 +1,81 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./app/**/*.{js,ts,jsx,tsx}", "./lib/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      colors: {
-        ink: {
-          950: "#f6f3ee",
-          900: "#efe9e0",
-          800: "#ded5c4",
-          700: "#b8ab92",
-          600: "#6b5f4d",
-        },
-        espresso: "#2a2521",
-        ember: {
-          500: "#a97c3f",
-          400: "#c79a5e",
-        },
-        status: {
-          buy: "#5c6b45",
-          apply: "#5c6b45",
-          prepare: "#8a6a1e",
-          watch: "#6b6b73",
-          skip: "#7a3f3f",
-          verify: "#3f5a8a",
-        },
-      },
-      fontFamily: {
-        display: ["'Playfair Display'", "Georgia", "serif"],
-        sans: ["'Inter'", "system-ui", "sans-serif"],
-      },
-      boxShadow: {
-        soft: "0 1px 2px rgba(20,16,10,0.03), 0 8px 24px rgba(20,16,10,0.06)",
-      },
-    },
-  },
-  plugins: [],
-};
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+
+const SECTIONS = [
+  { href: "/now", label: "СЕЙЧАС" },
+  { href: "/soon", label: "СКОРО" },
+  { href: "/radar", label: "НА РАДАРЕ" },
+  { href: "/purchases", label: "МОИ ПОКУПКИ" },
+];
+
+export function Nav() {
+  const pathname = usePathname();
+  if (pathname === "/login") return null;
+
+  return (
+    <>
+      {/* Desktop */}
+      <nav className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-ink-800/50 bg-ink-900/30 p-7 justify-between">
+        <div>
+          <div className="font-display text-xl tracking-[0.08em] text-ember-500 mb-12">
+            Release Radar
+          </div>
+          <div className="space-y-1">
+            {SECTIONS.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                className={`block px-3 py-2.5 rounded-lg text-xs tracking-wider transition-colors ${
+                  pathname === s.href
+                    ? "bg-white text-ember-500 shadow-sm"
+                    : "text-ink-600 hover:text-espresso hover:bg-white/60"
+                }`}
+              >
+                {s.label}
+              </Link>
+            ))}
+          </div>
+          <Link
+            href="/signals/new"
+            className="block mt-8 px-3 py-2.5 rounded-lg text-xs tracking-wider border border-ember-500/50 text-ember-500 hover:bg-ember-500 hover:text-white hover:border-ember-500 transition-colors text-center"
+          >
+            + Новый сигнал
+          </Link>
+        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-xs text-ink-700 hover:text-espresso text-left tracking-wide"
+        >
+          Выйти
+        </button>
+      </nav>
+
+      {/* Mobile */}
+      <nav className="md:hidden border-b border-ink-800/50 p-3 sticky top-0 bg-ink-950/95 backdrop-blur z-10">
+        <div className="font-display text-base tracking-[0.06em] text-ember-500 mb-2 px-1">Release Radar</div>
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {SECTIONS.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${
+                pathname === s.href ? "bg-white text-ember-500 shadow-sm" : "bg-ink-900/40 text-ink-600"
+              }`}
+            >
+              {s.label}
+            </Link>
+          ))}
+          <Link
+            href="/signals/new"
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap border border-ember-500/50 text-ember-500"
+          >
+            + Сигнал
+          </Link>
+        </div>
+      </nav>
+    </>
+  );
+}
