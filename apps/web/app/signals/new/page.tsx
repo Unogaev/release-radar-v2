@@ -103,6 +103,7 @@ export default function NewSignalPage() {
             />
             <Field label="Продавец (seller of record)" name="sellerOfRecord" />
             <Field label="Разрешённые продавцы (через запятую)" name="allowedSellers" />
+            <Field label="Прямая ссылка (checkout/raffle/dealer)" name="evidenceUrl" placeholder="https://..." />
           </div>
           <div className="grid grid-cols-2 gap-2 pt-2">
             <Check label="Вариант подтверждён доступным" name="variantAvailable" />

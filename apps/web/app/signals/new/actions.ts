@@ -99,6 +99,7 @@ export async function createSignal(formData: FormData) {
       zip: availability.zip,
       sessionRegion: availability.sessionRegion,
       evidenceBlobRef: availability.evidenceBlobRef,
+      url: str(formData, "evidenceUrl") || null,
     },
   });
 
@@ -109,6 +110,7 @@ export async function createSignal(formData: FormData) {
       level: evidenceLevel,
       rawSnapshotRef: `manual:${Date.now()}`,
       parseVersion: "manual-v1",
+      url: str(formData, "evidenceUrl") || null,
     },
   });
 
