@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   background-color: theme("colors.ink.950");
-  color: #e8e6e1;
+  color: #2a2521;
 }
 
-/* Subtle grain-free vignette instead of a flat single color — reads as a
-   considered room, not a default dark-mode toggle. */
+/* Subtle warm vignette instead of a flat white background — reads as a
+   considered, expensive room, not a default light-mode toggle. */
 .app-shell {
   background:
-    radial-gradient(ellipse at top, rgba(192, 138, 78, 0.05), transparent 60%),
+    radial-gradient(ellipse at top, rgba(169, 124, 63, 0.08), transparent 60%),
     theme("colors.ink.950");
 }
 
@@ -26,3 +26,11 @@ body {
   font-weight: 500;
   text-transform: uppercase;
 }
+
+/* The page components still use `text-white` from the old dark theme.
+   Rather than editing every page, repaint it dark here for the new
+   light theme. */
+.text-white {
+  color: #2a2521 !important;
+}
+
