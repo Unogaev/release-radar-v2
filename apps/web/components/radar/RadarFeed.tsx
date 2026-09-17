@@ -1,0 +1,139 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { FeedPayload, RadarCategory } from "@/lib/radar/types";
+import { derive, sortSignals, totalProfit } from "@/lib/radar/derive";
+import { clockLabel, signedMoney } from "@/lib/radar/format";
+import { useNow } from "./useCountdown";
+import { SignalHero } from "./SignalHero";
+import { SignalCard } from "./SignalCard";
+import { ServiceDrawer } from "./ServiceDrawer";
+import { FeedEmpty, FeedError, StaleBanner } from "./states";
+import type { SignalAction } from "./parts";
+
+const FILTERS: { id: RadarCategory; label: string }[] = [
+  { id: "now", label: "Сейчас" },
+  { id: "soon", label: "Скоро" },
+  { id: "restock", label: "Рестоки" },
+  { id: "trend", label: "Тренды" },
+  { id: "clearance", label: "Clearance" },
+  { id: "watches", label: "Watches" },
+  { id: "tech", label: "Tech" },
+  { id: "sneakers", label: "Sneakers" },
+  { id: "cars", label: "Cars" },
+];
+
+export function RadarFeed({
+  payload,
+  error,
+  isStale = false,
+  isPending = false,
+  onRetry,
+  onAction,
+}: {
+  payload?: FeedPayload;
+  error?: string;
+  isStale?: boolean;
+  isPending?: boolean;
+  onRetry?: () => void;
+  onAction?: (id: string, action: SignalAction) => void;
+}) {
+  const [filter, setFilter] = useState<RadarCategory>("now");
+  const now = useNow();
+
+  const signals = payload?.signals ?? [];
+
+  const visible = useMemo(
+    () => sortSignals(signals.filter((s) => s.categories.includes(filter)).map(derive)),
+    [signals, filter]
+  );
+
+  const handleAction = (id: string, action: SignalAction) => onAction?.(id, action);
+
+  const activeLabel = FILTERS.find((f) => f.id === filter)?.label ?? "";
+  const [hero, ...rest] = visible;
+
+  return (
+    <div className="min-h-screen bg-rr-bg font-rr-sans text-rr-text">
+      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#0b0a09_72%,rgba(11,10,9,0.86)_92%,rgba(11,10,9,0))] px-11 pb-[18px] pt-6">
+        <div className="flex items-baseline gap-5">
+          <div className="font-rr-display text-[25px] tracking-[0.01em]">Release Radar</div>
+          <div className="font-rr-mono text-[10.5px] uppercase tracking-[0.18em] text-rr-faint">
+            {signals.length} активных сигнала · апдейт каждые 60 с
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <span className="font-rr-mono text-[10.5px] uppercase tracking-[0.16em] text-rr-faint">
+            Прибыль в ленте
+          </span>
+          <span className="font-rr-display text-xl text-rr-accent">
+            {signedMoney(totalProfit(visible))}
+          </span>
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#1d1913] font-rr-mono text-[10px] tracking-[0.08em] text-rr-accent">
+            AK
+          </span>
+        </div>
+      </header>
+
+      <nav className="flex items-center gap-2 overflow-x-auto px-11 pb-[34px] pt-1.5">
+        {FILTERS.map((f) => {
+          const active = f.id === filter;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              aria-pressed={active}
+              className={`whitespace-nowrap rounded-full px-[17px] py-[9px] text-[12.5px] tracking-[0.02em] transition-colors ${
+                active
+                  ? "bg-rr-text text-[#100e0c]"
+                  : "bg-[rgba(241,238,232,0.05)] text-[#9a948a] hover:bg-[#221d17] hover:text-rr-text"
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {isStale && payload && <StaleBanner at={clockLabel(payload.scannedAt)} onRefresh={onRetry} />}
+
+      {error && !payload ? (
+        <FeedError reason={error} onRetry={onRetry} />
+      ) : visible.length === 0 ? (
+        <FeedEmpty
+          variant={signals.length === 0 ? "all" : "filter"}
+          filterLabel={activeLabel}
+          nextScanLabel={payload?.nextScanAt ? clockLabel(payload.nextScanAt) : undefined}
+          onReset={() => setFilter("now")}
+        />
+      ) : (
+        <div className={isPending ? "opacity-40 transition-opacity" : "transition-opacity"}>
+          <div className="px-11 pb-5">
+            <SignalHero signal={hero} now={now} onAction={handleAction} />
+          </div>
+
+          <div className="flex items-baseline justify-between px-11 pb-4 pt-[30px]">
+            <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-faint">
+              {activeLabel} · остальная лента
+            </div>
+            <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#4f4b45]">
+              {rest.length} сигнала
+            </div>
+          </div>
+
+          <div
+            className="grid gap-[26px] px-11"
+            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 430px), 1fr))" }}
+          >
+            {rest.map((s) => (
+              <SignalCard key={s.id} signal={s} now={now} onAction={handleAction} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {payload && <ServiceDrawer sources={payload.sources} logs={payload.logs} />}
+    </div>
+  );
+}

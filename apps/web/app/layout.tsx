@@ -1,11 +1,30 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Archivo, Bodoni_Moda, IBM_Plex_Mono } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
-import { Nav } from "./Nav";
-import { TopBar } from "@/components/TopBar";
 import { LanguageProvider } from "@/lib/i18n";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans" });
+
+const rrSans = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-rr-sans",
+  display: "swap",
+});
+
+const rrDisplay = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-rr-display",
+  display: "swap",
+});
+
+const rrMono = IBM_Plex_Mono({
+  subsets: ["latin", "cyrillic-ext"],
+  weight: ["400", "500"],
+  variable: "--font-rr-mono",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Release Radar",
@@ -14,18 +33,13 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={inter.variable}>
+    <html
+      lang="ru"
+      className={`${inter.variable} ${rrSans.variable} ${rrDisplay.variable} ${rrMono.variable}`}
+    >
       <body className="app-shell font-sans min-h-screen">
         <SessionProviderWrapper>
-          <LanguageProvider>
-            <div className="flex flex-col min-h-screen">
-              <TopBar />
-              <div className="flex flex-col md:flex-row flex-1">
-                <Nav />
-                <main className="flex-1 p-4 md:p-8 max-w-6xl">{children}</main>
-              </div>
-            </div>
-          </LanguageProvider>
+          <LanguageProvider>{children}</LanguageProvider>
         </SessionProviderWrapper>
       </body>
     </html>
