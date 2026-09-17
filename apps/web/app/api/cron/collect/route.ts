@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createGenericRssAdapter, createStructuredDataAdapter } from "../../../../../../packages/collectors/genericAdapter";
-import { runSourcePipeline } from "../../../../../../packages/collectors/pipeline";
+import { createGenericRssAdapter, createStructuredDataAdapter } from "../../../../collectors/genericAdapter";
+import { runSourcePipeline } from "../../../../collectors/pipeline";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
