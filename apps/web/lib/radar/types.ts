@@ -18,9 +18,10 @@ export interface Signal {
   imageUrl?: string;
   imageHint?: string;
 
-  retail: number;
-  cost: number;
-  expectedResale: number;
+  /** null — данных о цене пока нет (не выдумываем цифры). */
+  retail: number | null;
+  cost: number | null;
+  expectedResale: number | null;
 
   store: string;
   stock: string;
@@ -32,8 +33,8 @@ export interface Signal {
 }
 
 export interface DerivedSignal extends Signal {
-  profit: number;
-  marginPct: number;
+  profit: number | null;
+  marginPct: number | null;
 }
 
 export interface SourceHealth {

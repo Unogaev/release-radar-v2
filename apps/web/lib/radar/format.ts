@@ -1,12 +1,15 @@
-export function money(value: number): string {
-  return "€" + Math.round(value).toLocaleString("ru-RU").replace(/\u00a0/g, "\u2009");
+export function money(value: number | null): string {
+  if (value === null) return "—";
+  return "€" + Math.round(value).toLocaleString("ru-RU").replace(/ /g, " ");
 }
 
-export function signedMoney(value: number): string {
+export function signedMoney(value: number | null): string {
+  if (value === null) return "—";
   return (value >= 0 ? "+" : "−") + money(Math.abs(value));
 }
 
-export function marginLabel(pct: number): string {
+export function marginLabel(pct: number | null): string {
+  if (pct === null) return "—";
   return pct.toFixed(1).replace(".", ",") + "%";
 }
 
