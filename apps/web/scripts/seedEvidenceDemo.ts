@@ -266,7 +266,7 @@ async function main() {
     const existingAsk = await prisma.marketAsk.findFirst({ where: { productVariantId: variant.id } });
     if (!existingAsk) {
       await prisma.marketAsk.create({
-        data: { productVariantId: variant.id, platform: "GOAT", priceMinor: 27999, currency: "USD" },
+        data: { productVariantId: variant.id, platform: "GOAT", priceMinor: 27999, currency: "USD", observedAt: new Date() },
       });
       console.log("  + marketAsk (GOAT)");
     }
