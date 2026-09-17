@@ -4,37 +4,36 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Deep, near-black charcoal — not pure black (flat, cheap-looking)
-        // and not a "SaaS blue" — this is meant to feel like a private room,
-        // not a public product landing page.
+        // Warm, light stone/ivory — a private, expensive room, not a
+        // flat white "SaaS" background.
         ink: {
-          950: "#0a0a0c",
-          900: "#111114",
-          800: "#1a1a1f",
-          700: "#242429",
-          600: "#33333a",
+          950: "#f6f3ee",
+          900: "#efe9e0",
+          800: "#ded5c4",
+          700: "#b8ab92",
+          600: "#6b5f4d",
         },
-        // Restrained warm accent — used sparingly (primary actions, BUY_NOW),
-        // never as a decorative brand color splashed everywhere.
+        // Restrained brass/gold accent — used sparingly (primary actions,
+        // BUY_NOW), never as decoration everywhere.
         ember: {
-          500: "#c08a4e",
-          400: "#d4a56c",
+          500: "#a97c3f",
+          400: "#c79a5e",
         },
-        // Status colors kept desaturated — urgency without looking like a
-        // consumer app's cheerful palette.
+        // Status colors kept deep and desaturated for readability on a
+        // light background.
         status: {
-          buy: "#8a9a6f",
-          apply: "#8a9a6f",
-          prepare: "#c0a24e",
-          watch: "#5a5a63",
-          skip: "#6e4a4a",
-          verify: "#4e6ec0",
+          buy: "#5c6b45",
+          apply: "#5c6b45",
+          prepare: "#8a6a1e",
+          watch: "#6b6b73",
+          skip: "#7a3f3f",
+          verify: "#3f5a8a",
         },
       },
       fontFamily: {
-        // Serif display for headings/status labels — gives the "private
-        // club" register instead of a typical grotesque SaaS sans.
-        display: ["'Fraunces'", "Georgia", "serif"],
+        // Elegant serif for headings/status labels — the "private club"
+        // register.
+        display: ["'Playfair Display'", "Georgia", "serif"],
         sans: ["'Inter'", "system-ui", "sans-serif"],
       },
     },
