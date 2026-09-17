@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useLanguage } from "@/lib/i18n";
 import {
   LayoutDashboard,
   Radio,
@@ -19,19 +20,20 @@ import {
 } from "lucide-react";
 
 const SECTIONS = [
-  { href: "/now", label: "Command Center", icon: LayoutDashboard },
-  { href: "/radar", label: "Live Signals", icon: Radio },
-  { href: "/soon", label: "Upcoming", icon: Clock },
-  { href: "/calendar", label: "Calendar", icon: Calendar },
-  { href: "/market", label: "Market", icon: TrendingUp },
-  { href: "/sources", label: "Sources", icon: RadioTower },
-  { href: "/logs", label: "Collection Logs", icon: ScrollText },
-  { href: "/purchases", label: "Purchases", icon: ShoppingBag },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  { href: "/now", key: "nav_command_center", icon: LayoutDashboard },
+  { href: "/radar", key: "nav_live_signals", icon: Radio },
+  { href: "/soon", key: "nav_upcoming", icon: Clock },
+  { href: "/calendar", key: "nav_calendar", icon: Calendar },
+  { href: "/market", key: "nav_market", icon: TrendingUp },
+  { href: "/sources", key: "nav_sources", icon: RadioTower },
+  { href: "/logs", key: "nav_logs", icon: ScrollText },
+  { href: "/purchases", key: "nav_purchases", icon: ShoppingBag },
+  { href: "/clients", key: "nav_clients", icon: Users },
+  { href: "/settings", key: "nav_settings", icon: Settings },
+] as const;
 
 export function Nav() {
+  const { t } = useLanguage();
   const pathname = usePathname();
   if (pathname === "/login") return null;
 
@@ -57,7 +59,7 @@ export function Nav() {
                   }`}
                 >
                   <Icon size={16} className={isActive ? "text-lime" : ""} />
-                  {s.label}
+                  {t(s.key)}
                 </Link>
               );
             })}
@@ -67,7 +69,7 @@ export function Nav() {
             className="flex items-center gap-2 mt-6 px-2.5 py-2 rounded-lg text-[12px] text-graphite-500 hover:text-graphite-300 transition-colors"
           >
             <Plus size={14} />
-            Add signal (manual)
+            {t("add_signal")}
           </Link>
         </div>
         <button
@@ -75,7 +77,7 @@ export function Nav() {
           className="flex items-center gap-2 px-2.5 py-2 text-[12px] text-graphite-500 hover:text-graphite-200 text-left"
         >
           <LogOut size={14} />
-          Выйти
+          {t("sign_out")}
         </button>
       </nav>
 
@@ -94,7 +96,7 @@ export function Nav() {
                 }`}
               >
                 <Icon size={13} className={isActive ? "text-lime" : ""} />
-                {s.label}
+                {t(s.key)}
               </Link>
             );
           })}

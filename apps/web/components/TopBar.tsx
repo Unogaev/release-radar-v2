@@ -1,8 +1,8 @@
 "use client";
-
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Search, Bell, RefreshCw } from "lucide-react";
+import { Search, Bell, RefreshCw, Languages } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface CollectorStats {
   total: number;
@@ -14,6 +14,7 @@ export function TopBar() {
   const pathname = usePathname();
   const [stats, setStats] = useState<CollectorStats | null>(null);
   const [scanning, setScanning] = useState(false);
+  const { lang, setLang, t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/stats/collectors")
@@ -28,7 +29,11 @@ export function TopBar() {
     !stats || stats.total === 0 ? "OFFLINE" : stats.active === stats.total ? "LIVE" : "DEGRADED";
 
   const healthColor =
-    health === "LIVE" ? "text-lime bg-lime/10 border-lime/30" : health === "DEGRADED" ? "text-amber-400 bg-amber-500/10 border-amber-500/30" : "text-zinc-500 bg-zinc-700/10 border-zinc-600/30";
+    health === "LIVE"
+      ? "text-lime bg-lime/10 border-lime/30"
+      : health === "DEGRADED"
+      ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+      : "text-zinc-500 bg-zinc-700/10 border-zinc-600/30";
 
   async function runScan() {
     setScanning(true);
@@ -47,20 +52,25 @@ export function TopBar() {
         <Search size={14} className="text-graphite-500" />
         <input
           type="text"
-          placeholder="Поиск по товару, SKU, бренду, магазину..."
+          placeholder={t("search_placeholder")}
           className="bg-transparent text-sm text-graphite-200 placeholder:text-graphite-500 outline-none flex-1"
         />
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        <span className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold tracking-wide ${healthColor}`}>
+        <span
+          className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold tracking-wide ${healthColor}`}
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-current" />
           {health}
         </span>
         <span className="hidden lg:inline text-[11px] text-graphite-500 tabular-nums">
           {stats?.lastCheckedAt
-            ? `Скан: ${new Date(stats.lastCheckedAt).toLocaleString("ru-RU", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}`
-            : "Скан ещё не запускался"}
+            ? `${t("scan_at")}${new Date(stats.lastCheckedAt).toLocaleString(
+                lang === "ru" ? "ru-RU" : "en-US",
+                { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }
+              )}`
+            : t("scan_never")}
         </span>
         <button
           onClick={runScan}
@@ -68,10 +78,18 @@ export function TopBar() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-graphite-700 text-graphite-200 text-xs font-medium hover:border-lime/40 hover:text-lime transition-colors disabled:opacity-50"
         >
           <RefreshCw size={13} className={scanning ? "animate-spin" : ""} />
-          Run scan
+          {t("run_scan")}
         </button>
         <button className="p-2 rounded-lg border border-graphite-700 text-graphite-400 hover:text-graphite-100 transition-colors">
           <Bell size={15} />
+        </button>
+        <button
+          onClick={() => setLang(lang === "ru" ? "en" : "ru")}
+          title={lang === "ru" ? "Switch to English" : "Переключить на русский"}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-graphite-700 text-graphite-300 text-xs font-semibold hover:border-lime/40 hover:text-lime transition-colors"
+        >
+          <Languages size={13} />
+          {lang === "ru" ? "EN" : "RU"}
         </button>
       </div>
     </div>
