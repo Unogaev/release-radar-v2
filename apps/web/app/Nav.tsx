@@ -1,81 +1,38 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-
-const SECTIONS = [
-  { href: "/now", label: "СЕЙЧАС" },
-  { href: "/soon", label: "СКОРО" },
-  { href: "/radar", label: "НА РАДАРЕ" },
-  { href: "/purchases", label: "МОИ ПОКУПКИ" },
-];
-
-export function Nav() {
-  const pathname = usePathname();
-  if (pathname === "/login") return null;
-
-  return (
-    <>
-      {/* Desktop */}
-      <nav className="hidden md:flex md:flex-col w-56 shrink-0 border-r border-ink-700 p-6 justify-between">
-        <div>
-          <div className="font-display text-lg tracking-wide text-ember-400 mb-10">
-            Release Radar
-          </div>
-          <div className="space-y-1">
-            {SECTIONS.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                className={`block px-3 py-2 rounded text-sm tracking-wide transition-colors ${
-                  pathname === s.href
-                    ? "bg-ink-800 text-ember-400"
-                    : "text-ink-600 hover:text-white hover:bg-ink-900"
-                }`}
-              >
-                {s.label}
-              </Link>
-            ))}
-          </div>
-          <Link
-            href="/signals/new"
-            className="block mt-6 px-3 py-2 rounded text-xs tracking-wide border border-ember-500/40 text-ember-400 hover:bg-ember-500/10 transition-colors text-center"
-          >
-            + Новый сигнал
-          </Link>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-xs text-ink-600 hover:text-white text-left"
-        >
-          Выйти
-        </button>
-      </nav>
-
-      {/* Mobile */}
-      <nav className="md:hidden border-b border-ink-700 p-3 sticky top-0 bg-ink-950 z-10">
-        <div className="font-display text-base text-ember-400 mb-2 px-1">Release Radar</div>
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {SECTIONS.map((s) => (
-            <Link
-              key={s.href}
-              href={s.href}
-              className={`shrink-0 px-3 py-1.5 rounded text-xs whitespace-nowrap ${
-                pathname === s.href ? "bg-ink-800 text-ember-400" : "bg-ink-900 text-ink-600"
-              }`}
-            >
-              {s.label}
-            </Link>
-          ))}
-          <Link
-            href="/signals/new"
-            className="shrink-0 px-3 py-1.5 rounded text-xs whitespace-nowrap border border-ember-500/40 text-ember-400"
-          >
-            + Сигнал
-          </Link>
-        </div>
-      </nav>
-    </>
-  );
-}
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./app/**/*.{js,ts,jsx,tsx}", "./lib/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        ink: {
+          950: "#f6f3ee",
+          900: "#efe9e0",
+          800: "#ded5c4",
+          700: "#b8ab92",
+          600: "#6b5f4d",
+        },
+        espresso: "#2a2521",
+        ember: {
+          500: "#a97c3f",
+          400: "#c79a5e",
+        },
+        status: {
+          buy: "#5c6b45",
+          apply: "#5c6b45",
+          prepare: "#8a6a1e",
+          watch: "#6b6b73",
+          skip: "#7a3f3f",
+          verify: "#3f5a8a",
+        },
+      },
+      fontFamily: {
+        display: ["'Playfair Display'", "Georgia", "serif"],
+        sans: ["'Inter'", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(20,16,10,0.03), 0 8px 24px rgba(20,16,10,0.06)",
+      },
+    },
+  },
+  plugins: [],
+};
