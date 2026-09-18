@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { SignalStatus } from "@/lib/radar/types";
+import { useLanguage } from "@/lib/i18n";
 
 export const STATUS_STYLE: Record<SignalStatus, { label: string; className: string }> = {
   buy: { label: "BUY NOW", className: "bg-rr-accent text-[#faf9f7]" },
@@ -126,6 +127,7 @@ export function WhyBlock({
   factors: string[];
   variant?: "card" | "hero";
 }) {
+  const { t } = useLanguage();
   const hero = variant === "hero";
   return (
     <div
@@ -137,7 +139,7 @@ export function WhyBlock({
     >
       {hero && (
         <div className="font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-rr-accent">
-          Почему радар это поднял
+          {t("why_heading")}
         </div>
       )}
       <p className={`text-pretty leading-relaxed ${hero ? "text-[13px] text-rr-text-dim" : "text-[12.5px] text-rr-text-dim"}`}>
@@ -202,13 +204,6 @@ export function ImageFrame({
 
 export type SignalAction = "buy" | "source" | "calendar" | "publish";
 
-const ACTION_LABELS: Record<SignalAction, { full: string; short: string }> = {
-  buy: { full: "Купить", short: "Купить" },
-  source: { full: "Открыть источник", short: "Источник" },
-  calendar: { full: "В календарь", short: "В календарь" },
-  publish: { full: "Создать публикацию", short: "Публикация" },
-};
-
 export function ActionRow({
   onAction,
   variant = "card",
@@ -221,12 +216,19 @@ export function ActionRow({
   primaryHref?: string | null;
   disabledActions?: SignalAction[];
 }) {
+  const { t } = useLanguage();
+  const actionLabels: Record<SignalAction, { full: string; short: string }> = {
+    buy: { full: t("action_buy"), short: t("action_buy") },
+    source: { full: t("action_source_full"), short: t("action_source_short") },
+    calendar: { full: t("action_calendar"), short: t("action_calendar") },
+    publish: { full: t("action_publish_full"), short: t("action_publish_short") },
+  };
   const hero = variant === "hero";
   const order: SignalAction[] = ["buy", "source", "calendar", "publish"];
   return (
     <div className="mt-auto flex flex-wrap gap-2 pt-1">
       {order.map((action) => {
-        const label = hero ? ACTION_LABELS[action].full : ACTION_LABELS[action].short;
+        const label = hero ? actionLabels[action].full : actionLabels[action].short;
         const primary = action === "buy";
         const disabled = disabledActions.includes(action) || (primary && !primaryHref);
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
