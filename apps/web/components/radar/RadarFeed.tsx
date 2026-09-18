@@ -122,8 +122,8 @@ export function RadarFeed({
               aria-pressed={active}
               className={`whitespace-nowrap rounded-full px-[17px] py-[9px] text-[12.5px] tracking-[0.02em] transition-colors ${
                 active
-                  ? "bg-rr-text text-[#100e0c]"
-                  : "bg-[rgba(241,238,232,0.05)] text-[#9a948a] hover:bg-[#221d17] hover:text-rr-text"
+                  ? "bg-rr-text text-[#faf9f7]"
+                  : "bg-[rgba(22,21,20,0.04)] text-[#8f8c86] hover:bg-[rgba(22,21,20,0.08)] hover:text-rr-text"
               }`}
             >
               {f.label}
