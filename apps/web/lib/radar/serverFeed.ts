@@ -75,7 +75,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const expectedResale = sale ? sale.priceMinor / 100 : ask ? ask.priceMinor / 100 : null;
         const brand = stripDemo(product.brand);
         const model = titleCase(product.normalizedModel);
-        const imageUrl = (await getProductImage(brand, model, mappedCat)) ?? undefined;
+        const imageUrl = (await getProductImage(brand, model)) ?? undefined;
 
         return {
           id: d.id,

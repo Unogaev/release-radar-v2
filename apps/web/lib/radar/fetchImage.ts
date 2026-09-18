@@ -19,8 +19,6 @@ async function fetchImageUrl(query: string): Promise<string | null> {
     };
     const results = data.results ?? [];
 
-    // Prefer a roughly square-ish, reasonably sized photo — closer to a real product shot
-    // than a random wide/tall lifestyle photo.
     const scored = results
       .filter((r) => r.url || r.thumbnail)
       .map((r) => {
@@ -42,18 +40,6 @@ async function fetchImageUrl(query: string): Promise<string | null> {
   }
 }
 
-const CATEGORY_KEYWORDS: Record<string, string> = {
-  sneakers: "sneaker shoe product photo",
-  watches: "wristwatch product photo",
-  tech: "gadget device product photo",
-  cars: "car vehicle photo",
-};
-
-export async function getProductImage(
-  brand: string,
-  model: string,
-  category?: string
-): Promise<string | null> {
-  const keyword = (category && CATEGORY_KEYWORDS[category]) || "product photo";
-  return fetchImageUrl(`${brand} ${model} ${keyword}`);
+export async function getProductImage(brand: string, model: string): Promise<string | null> {
+  return fetchImageUrl(`${brand} ${model}`);
 }
