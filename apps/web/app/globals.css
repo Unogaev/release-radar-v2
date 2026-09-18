@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: theme("colors.graphite.950");
-  color: theme("colors.graphite.200");
+  background-color: #f4f3f1;
+  color: #161514;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 .app-shell {
   background:
-    radial-gradient(ellipse at top, rgba(200, 255, 77, 0.05), transparent 60%),
-    theme("colors.graphite.950");
+    radial-gradient(ellipse at top, rgba(22, 21, 20, 0.03), transparent 60%),
+    #f4f3f1;
 }
 
 .status-badge {
