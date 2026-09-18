@@ -3,24 +3,19 @@ const cache = new Map<string, string | null>();
 async function fetchImageUrl(query: string): Promise<string | null> {
   if (cache.has(query)) return cache.get(query) ?? null;
 
-  const key = process.env.GOOGLE_CSE_KEY;
-  const cx = process.env.GOOGLE_CSE_CX;
-  if (!key || !cx) {
-    cache.set(query, null);
-    return null;
-  }
-
   try {
-    const url = `https://www.googleapis.com/customsearch/v1?key=${key}&cx=${cx}&q=${encodeURIComponent(
+    const url = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(
       query
-    )}&searchType=image&num=1&safe=active`;
-    const res = await fetch(url);
+    )}&page_size=1&license_type=all`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "release-radar (contact: eunogaev@gmail.com)" },
+    });
     if (!res.ok) {
       cache.set(query, null);
       return null;
     }
-    const data = (await res.json()) as { items?: { link?: string }[] };
-    const found = data.items?.[0]?.link ?? null;
+    const data = (await res.json()) as { results?: { url?: string; thumbnail?: string }[] };
+    const found = data.results?.[0]?.url ?? data.results?.[0]?.thumbnail ?? null;
     cache.set(query, found);
     return found;
   } catch {
