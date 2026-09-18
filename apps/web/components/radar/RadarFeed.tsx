@@ -73,6 +73,12 @@ export function RadarFeed({
           >
             {t("nav_menu")}
           </Link>
+          <Link
+            href="/now/add"
+            className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-accent transition-colors hover:text-rr-accent-hi"
+          >
+            + {t("add_signal")}
+          </Link>
           <div className="flex items-center gap-1 rounded-full bg-[rgba(241,238,232,0.06)] p-0.5">
             <button
               type="button"
