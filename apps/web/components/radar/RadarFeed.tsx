@@ -13,16 +13,16 @@ import { ServiceDrawer } from "./ServiceDrawer";
 import { FeedEmpty, FeedError, StaleBanner } from "./states";
 import type { SignalAction } from "./parts";
 
-const FILTERS: { id: RadarCategory; label: string }[] = [
-  { id: "now", label: "Сейчас" },
-  { id: "soon", label: "Скоро" },
-  { id: "restock", label: "Рестоки" },
-  { id: "trend", label: "Тренды" },
-  { id: "clearance", label: "Clearance" },
-  { id: "watches", label: "Watches" },
-  { id: "tech", label: "Tech" },
-  { id: "sneakers", label: "Sneakers" },
-  { id: "cars", label: "Cars" },
+const FILTER_IDS = [
+  { id: "now" as const, key: "filter_now" as const },
+  { id: "soon" as const, key: "filter_soon" as const },
+  { id: "restock" as const, key: "filter_restock" as const },
+  { id: "trend" as const, key: "filter_trend" as const },
+  { id: "clearance" as const, key: "filter_clearance" as const },
+  { id: "watches" as const, key: "filter_watches" as const },
+  { id: "tech" as const, key: "filter_tech" as const },
+  { id: "sneakers" as const, key: "filter_sneakers" as const },
+  { id: "cars" as const, key: "filter_cars" as const },
 ];
 
 export function RadarFeed({
@@ -42,7 +42,7 @@ export function RadarFeed({
 }) {
   const [filter, setFilter] = useState<RadarCategory>("now");
   const now = useNow();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
 
   const signals = payload?.signals ?? [];
 
@@ -53,6 +53,7 @@ export function RadarFeed({
 
   const handleAction = (id: string, action: SignalAction) => onAction?.(id, action);
 
+  const FILTERS = FILTER_IDS.map((f) => ({ id: f.id, label: t(f.key) }));
   const activeLabel = FILTERS.find((f) => f.id === filter)?.label ?? "";
   const [hero, ...rest] = visible;
 
@@ -62,7 +63,7 @@ export function RadarFeed({
         <div className="flex items-baseline gap-5">
           <div className="font-rr-display text-[25px] tracking-[0.01em]">Release Radar</div>
           <div className="font-rr-mono text-[10.5px] uppercase tracking-[0.18em] text-rr-faint">
-            {signals.length} активных сигнала · апдейт каждые 60 с
+            {signals.length} {t("active_signals_suffix")}
           </div>
         </div>
         <div className="flex items-center gap-5">
@@ -70,7 +71,7 @@ export function RadarFeed({
             href="/"
             className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint transition-colors hover:text-rr-text"
           >
-            ← Меню
+            {t("nav_menu")}
           </Link>
           <div className="flex items-center gap-1 rounded-full bg-[rgba(241,238,232,0.06)] p-0.5">
             <button
@@ -93,7 +94,7 @@ export function RadarFeed({
             </button>
           </div>
           <span className="font-rr-mono text-[10.5px] uppercase tracking-[0.16em] text-rr-faint">
-            Прибыль в ленте
+            {t("feed_profit")}
           </span>
           <span className="font-rr-display text-xl text-rr-accent">
             {signedMoney(totalProfit(visible))}
@@ -144,10 +145,10 @@ export function RadarFeed({
 
           <div className="flex items-baseline justify-between px-11 pb-4 pt-[30px]">
             <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-faint">
-              {activeLabel} · остальная лента
+              {activeLabel} · {t("rest_of_feed")}
             </div>
             <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#4f4b45]">
-              {rest.length} сигнала
+              {rest.length} {t("signals_suffix")}
             </div>
           </div>
 

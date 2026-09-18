@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/lib/i18n";
 import type { DerivedSignal } from "@/lib/radar/types";
 import {
   checkedLabel,
@@ -32,6 +33,7 @@ export function SignalCard({
   showWhy?: boolean;
   onAction: (id: string, action: SignalAction) => void;
 }) {
+  const { t } = useLanguage();
   const left = now === null ? null : secondsUntil(signal.launchAt, now);
 
   return (
@@ -59,12 +61,12 @@ export function SignalCard({
         </div>
 
         <div className="flex flex-wrap items-end gap-x-[26px] gap-y-4">
-          <Figure label="Чистая прибыль">
+          <Figure label={t("label_net_profit")}>
             <div className="font-rr-display text-[28px] leading-none whitespace-nowrap text-rr-accent">
               {signedMoney(signal.profit)}
             </div>
           </Figure>
-          <Figure label="Маржа">
+          <Figure label={t("label_margin")}>
             <div className="pb-[3px] text-[17px] font-medium whitespace-nowrap text-rr-text">
               {marginLabel(signal.marginPct)}
             </div>
@@ -74,15 +76,15 @@ export function SignalCard({
         <Ledger
           items={[
             { label: "Retail", value: money(signal.retail) },
-            { label: "Закупка", value: money(signal.cost) },
-            { label: "Продажа", value: money(signal.expectedResale) },
+            { label: t("label_cost"), value: money(signal.cost) },
+            { label: t("label_resale"), value: money(signal.expectedResale) },
           ]}
         />
 
         <MetaRow
           store={signal.store}
           stock={signal.stock}
-          checked={now === null ? "проверено недавно" : checkedLabel(signal.checkedAt, now)}
+          checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now)}
         />
 
         {showWhy && <WhyBlock why={signal.why} factors={signal.factors} />}

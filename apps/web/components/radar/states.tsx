@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/lib/i18n";
+
 export function FeedSkeleton() {
   return (
     <div className="animate-pulse px-11">
@@ -51,22 +53,21 @@ export function FeedEmpty({
   nextScanLabel?: string;
   onReset?: () => void;
 }) {
+  const { t } = useLanguage();
   const filtered = variant === "filter";
   return (
     <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-faint">
-        {filtered ? `Категория «${filterLabel}»` : "Цикл сканирования завершён"}
+        {filtered
+          ? `${t("empty_category_prefix")}${filterLabel}${t("empty_category_suffix")}`
+          : t("empty_scan_done")}
       </div>
       <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
-        {filtered
-          ? "В этой категории сейчас нет сигналов"
-          : "Радар не нашёл сигналов за последний цикл"}
+        {filtered ? t("empty_title_filtered") : t("empty_title_all")}
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
-        {filtered
-          ? "Условия по марже и наличию не выполнены ни по одной позиции. Сигналы появятся после следующего обхода источников."
-          : "Все найденные позиции отсеяны по марже, наличию или достоверности источника."}
-        {nextScanLabel ? ` Следующее сканирование в ${nextScanLabel}.` : ""}
+        {filtered ? t("empty_desc_filtered") : t("empty_desc_all")}
+        {nextScanLabel ? `${t("empty_next_scan_prefix")}${nextScanLabel}.` : ""}
       </p>
       {filtered && onReset && (
         <button
@@ -74,7 +75,7 @@ export function FeedEmpty({
           onClick={onReset}
           className="bg-rr-well px-5 py-3 text-[12.5px] text-[#e7e3db] transition-colors hover:bg-[rgba(241,238,232,0.13)]"
         >
-          Вернуться к «Сейчас»
+          {t("empty_reset_button")}
         </button>
       )}
     </div>
@@ -88,17 +89,18 @@ export function FeedError({
   reason?: string;
   onRetry?: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-warn">
-        Лента недоступна
+        {t("error_unavailable")}
       </div>
       <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
-        Не удалось получить сигналы
+        {t("error_title")}
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
-        {reason ?? "Источники не ответили в отведённое время."} Данные о ценах и наличии могли
-        измениться — перед покупкой проверьте источник вручную.
+        {reason ?? t("error_default_reason")}
+        {t("error_desc_suffix")}
       </p>
       {onRetry && (
         <button
@@ -106,7 +108,7 @@ export function FeedError({
           onClick={onRetry}
           className="bg-rr-accent px-5 py-3 text-[12.5px] font-semibold text-[#100e0c] transition-colors hover:bg-rr-accent-hi"
         >
-          Повторить
+          {t("error_retry")}
         </button>
       )}
     </div>
@@ -114,13 +116,14 @@ export function FeedError({
 }
 
 export function StaleBanner({ at, onRefresh }: { at: string; onRefresh?: () => void }) {
+  const { t } = useLanguage();
   return (
     <div className="mx-11 mb-6 flex flex-wrap items-center gap-4 border border-[rgba(232,160,106,0.28)] bg-[rgba(232,160,106,0.07)] px-5 py-3.5">
       <span className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-warn">
-        Данные от {at}
+        {t("stale_data_from_prefix")}{at}
       </span>
       <span className="text-[12.5px] text-rr-text-dim">
-        Последний обход источников не завершился, цены могли измениться.
+        {t("stale_desc")}
       </span>
       {onRefresh && (
         <button
@@ -128,7 +131,7 @@ export function StaleBanner({ at, onRefresh }: { at: string; onRefresh?: () => v
           onClick={onRefresh}
           className="ml-auto font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-accent transition-colors hover:text-rr-accent-hi"
         >
-          Обновить
+          {t("stale_refresh")}
         </button>
       )}
     </div>
