@@ -2,31 +2,27 @@ const cache = new Map<string, string | null>();
 
 async function fetchImageUrl(query: string): Promise<string | null> {
   if (cache.has(query)) return cache.get(query) ?? null;
-  try {
-    const tokenRes = await fetch(
-      `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
-    );
-    const html = await tokenRes.text();
-    const match = html.match(/vqd=['"]?([\d-]+)['"]?/);
-    const vqd = match?.[1];
-    if (!vqd) {
-      cache.set(query, null);
-      return null;
-    }
 
-    const imgRes = await fetch(
-      `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&f=,,,,,&p=1`,
-      { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://duckduckgo.com/" } }
-    );
-    if (!imgRes.ok) {
+  const key = process.env.GOOGLE_CSE_KEY;
+  const cx = process.env.GOOGLE_CSE_CX;
+  if (!key || !cx) {
+    cache.set(query, null);
+    return null;
+  }
+
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${key}&cx=${cx}&q=${encodeURIComponent(
+      query
+    )}&searchType=image&num=1&safe=active`;
+    const res = await fetch(url);
+    if (!res.ok) {
       cache.set(query, null);
       return null;
     }
-    const data = (await imgRes.json()) as { results?: { image?: string }[] };
-    const url = data.results?.[0]?.image ?? null;
-    cache.set(query, url);
-    return url;
+    const data = (await res.json()) as { items?: { link?: string }[] };
+    const found = data.items?.[0]?.link ?? null;
+    cache.set(query, found);
+    return found;
   } catch {
     cache.set(query, null);
     return null;
