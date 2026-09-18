@@ -38,7 +38,7 @@ export function SignalCard({
 
   return (
     <article className="flex flex-col bg-rr-surface transition-colors hover:bg-rr-surface-hi">
-      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[290px]">
+      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[210px] sm:h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />
         </div>
@@ -52,7 +52,7 @@ export function SignalCard({
           <div className="mb-[9px] font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-muted">
             {signal.brand}
           </div>
-          <h2 className="text-pretty font-rr-display text-[27px] leading-[1.1] tracking-[-0.008em]">
+          <h2 className="text-pretty font-rr-display text-[21px] sm:text-[27px] leading-[1.1] tracking-[-0.008em]">
             {signal.model}
           </h2>
           <div className="mt-[9px] font-rr-mono text-[10.5px] text-rr-stencil">

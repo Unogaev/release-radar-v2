@@ -4,10 +4,10 @@ import { useLanguage } from "@/lib/i18n";
 
 export function FeedSkeleton() {
   return (
-    <div className="animate-pulse px-11">
+    <div className="animate-pulse px-4 sm:px-11">
       <div className="grid bg-[#f1efec]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}>
-        <div className="min-h-[540px] bg-rr-frame" />
-        <div className="flex flex-col gap-6 px-10 pb-[30px] pt-[38px]">
+        <div className="min-h-[300px] sm:min-h-[540px] bg-rr-frame" />
+        <div className="flex flex-col gap-6 px-5 sm:px-10 pb-[20px] sm:pb-[30px] pt-[24px] sm:pt-[38px]">
           <div className="h-3 w-24 bg-rr-well" />
           <div className="h-10 w-4/5 bg-rr-well" />
           <div className="h-10 w-1/2 bg-rr-well" />
@@ -27,7 +27,7 @@ export function FeedSkeleton() {
       >
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="bg-rr-surface">
-            <div className="h-[290px] bg-rr-frame" />
+            <div className="h-[210px] sm:h-[290px] bg-rr-frame" />
             <div className="flex flex-col gap-4 px-6 pb-6 pt-[22px]">
               <div className="h-2.5 w-20 bg-rr-well" />
               <div className="h-7 w-3/4 bg-rr-well" />
@@ -56,11 +56,11 @@ export function FeedEmpty({
   const { t } = useLanguage();
   const filtered = variant === "filter";
   return (
-    <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
+    <div className="mx-4 sm:mx-11 flex flex-col items-start gap-5 bg-rr-surface px-5 sm:px-10 py-10 sm:py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-faint">
         {filtered ? `${t("empty_category_prefix")}${filterLabel}${t("empty_category_suffix")}` : t("empty_scan_done")}
       </div>
-      <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
+      <h2 className="max-w-[26ch] text-pretty font-rr-display text-[24px] sm:text-[32px] leading-[1.12]">
         {filtered ? t("empty_title_filtered") : t("empty_title_all")}
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
@@ -89,11 +89,11 @@ export function FeedError({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
+    <div className="mx-4 sm:mx-11 flex flex-col items-start gap-5 bg-rr-surface px-5 sm:px-10 py-10 sm:py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-warn">
         {t("error_unavailable")}
       </div>
-      <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
+      <h2 className="max-w-[26ch] text-pretty font-rr-display text-[24px] sm:text-[32px] leading-[1.12]">
         {t("error_title")}
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
@@ -115,7 +115,7 @@ export function FeedError({
 export function StaleBanner({ at, onRefresh }: { at: string; onRefresh?: () => void }) {
   const { t } = useLanguage();
   return (
-    <div className="mx-11 mb-6 flex flex-wrap items-center gap-4 border border-[rgba(138,106,74,0.32)] bg-[rgba(138,106,74,0.06)] px-5 py-3.5">
+    <div className="mx-4 sm:mx-11 mb-6 flex flex-wrap items-center gap-4 border border-[rgba(138,106,74,0.32)] bg-[rgba(138,106,74,0.06)] px-5 py-3.5">
       <span className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-warn">
         {t("stale_data_from_prefix")}{at}
       </span>

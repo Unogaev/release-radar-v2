@@ -59,7 +59,7 @@ export function RadarFeed({
 
   return (
     <div className="min-h-screen bg-rr-bg font-rr-sans text-rr-text">
-      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#f4f3f1_72%,rgba(244,243,241,0.86)_92%,rgba(244,243,241,0))] px-11 pb-[18px] pt-6">
+      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#f4f3f1_72%,rgba(244,243,241,0.86)_92%,rgba(244,243,241,0))] px-4 sm:px-11 pb-[18px] pt-6">
         <div className="flex items-baseline gap-5">
           <div className="font-rr-display text-[25px] tracking-[0.01em]">Release Radar</div>
           <div className="font-rr-mono text-[10.5px] uppercase tracking-[0.18em] text-rr-faint">
@@ -111,7 +111,7 @@ export function RadarFeed({
         </div>
       </header>
 
-      <nav className="flex items-center gap-2 overflow-x-auto px-11 pb-[34px] pt-1.5">
+      <nav className="flex items-center gap-2 overflow-x-auto px-4 sm:px-11 pb-[34px] pt-1.5">
         {FILTERS.map((f) => {
           const active = f.id === filter;
           return (
@@ -145,11 +145,11 @@ export function RadarFeed({
         />
       ) : (
         <div className={isPending ? "opacity-40 transition-opacity" : "transition-opacity"}>
-          <div className="px-11 pb-5">
+          <div className="px-4 sm:px-11 pb-5">
             <SignalHero signal={hero} now={now} onAction={handleAction} />
           </div>
 
-          <div className="flex items-baseline justify-between px-11 pb-4 pt-[30px]">
+          <div className="flex items-baseline justify-between px-4 sm:px-11 pb-4 pt-[30px]">
             <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-faint">
               {activeLabel} · {t("rest_of_feed")}
             </div>
@@ -159,7 +159,7 @@ export function RadarFeed({
           </div>
 
           <div
-            className="grid gap-[26px] px-11"
+            className="grid gap-[26px] px-4 sm:px-11"
             style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 430px), 1fr))" }}
           >
             {rest.map((s) => (

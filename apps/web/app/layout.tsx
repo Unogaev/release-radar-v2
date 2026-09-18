@@ -29,6 +29,17 @@ const rrMono = IBM_Plex_Mono({
 export const metadata = {
   title: "Release Radar",
   description: "Personal action-first release intelligence",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#f4f3f1",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

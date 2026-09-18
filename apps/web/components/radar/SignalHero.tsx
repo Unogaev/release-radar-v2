@@ -48,19 +48,19 @@ export function SignalHero({
       className="grid bg-[linear-gradient(115deg,#ffffff_0%,#f8f7f5_55%,#f3f2ef_100%)]"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}
     >
-      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="min-h-[540px] p-6">
+      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="min-h-[300px] sm:min-h-[540px] p-6">
         <div className="absolute left-6 top-6 flex items-center gap-[7px]">
           <StatusBadge status={signal.status} />
           <KindBadge>{t(kindKey)}</KindBadge>
         </div>
       </ImageFrame>
 
-      <div className="flex flex-col gap-6 px-10 pb-[30px] pt-[38px]">
+      <div className="flex flex-col gap-6 px-5 sm:px-10 pb-[20px] sm:pb-[30px] pt-[24px] sm:pt-[38px]">
         <div>
           <div className="mb-3 font-rr-mono text-[10.5px] uppercase tracking-[0.24em] text-rr-muted">
             {signal.brand}
           </div>
-          <h1 className="text-pretty font-rr-display text-[44px] leading-[1.04] tracking-[-0.012em]">
+          <h1 className="text-pretty font-rr-display text-[28px] sm:text-[44px] leading-[1.04] tracking-[-0.012em]">
             {signal.model}
           </h1>
           <div className="mt-[11px] font-rr-mono text-[11.5px] text-rr-stencil">
@@ -70,7 +70,7 @@ export function SignalHero({
 
         <div className="flex flex-wrap items-end gap-x-8 gap-y-5">
           <Figure label={t("label_net_profit")}>
-            <div className="font-rr-display text-[40px] leading-none whitespace-nowrap text-rr-accent">
+            <div className="font-rr-display text-[28px] sm:text-[40px] leading-none whitespace-nowrap text-rr-accent">
               {signedMoney(signal.profit)}
             </div>
           </Figure>
