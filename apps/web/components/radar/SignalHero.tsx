@@ -45,7 +45,7 @@ export function SignalHero({
 
   return (
     <div
-      className="grid bg-[linear-gradient(115deg,#15120e_0%,#110f0d_60%,#0e0d0c_100%)]"
+      className="grid bg-[linear-gradient(115deg,#ffffff_0%,#f8f7f5_55%,#f3f2ef_100%)]"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}
     >
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="min-h-[540px] p-6">
