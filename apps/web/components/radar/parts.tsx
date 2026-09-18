@@ -233,11 +233,11 @@ export function ActionRow({
         const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
 
         const className = primary
-          ? `border border-rr-accent font-semibold transition-colors ${sizing} ${
-              disabled
-                ? "opacity-40 cursor-not-allowed bg-transparent text-rr-accent"
-                : "bg-rr-accent text-[#100e0c] hover:bg-rr-accent-hi"
-            }`
+      ? `font-semibold transition-colors ${sizing} ${
+          disabled
+            ? "opacity-40 cursor-not-allowed bg-transparent border border-[#d8b878] text-[#d8b878]"
+            : "border border-[#d8b878]"
+        }`
           : `border border-[rgba(241,238,232,0.18)] transition-colors ${secondarySizing} ${
               disabled
                 ? "opacity-40 cursor-not-allowed text-rr-faint"
