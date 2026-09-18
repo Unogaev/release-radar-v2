@@ -22,8 +22,12 @@ export function countdownLabel(secondsLeft: number): string {
   return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
 }
 
-export function checkedLabel(checkedAt: string, now: number): string {
+export function checkedLabel(checkedAt: string, now: number, lang: "en" | "ru" = "ru"): string {
   const min = Math.max(0, Math.round((now - new Date(checkedAt).getTime()) / 60000));
+  if (lang === "en") {
+    if (min < 1) return "checked just now";
+    return `checked ${min} min ago`;
+  }
   if (min < 1) return "проверено только что";
   return `проверено ${min} мин назад`;
 }

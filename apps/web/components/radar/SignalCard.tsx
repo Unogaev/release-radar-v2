@@ -33,7 +33,7 @@ export function SignalCard({
   showWhy?: boolean;
   onAction: (id: string, action: SignalAction) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const left = now === null ? null : secondsUntil(signal.launchAt, now);
 
   return (
@@ -84,7 +84,7 @@ export function SignalCard({
         <MetaRow
           store={signal.store}
           stock={signal.stock}
-          checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now)}
+          checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now, lang)}
         />
 
         {showWhy && <WhyBlock why={signal.why} factors={signal.factors} />}

@@ -23,6 +23,13 @@ import {
   type SignalAction,
 } from "./parts";
 
+const KIND_LABEL_KEYS: Record<string, "kind_now" | "kind_soon" | "kind_verify" | "kind_client"> = {
+  now: "kind_now",
+  soon: "kind_soon",
+  verify: "kind_verify",
+  client: "kind_client",
+};
+
 export function SignalHero({
   signal,
   now,
@@ -32,8 +39,9 @@ export function SignalHero({
   now: number | null;
   onAction: (id: string, action: SignalAction) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const left = now === null ? null : secondsUntil(signal.launchAt, now);
+  const kindKey = KIND_LABEL_KEYS[signal.kindLabel] ?? "kind_now";
 
   return (
     <div
@@ -43,7 +51,7 @@ export function SignalHero({
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="min-h-[540px] p-6">
         <div className="absolute left-6 top-6 flex items-center gap-[7px]">
           <StatusBadge status={signal.status} />
-          <KindBadge>{signal.kindLabel}</KindBadge>
+          <KindBadge>{t(kindKey)}</KindBadge>
         </div>
       </ImageFrame>
 
@@ -94,7 +102,7 @@ export function SignalHero({
         <MetaRow
           store={signal.store}
           stock={signal.stock}
-          checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now)}
+          checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now, lang)}
         />
 
         <WhyBlock variant="hero" why={signal.why} factors={signal.factors} />

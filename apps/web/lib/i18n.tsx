@@ -38,6 +38,11 @@ const dict = {
     filter_sneakers: "Sneakers",
     filter_cars: "Cars",
 
+    kind_now: "Now",
+    kind_soon: "Soon",
+    kind_verify: "Verify",
+    kind_client: "Client",
+
     why_heading: "Why the radar flagged this",
 
     label_cost: "Cost",
@@ -110,6 +115,11 @@ const dict = {
     filter_tech: "Tech",
     filter_sneakers: "Sneakers",
     filter_cars: "Cars",
+
+    kind_now: "Сейчас",
+    kind_soon: "Скоро",
+    kind_verify: "Проверка",
+    kind_client: "Клиент",
 
     why_heading: "Почему радар это поднял",
 

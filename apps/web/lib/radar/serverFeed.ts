@@ -4,16 +4,16 @@ import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } f
 import { getProductImage } from "./fetchImage";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
-  [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "Сейчас" },
-  [DecisionStatus.APPLY_NOW]: { bucket: "buy", kindLabel: "Сейчас" },
-  [DecisionStatus.CONTACT_DEALER]: { bucket: "buy", kindLabel: "Сейчас" },
-  [DecisionStatus.SOURCE_NOW]: { bucket: "buy", kindLabel: "Сейчас" },
-  [DecisionStatus.APPLY_RESERVE]: { bucket: "prepare", kindLabel: "Скоро", extraCategory: "soon" },
-  [DecisionStatus.RESERVE_PICKUP]: { bucket: "prepare", kindLabel: "Скоро", extraCategory: "soon" },
-  [DecisionStatus.PREPARE]: { bucket: "prepare", kindLabel: "Скоро", extraCategory: "soon" },
-  [DecisionStatus.VERIFY]: { bucket: "prepare", kindLabel: "Проверка", extraCategory: "soon" },
-  [DecisionStatus.VERIFY_IN_STORE]: { bucket: "prepare", kindLabel: "Проверка", extraCategory: "soon" },
-  [DecisionStatus.CLIENT_FIRST]: { bucket: "client", kindLabel: "Клиент" },
+  [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
+  [DecisionStatus.APPLY_NOW]: { bucket: "buy", kindLabel: "now" },
+  [DecisionStatus.CONTACT_DEALER]: { bucket: "buy", kindLabel: "now" },
+  [DecisionStatus.SOURCE_NOW]: { bucket: "buy", kindLabel: "now" },
+  [DecisionStatus.APPLY_RESERVE]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
+  [DecisionStatus.RESERVE_PICKUP]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
+  [DecisionStatus.PREPARE]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
+  [DecisionStatus.VERIFY]: { bucket: "prepare", kindLabel: "verify", extraCategory: "soon" },
+  [DecisionStatus.VERIFY_IN_STORE]: { bucket: "prepare", kindLabel: "verify", extraCategory: "soon" },
+  [DecisionStatus.CLIENT_FIRST]: { bucket: "client", kindLabel: "client" },
 };
 
 const CATEGORY_MAP: Record<string, RadarCategory> = {
