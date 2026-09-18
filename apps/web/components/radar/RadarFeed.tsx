@@ -59,7 +59,7 @@ export function RadarFeed({
 
   return (
     <div className="min-h-screen bg-rr-bg font-rr-sans text-rr-text">
-      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#0b0a09_72%,rgba(11,10,9,0.86)_92%,rgba(11,10,9,0))] px-11 pb-[18px] pt-6">
+      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#f4f3f1_72%,rgba(244,243,241,0.86)_92%,rgba(244,243,241,0))] px-11 pb-[18px] pt-6">
         <div className="flex items-baseline gap-5">
           <div className="font-rr-display text-[25px] tracking-[0.01em]">Release Radar</div>
           <div className="font-rr-mono text-[10.5px] uppercase tracking-[0.18em] text-rr-faint">
@@ -79,12 +79,12 @@ export function RadarFeed({
           >
             + {t("add_signal")}
           </Link>
-          <div className="flex items-center gap-1 rounded-full bg-[rgba(241,238,232,0.06)] p-0.5">
+          <div className="flex items-center gap-1 rounded-full bg-[rgba(22,21,20,0.05)] p-0.5">
             <button
               type="button"
               onClick={() => setLang("ru")}
               className={`rounded-full px-2.5 py-1 font-rr-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-                lang === "ru" ? "bg-rr-text text-[#100e0c]" : "text-rr-faint hover:text-rr-text"
+                lang === "ru" ? "bg-rr-text text-[#faf9f7]" : "text-rr-faint hover:text-rr-text"
               }`}
             >
               RU
@@ -93,7 +93,7 @@ export function RadarFeed({
               type="button"
               onClick={() => setLang("en")}
               className={`rounded-full px-2.5 py-1 font-rr-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-                lang === "en" ? "bg-rr-text text-[#100e0c]" : "text-rr-faint hover:text-rr-text"
+                lang === "en" ? "bg-rr-text text-[#faf9f7]" : "text-rr-faint hover:text-rr-text"
               }`}
             >
               EN
@@ -105,7 +105,7 @@ export function RadarFeed({
           <span className="font-rr-display text-xl text-rr-accent">
             {signedMoney(totalProfit(visible))}
           </span>
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#1d1913] font-rr-mono text-[10px] tracking-[0.08em] text-rr-accent">
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#161514] font-rr-mono text-[10px] tracking-[0.08em] text-[#efece7]">
             AK
           </span>
         </div>
@@ -153,7 +153,7 @@ export function RadarFeed({
             <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-faint">
               {activeLabel} · {t("rest_of_feed")}
             </div>
-            <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#4f4b45]">
+            <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#b3b0aa]">
               {rest.length} {t("signals_suffix")}
             </div>
           </div>

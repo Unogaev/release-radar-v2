@@ -2,11 +2,10 @@
 
 import type { ReactNode } from "react";
 import type { SignalStatus } from "@/lib/radar/types";
-import { useLanguage } from "@/lib/i18n";
 
 export const STATUS_STYLE: Record<SignalStatus, { label: string; className: string }> = {
-  buy: { label: "BUY NOW", className: "bg-rr-accent text-[#100e0c]" },
-  prepare: { label: "PREPARE", className: "bg-[rgba(241,238,232,0.13)] text-rr-text" },
+  buy: { label: "BUY NOW", className: "bg-rr-accent text-[#faf9f7]" },
+  prepare: { label: "PREPARE", className: "bg-[rgba(22,21,20,0.06)] text-rr-text" },
   client: { label: "CLIENT FIRST", className: "bg-rr-client-bg text-rr-client" },
 };
 
@@ -24,7 +23,7 @@ export function StatusBadge({ status }: { status: SignalStatus }) {
 
 export function KindBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="bg-[rgba(11,10,9,0.6)] px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-[#cec7bb]">
+    <span className="bg-[rgba(11,10,9,0.6)] px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-[#f1eee8]">
       {children}
     </span>
   );
@@ -41,12 +40,12 @@ export function Countdown({
 }) {
   const tone =
     secondsLeft === null
-      ? "text-[#cec7bb]"
+      ? "text-[#e5e2dc]"
       : secondsLeft <= 0
         ? "text-rr-accent"
         : secondsLeft < 900
           ? "text-rr-warn"
-          : "text-[#cec7bb]";
+          : "text-[#e5e2dc]";
   return (
     <span
       className={`font-rr-mono tabular-nums tracking-[0.04em] whitespace-nowrap ${tone} ${
@@ -110,9 +109,9 @@ export function MetaRow({
   return (
     <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-xs text-rr-text-dim">
       <span className="font-medium text-rr-text">{store}</span>
-      <span className="h-2.5 w-px bg-[rgba(241,238,232,0.18)]" />
+      <span className="h-2.5 w-px bg-[rgba(22,21,20,0.14)]" />
       <span>{stock}</span>
-      <span className="h-2.5 w-px bg-[rgba(241,238,232,0.18)]" />
+      <span className="h-2.5 w-px bg-[rgba(22,21,20,0.14)]" />
       <span className="font-rr-mono text-[10.5px] text-rr-faint">{checked}</span>
     </div>
   );
@@ -127,7 +126,6 @@ export function WhyBlock({
   factors: string[];
   variant?: "card" | "hero";
 }) {
-  const { t } = useLanguage();
   const hero = variant === "hero";
   return (
     <div
@@ -139,10 +137,10 @@ export function WhyBlock({
     >
       {hero && (
         <div className="font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-rr-accent">
-          {t("why_heading")}
+          Почему радар это поднял
         </div>
       )}
-      <p className={`text-pretty leading-relaxed ${hero ? "text-[13px] text-[#cec7bb]" : "text-[12.5px] text-rr-text-dim"}`}>
+      <p className={`text-pretty leading-relaxed ${hero ? "text-[13px] text-rr-text-dim" : "text-[12.5px] text-rr-text-dim"}`}>
         {why}
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -151,8 +149,8 @@ export function WhyBlock({
             key={f}
             className={`font-rr-mono tracking-[0.08em] ${
               hero
-                ? "bg-rr-accent-chip px-[9px] py-[5px] text-[10px] text-[#e3d6bc]"
-                : "bg-[rgba(216,184,120,0.09)] px-2 py-[5px] text-[9.5px] text-[#cbbfa6]"
+                ? "bg-rr-accent-chip px-[9px] py-[5px] text-[10px] text-rr-text"
+                : "bg-[rgba(22,21,20,0.05)] px-2 py-[5px] text-[9.5px] text-rr-text-dim"
             }`}
           >
             {f}
@@ -188,7 +186,7 @@ export function ImageFrame({
             }
           : {
               backgroundImage:
-                "repeating-linear-gradient(132deg, rgba(216,184,120,0.07) 0 1px, transparent 1px 12px)",
+                "repeating-linear-gradient(132deg, rgba(22,21,20,0.06) 0 1px, transparent 1px 12px)",
             }
       }
     >
@@ -204,6 +202,13 @@ export function ImageFrame({
 
 export type SignalAction = "buy" | "source" | "calendar" | "publish";
 
+const ACTION_LABELS: Record<SignalAction, { full: string; short: string }> = {
+  buy: { full: "Купить", short: "Купить" },
+  source: { full: "Открыть источник", short: "Источник" },
+  calendar: { full: "В календарь", short: "В календарь" },
+  publish: { full: "Создать публикацию", short: "Публикация" },
+};
+
 export function ActionRow({
   onAction,
   variant = "card",
@@ -216,34 +221,27 @@ export function ActionRow({
   primaryHref?: string | null;
   disabledActions?: SignalAction[];
 }) {
-  const { t } = useLanguage();
   const hero = variant === "hero";
   const order: SignalAction[] = ["buy", "source", "calendar", "publish"];
-  const actionLabels: Record<SignalAction, { full: string; short: string }> = {
-    buy: { full: t("action_buy"), short: t("action_buy") },
-    source: { full: t("action_source_full"), short: t("action_source_short") },
-    calendar: { full: t("action_calendar"), short: t("action_calendar") },
-    publish: { full: t("action_publish_full"), short: t("action_publish_short") },
-  };
   return (
     <div className="mt-auto flex flex-wrap gap-2 pt-1">
       {order.map((action) => {
-        const label = hero ? actionLabels[action].full : actionLabels[action].short;
+        const label = hero ? ACTION_LABELS[action].full : ACTION_LABELS[action].short;
         const primary = action === "buy";
         const disabled = disabledActions.includes(action) || (primary && !primaryHref);
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
         const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
 
         const className = primary
-          ? `font-semibold transition-colors ${sizing} ${
-              disabled
-                ? "opacity-40 cursor-not-allowed bg-transparent border border-[#d8b878] text-[#d8b878]"
-                : "border border-[#d8b878]"
-            }`
-          : `border border-[rgba(241,238,232,0.18)] transition-colors ${secondarySizing} ${
+      ? `font-semibold transition-colors ${sizing} ${
+          disabled
+            ? "opacity-40 cursor-not-allowed bg-transparent border border-rr-accent text-rr-accent"
+            : "border border-rr-accent text-rr-accent hover:bg-rr-accent hover:text-[#faf9f7]"
+        }`
+          : `border border-[rgba(22,21,20,0.14)] transition-colors ${secondarySizing} ${
               disabled
                 ? "opacity-40 cursor-not-allowed text-rr-faint"
-                : "bg-[rgba(241,238,232,0.09)] text-[#e7e3db] hover:bg-[rgba(241,238,232,0.16)]"
+                : "bg-[rgba(22,21,20,0.03)] text-rr-text hover:bg-[rgba(22,21,20,0.07)]"
             }`;
 
         if (primary && primaryHref && !disabled) {

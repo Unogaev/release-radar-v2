@@ -1,11 +1,9 @@
 "use client";
 
-import { useLanguage } from "@/lib/i18n";
-
 export function FeedSkeleton() {
   return (
     <div className="animate-pulse px-11">
-      <div className="grid bg-[#110f0d]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}>
+      <div className="grid bg-[#f1efec]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}>
         <div className="min-h-[540px] bg-rr-frame" />
         <div className="flex flex-col gap-6 px-10 pb-[30px] pt-[38px]">
           <div className="h-3 w-24 bg-rr-well" />
@@ -53,29 +51,30 @@ export function FeedEmpty({
   nextScanLabel?: string;
   onReset?: () => void;
 }) {
-  const { t } = useLanguage();
   const filtered = variant === "filter";
   return (
     <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-faint">
-        {filtered
-          ? `${t("empty_category_prefix")}${filterLabel}${t("empty_category_suffix")}`
-          : t("empty_scan_done")}
+        {filtered ? `Категория «${filterLabel}»` : "Цикл сканирования завершён"}
       </div>
       <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
-        {filtered ? t("empty_title_filtered") : t("empty_title_all")}
+        {filtered
+          ? "В этой категории сейчас нет сигналов"
+          : "Радар не нашёл сигналов за последний цикл"}
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
-        {filtered ? t("empty_desc_filtered") : t("empty_desc_all")}
-        {nextScanLabel ? `${t("empty_next_scan_prefix")}${nextScanLabel}.` : ""}
+        {filtered
+          ? "Условия по марже и наличию не выполнены ни по одной позиции. Сигналы появятся после следующего обхода источников."
+          : "Все найденные позиции отсеяны по марже, наличию или достоверности источника."}
+        {nextScanLabel ? ` Следующее сканирование в ${nextScanLabel}.` : ""}
       </p>
       {filtered && onReset && (
         <button
           type="button"
           onClick={onReset}
-          className="bg-rr-well px-5 py-3 text-[12.5px] text-[#e7e3db] transition-colors hover:bg-[rgba(241,238,232,0.13)]"
+          className="bg-rr-well px-5 py-3 text-[12.5px] text-rr-text transition-colors hover:bg-[rgba(22,21,20,0.09)]"
         >
-          {t("empty_reset_button")}
+          Вернуться к «Сейчас»
         </button>
       )}
     </div>
@@ -89,26 +88,25 @@ export function FeedError({
   reason?: string;
   onRetry?: () => void;
 }) {
-  const { t } = useLanguage();
   return (
     <div className="mx-11 flex flex-col items-start gap-5 bg-rr-surface px-10 py-16">
       <div className="font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-warn">
-        {t("error_unavailable")}
+        Лента недоступна
       </div>
       <h2 className="max-w-[26ch] text-pretty font-rr-display text-[32px] leading-[1.12]">
-        {t("error_title")}
+        Не удалось получить сигналы
       </h2>
       <p className="max-w-[46ch] text-pretty text-[13px] leading-relaxed text-rr-text-dim">
-        {reason ?? t("error_default_reason")}
-        {t("error_desc_suffix")}
+        {reason ?? "Источники не ответили в отведённое время."} Данные о ценах и наличии могли
+        измениться — перед покупкой проверьте источник вручную.
       </p>
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
-          className="bg-rr-accent px-5 py-3 text-[12.5px] font-semibold text-[#100e0c] transition-colors hover:bg-rr-accent-hi"
+          className="bg-rr-accent px-5 py-3 text-[12.5px] font-semibold text-[#faf9f7] transition-colors hover:bg-rr-accent-hi"
         >
-          {t("error_retry")}
+          Повторить
         </button>
       )}
     </div>
@@ -116,14 +114,13 @@ export function FeedError({
 }
 
 export function StaleBanner({ at, onRefresh }: { at: string; onRefresh?: () => void }) {
-  const { t } = useLanguage();
   return (
-    <div className="mx-11 mb-6 flex flex-wrap items-center gap-4 border border-[rgba(232,160,106,0.28)] bg-[rgba(232,160,106,0.07)] px-5 py-3.5">
+    <div className="mx-11 mb-6 flex flex-wrap items-center gap-4 border border-[rgba(138,106,74,0.32)] bg-[rgba(138,106,74,0.06)] px-5 py-3.5">
       <span className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-warn">
-        {t("stale_data_from_prefix")}{at}
+        Данные от {at}
       </span>
       <span className="text-[12.5px] text-rr-text-dim">
-        {t("stale_desc")}
+        Последний обход источников не завершился, цены могли измениться.
       </span>
       {onRefresh && (
         <button
@@ -131,7 +128,7 @@ export function StaleBanner({ at, onRefresh }: { at: string; onRefresh?: () => v
           onClick={onRefresh}
           className="ml-auto font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-accent transition-colors hover:text-rr-accent-hi"
         >
-          {t("stale_refresh")}
+          Обновить
         </button>
       )}
     </div>
