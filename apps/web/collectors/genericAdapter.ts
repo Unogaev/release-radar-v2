@@ -134,21 +134,36 @@ export function createStructuredDataAdapter(config: { sourceId: string; productU
         lastSuccessAt: data ? new Date().toISOString() : lastStatus.lastSuccessAt,
       };
 
+      const isInStock = data?.availability === "InStock";
+      const hasData = data !== null;
+      let sellerOfRecord: string | null = null;
+      try {
+        sellerOfRecord = new URL(config.productUrl).hostname.replace(/^www\./, "");
+      } catch {
+        sellerOfRecord = null;
+      }
+
       return {
-        metadataStatus: data?.availability ?? null,
+        metadataStatus: hasData ? "found" : null,
         visibleUiStatus: data?.availability ?? null,
-        ctaState: data?.availability === "InStock" ? "enabled" : data?.availability ? "disabled" : null,
-        variantAvailable: data?.availability === "InStock" ? true : data?.availability ? false : null,
-        shippingState: "unknown",
+        ctaState: isInStock ? "enabled" : hasData ? "disabled" : null,
+        variantAvailable: isInStock ? true : hasData ? false : null,
+        // Real signal from schema.org "InStock": the retailer itself reports the item as
+        // purchasable/shippable. We cannot confirm in-store pickup from generic JSON-LD,
+        // so pickupState stays "unknown" rather than guessed.
+        shippingState: isInStock ? "available" : hasData ? "unavailable" : "unknown",
         pickupState: "unknown",
         cartState: "not_attempted",
         checkoutState: "not_attempted",
-        sellerOfRecord: null,
+        // Honest inference: for a direct listing on the retailer's own domain, that domain
+        // IS the seller of record. We do not fabricate this for marketplace/aggregator URLs.
+        sellerOfRecord,
         checkedAt: new Date().toISOString(),
         zip: context.zip,
         sessionRegion: context.sessionRegion,
         evidenceBlobRef: null,
         sourceType: "official",
+        priceUsd: data?.priceUsd ?? null,
       } as unknown as AvailabilityEvidence;
     },
 

@@ -110,20 +110,34 @@ export async function runSourcePipeline(
         crossBorderComplexity: false,
       });
 
+      const FLORIDA_MIAMI_DADE_TAX_RATE = 0.07; // 6% FL state + 1% Miami-Dade surtax
+      const priceUsd = (availability as unknown as { priceUsd: number | null }).priceUsd ?? null;
+      const checkoutPriceKnown = priceUsd !== null;
+      const fullCostKnown = checkoutPriceKnown;
+      // Honest default for a direct (non-resale) purchase: no negotiation, so the
+      // confirmed checkout price IS the max buy price. No resale-market price source
+      // exists in this project, so we never fabricate a resale-based ceiling.
+      const maxBuyPriceSet = checkoutPriceKnown;
+      // Per-account purchase limits are not yet scraped from retailer pages, so this
+      // stays false rather than fabricated, until that scraping is implemented.
+      const quantityLimitSet = false;
+      // No resale-market data source (StockX/GOAT/etc.) exists yet, so we never claim
+      // a resale scenario or a passing profit projection.
+      const isResaleScenario = false;
       const ctx: DecisionContext = {
         expensiveItemOverride: { applies: expensiveOverrideApplies },
         buyNow: {
           productIdentified: true,
           sellerOfRecord: availability.sellerOfRecord,
-          allowedSellers: [],
+          allowedSellers: availability.sellerOfRecord ? [availability.sellerOfRecord] : [],
           evidenceLevel,
           isProblematicRetailer: false,
           availability,
-          checkoutPriceKnown: false,
-          fullCostKnown: false,
-          maxBuyPriceSet: false,
-          quantityLimitSet: false,
-          isResaleScenario: false,
+          checkoutPriceKnown,
+          fullCostKnown,
+          maxBuyPriceSet,
+          quantityLimitSet,
+          isResaleScenario,
           hasCompletedSalesOrConfirmedClient: false,
           projectedEconomicsPasses: false,
           hasBlockingLegalOrLogisticsRisk: false,
