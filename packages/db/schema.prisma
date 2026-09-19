@@ -31,47 +31,47 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  preferences   UserPreferences?
-  buyerRequests BuyerRequest[]
-  purchases     Purchase[]
-  alerts        Alert[]
-  reminderEvents ReminderEvent[]
+  preferences       UserPreferences?
+  buyerRequests     BuyerRequest[]
+  purchases         Purchase[]
+  alerts            Alert[]
+  reminderEvents    ReminderEvent[]
   circleMemberships CircleMember[]
-  auditLogEntries AuditLog[]
+  auditLogEntries   AuditLog[]
 }
 
 model UserPreferences {
-  id                    String   @id @default(cuid())
-  user                  User     @relation(fields: [userId], references: [id])
-  userId                String   @unique
-  categories            String[]
-  brands                String[]
-  shoeSizes             String[]
-  apparelSizes          String[]
-  budgetMinor            Int?
-  budgetCurrency         String   @default("USD")
-  zip                    String?
-  city                   String?
-  purchaseCountries      String[]
-  goal                   String   @default("self")
-  minProfitMinor          Int?
-  minRoi                  Float?
-  notificationChannels   String[]
-  quietHoursStart        String?
-  quietHoursEnd          String?
-  allowedRetailers       String[]
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  user                 User     @relation(fields: [userId], references: [id])
+  userId               String   @unique
+  categories           String[]
+  brands               String[]
+  shoeSizes            String[]
+  apparelSizes         String[]
+  budgetMinor          Int?
+  budgetCurrency       String   @default("USD")
+  zip                  String?
+  city                 String?
+  purchaseCountries    String[]
+  goal                 String   @default("self")
+  minProfitMinor       Int?
+  minRoi               Float?
+  notificationChannels String[]
+  quietHoursStart      String?
+  quietHoursEnd        String?
+  allowedRetailers     String[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 // ============================== Product identity ==============================
 
 model Product {
-  id               String   @id @default(cuid())
-  brand            String
-  normalizedModel  String
-  category         String
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  brand           String
+  normalizedModel String
+  category        String
+  createdAt       DateTime @default(now())
 
   variants ProductVariant[]
 
@@ -113,25 +113,25 @@ model Identifier {
 // ============================== Sources / Sellers / Offers ==============================
 
 model Source {
-  id            String   @id @default(cuid())
-  name          String
-  sourceClass   String // "A_truth" | "B_market" | "C_signal" (spec §9)
-  url           String
-  parseVersion  String
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  name         String
+  sourceClass  String // "A_truth" | "B_market" | "C_signal" (spec §9)
+  url          String
+  parseVersion String
+  createdAt    DateTime @default(now())
 
   // ---- Source Registry fields (auto-collection) ----
   category             String    @default("other")
-  officialDomain        String?
-  sourceType            String    @default("MANUAL") // RSS | API | SITEMAP | NEWSROOM | PRODUCT_LISTING | RELEASE_CALENDAR | BROWSER_VERIFICATION | SOCIAL_DISCOVERY | MARKET_SALES | MANUAL
-  trustLevel            Int       @default(3)
-  checkIntervalMinutes  Int       @default(60)
-  adapterStatus         String    @default("active") // "active" | "disabled" | "error"
-  lastCheckedAt         DateTime?
-  lastSuccessAt         DateTime?
-  lastError             String?
-  itemsDiscovered       Int       @default(0)
-  isEnabled             Boolean   @default(true)
+  officialDomain       String?
+  sourceType           String    @default("MANUAL") // RSS | API | SITEMAP | NEWSROOM | PRODUCT_LISTING | RELEASE_CALENDAR | BROWSER_VERIFICATION | SOCIAL_DISCOVERY | MARKET_SALES | MANUAL
+  trustLevel           Int       @default(3)
+  checkIntervalMinutes Int       @default(60)
+  adapterStatus        String    @default("active") // "active" | "disabled" | "error"
+  lastCheckedAt        DateTime?
+  lastSuccessAt        DateTime?
+  lastError            String?
+  itemsDiscovered      Int       @default(0)
+  isEnabled            Boolean   @default(true)
 
   availabilityChecks AvailabilityCheck[]
   evidence           Evidence[]
@@ -140,10 +140,10 @@ model Source {
 }
 
 model Seller {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isOfficial Boolean @default(false)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  name       String   @unique
+  isOfficial Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   offers Offer[]
 }
@@ -164,14 +164,14 @@ model Offer {
 // ============================== Release events / Availability ==============================
 
 model ReleaseEvent {
-  id               String         @id @default(cuid())
-  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
-  productVariantId String
-  startAtUtc       DateTime?
-  sourceTimezone   String?
-  timePrecision    String
-  eventStartVersion Int    @default(1)
-  createdAt        DateTime @default(now())
+  id                String         @id @default(cuid())
+  productVariant    ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId  String
+  startAtUtc        DateTime?
+  sourceTimezone    String?
+  timePrecision     String
+  eventStartVersion Int            @default(1)
+  createdAt         DateTime       @default(now())
 
   reminderEvents ReminderEvent[]
 }
@@ -194,8 +194,8 @@ model AvailabilityCheck {
   url              String?
   sellerOfRecord   String?
 
-  zip           String?
-  sessionRegion String?
+  zip             String?
+  sessionRegion   String?
   evidenceBlobRef String?
 
   checkedAt DateTime @default(now())
@@ -216,7 +216,7 @@ model Evidence {
   level            String
   rawSnapshotRef   String
   parseVersion     String
-  observedAt       DateTime @default(now())
+  observedAt       DateTime       @default(now())
 
   @@index([productVariantId, observedAt])
 }
@@ -235,15 +235,15 @@ model Signal {
 // ============================== Decisions / Alerts / Reminders ==============================
 
 model Decision {
-  id               String         @id @default(cuid())
-  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
-  productVariantId String
-  status           String
-  ruleVersion      String
-  rationale        String
-  blockedReasons   String[]
+  id                 String         @id @default(cuid())
+  productVariant     ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId   String
+  status             String
+  ruleVersion        String
+  rationale          String
+  blockedReasons     String[]
   evidenceConfidence Int
-  createdAt        DateTime @default(now())
+  createdAt          DateTime       @default(now())
 
   alerts Alert[]
 
@@ -251,16 +251,16 @@ model Decision {
 }
 
 model Alert {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id])
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id])
   userId     String
-  decision   Decision @relation(fields: [decisionId], references: [id])
+  decision   Decision  @relation(fields: [decisionId], references: [id])
   decisionId String
   channel    String
   payload    String
   dedupeKey  String
   sentAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([dedupeKey])
 }
@@ -309,33 +309,33 @@ model MarketAsk {
 // ============================== Buyer requests / Purchases ==============================
 
 model BuyerRequest {
+  id                     String         @id @default(cuid())
+  user                   User           @relation(fields: [userId], references: [id])
+  userId                 String
+  productVariant         ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId       String
+  customerCeilingMinor   Int
+  currency               String         @default("USD")
+  deadline               DateTime?
+  destination            String?
+  depositState           String         @default("none")
+  provenanceRequirements String?
+  contactOwner           String?
+  legalFlags             String[]
+  createdAt              DateTime       @default(now())
+}
+
+model Purchase {
   id                String         @id @default(cuid())
   user              User           @relation(fields: [userId], references: [id])
   userId            String
   productVariant    ProductVariant @relation(fields: [productVariantId], references: [id])
   productVariantId  String
-  customerCeilingMinor Int
-  currency          String   @default("USD")
-  deadline          DateTime?
-  destination       String?
-  depositState      String   @default("none")
-  provenanceRequirements String?
-  contactOwner      String?
-  legalFlags        String[]
-  createdAt         DateTime @default(now())
-}
-
-model Purchase {
-  id               String         @id @default(cuid())
-  user             User           @relation(fields: [userId], references: [id])
-  userId           String
-  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
-  productVariantId String
-  actualCostMinor  Int
-  currency         String   @default("USD")
-  status           String   @default("confirmed")
-  confirmedAt      DateTime @default(now())
-  outcome          String?
+  actualCostMinor   Int
+  currency          String         @default("USD")
+  status            String         @default("confirmed")
+  confirmedAt       DateTime       @default(now())
+  outcome           String?
   actualProfitMinor Int?
 }
 
@@ -362,12 +362,12 @@ model CircleMember {
 // ============================== Ops ==============================
 
 model SourceHealth {
-  id            String   @id @default(cuid())
-  source        Source   @relation(fields: [sourceId], references: [id])
+  id            String    @id @default(cuid())
+  source        Source    @relation(fields: [sourceId], references: [id])
   sourceId      String
   status        String
   lastSuccessAt DateTime?
-  checkedAt     DateTime @default(now())
+  checkedAt     DateTime  @default(now())
 }
 
 model AuditLog {
@@ -382,4 +382,16 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+// ============================== Notifications ==============================
+
+model NotificationLog {
+  id           String   @id @default(cuid())
+  variantId    String
+  stage        String // one of: first_detection, t_minus_72h, t_minus_24h, t_minus_3h, t_minus_1h, opening_hour, unexpected_restock, price_status_change
+  snapshotHash String // hash of {price, availability, launchAt, evidenceLevel} at send time
+  sentAt       DateTime @default(now())
+
+  @@unique([variantId, stage, snapshotHash])
 }
