@@ -23,13 +23,28 @@ export function countdownLabel(secondsLeft: number): string {
 }
 
 export function checkedLabel(checkedAt: string, now: number, lang: "en" | "ru" = "ru"): string {
-  const min = Math.max(0, Math.round((now - new Date(checkedAt).getTime()) / 60000));
+  const ms = Math.max(0, now - new Date(checkedAt).getTime());
+  const min = Math.round(ms / 60000);
+  const hours = Math.floor(min / 60);
+  const days = Math.floor(hours / 24);
+  const date = new Date(checkedAt);
+
   if (lang === "en") {
     if (min < 1) return "checked just now";
-    return `checked ${min} min ago`;
+    if (min < 60) return `checked ${min} min ago`;
+    if (hours < 24) return `checked ${hours}h ago`;
+    if (days < 7) return `checked ${days}d ago`;
+    return `checked ${date.toLocaleDateString("en-US", { day: "numeric", month: "short" })}`;
   }
   if (min < 1) return "проверено только что";
-  return `проверено ${min} мин назад`;
+  if (min < 60) return `проверено ${min} мин назад`;
+  if (hours < 24) return `проверено ${hours} ч назад`;
+  if (days < 7) return `проверено ${days} дн назад`;
+  return `проверено ${date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}`;
+}
+
+export function isStaleCheck(checkedAt: string, now: number, thresholdMinutes = 15): boolean {
+  return now - new Date(checkedAt).getTime() > thresholdMinutes * 60000;
 }
 
 export function clockLabel(iso: string): string {
