@@ -44,8 +44,22 @@ export interface SourceHealth {
   detail: string;
 }
 
+export interface NewsItem {
+  id: string;
+  kind: "NEWS" | "RELEASE";
+  headline: string;
+  brand?: string;
+  model?: string;
+  source: string;
+  sourceUrl?: string | null;
+  imageUrl?: string;
+  observedAt: string;
+  launchAt?: string | null;
+}
+
 export interface FeedPayload {
   signals: Signal[];
+  newsItems: NewsItem[];
   sources: SourceHealth[];
   logs: string[];
   scannedAt: string;

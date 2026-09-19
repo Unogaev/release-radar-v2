@@ -128,6 +128,7 @@ export const MOCK_FEED: FeedPayload = {
       factors: ["Депозит 10%", "Окно 24 ч", "Лист ожидания 14 мес"],
     },
   ],
+  newsItems: [],
   sources: [
     { name: "cartier.com/boutique-stock", state: "ok", detail: "42 с" },
     { name: "bucherer.com/ch", state: "ok", detail: "61 с" },

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
 import { getProductImage } from "./fetchImage";
+import type { NewsItem } from "./types";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
@@ -128,8 +129,52 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const scannedAtSource = sourceRows.find((s) => s.lastCheckedAt)?.lastCheckedAt;
 
+  const newsSignals = await prisma.signal.findMany({
+    where: { productVariantId: null },
+    orderBy: { observedAt: "desc" },
+    take: 15,
+    include: { source: true },
+  });
+
+  const releaseVariants = await prisma.productVariant.findMany({
+    where: {
+      decisions: { none: {} },
+      evidence: { some: { level: { in: ["E2_OFFICIAL", "E3_ACTIONABLE", "E4_CART_VERIFIED"] } } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 15,
+    include: {
+      product: true,
+      releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
+    },
+  });
+
+  const newsItems: NewsItem[] = [
+    ...releaseVariants.map((v) => ({
+      id: "release:" + v.id,
+      kind: "RELEASE" as const,
+      headline: v.product.brand + " " + titleCase(v.product.normalizedModel),
+      brand: v.product.brand,
+      model: titleCase(v.product.normalizedModel),
+      source: "confirmed release",
+      sourceUrl: null,
+      observedAt: v.createdAt.toISOString(),
+      launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
+    })),
+    ...newsSignals.map((s) => ({
+      id: "news:" + s.id,
+      kind: "NEWS" as const,
+      headline: (s.rawText ?? "New signal detected").slice(0, 140),
+      source: s.source.name,
+      sourceUrl: s.url ?? null,
+      observedAt: s.observedAt.toISOString(),
+      launchAt: null,
+    })),
+  ];
+
   return {
     signals,
+    newsItems,
     sources,
     logs,
     scannedAt: (scannedAtSource ?? new Date()).toISOString(),
