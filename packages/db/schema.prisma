@@ -199,6 +199,8 @@ model AvailabilityCheck {
   evidenceBlobRef String?
 
   checkedAt DateTime @default(now())
+  priceUsd  Float?
+  currency  String?
 
   @@index([productVariantId, checkedAt])
   @@index([zip])

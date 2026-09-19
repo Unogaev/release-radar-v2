@@ -3,6 +3,7 @@ import { SourceAdapter } from "@adapters/SourceAdapter";
 import { classifyEvidenceLevel } from "@domain/evidence/ladder";
 import { AvailabilityEvidence } from "@domain/evidence/types";
 import { decide, DecisionContext, requiresClientFirstOverride } from "@domain/decision/decisionEngine";
+import { createFirstDetectionAlert } from "../lib/notifications/alerts";
 import { ScoreComponents } from "@domain/scoring/score";
 
 export interface RunResult {
@@ -90,6 +91,8 @@ export async function runSourcePipeline(
           zip: availability.zip,
           sessionRegion: availability.sessionRegion,
           evidenceBlobRef: availability.evidenceBlobRef,
+      priceUsd: (availability as unknown as { priceUsd: number | null }).priceUsd ?? null,
+      currency: "USD",
         },
       });
 
@@ -163,7 +166,7 @@ export async function runSourcePipeline(
 
       if (decisionResult.status === "SKIP") continue;
 
-      await prisma.decision.create({
+      const decisionRow = await prisma.decision.create({
         data: {
           productVariantId: variant.id,
           status: decisionResult.status,
@@ -174,6 +177,20 @@ export async function runSourcePipeline(
         },
       });
       result.decisionsCreated += 1;
+      try {
+        await createFirstDetectionAlert({
+          decisionId: decisionRow.id,
+          productVariantId: variant.id,
+          brand: product.brand,
+          model: product.normalizedModel,
+          status: decisionResult.status,
+          priceUsd,
+          store: availability.sellerOfRecord ?? null,
+          primaryUrl: (availability as unknown as { url?: string | null }).url ?? null,
+        });
+      } catch (alertErr: any) {
+        console.error("Failed to create alert:", alertErr?.message ?? alertErr);
+      }
     }
   } catch (err: any) {
     result.error = err?.message ?? String(err);
