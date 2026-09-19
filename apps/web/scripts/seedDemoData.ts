@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
+if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
+  console.error("REFUSED: this seed script must not run in production.");
+  process.exit(1);
+}
+
 const prisma = new PrismaClient();
 const DEMO = "[DEMO]";
 

@@ -26,9 +26,6 @@ const CATEGORY_MAP: Record<string, RadarCategory> = {
   automobiles: "cars",
 };
 
-function stripDemo(s: string): string {
-  return s.replace(/^\[DEMO\]\s*/i, "");
-}
 
 function titleCase(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -73,7 +70,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         if (mappedCat) categories.push(mappedCat);
 
         const expectedResale = sale ? sale.priceMinor / 100 : ask ? ask.priceMinor / 100 : null;
-        const brand = stripDemo(product.brand);
+        const brand = product.brand;
         const model = titleCase(product.normalizedModel);
         const imageUrl = (await getProductImage(brand, model)) ?? undefined;
 
@@ -124,7 +121,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const logs = recentDecisions.map((d) => {
     const t = d.createdAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const brand = stripDemo(d.productVariant.product.brand);
+    const brand = d.productVariant.product.brand;
     const model = titleCase(d.productVariant.product.normalizedModel);
     return `${t}  ${d.status} · ${brand} ${model} · confidence ${d.evidenceConfidence}%`;
   });
