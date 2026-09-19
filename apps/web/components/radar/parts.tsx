@@ -176,7 +176,7 @@ export function ImageFrame({
 }) {
   return (
     <div
-      className={`relative flex items-end overflow-hidden bg-rr-frame p-[18px] ${className ?? ""}`}
+      className={`relative flex items-end self-start overflow-hidden bg-rr-frame p-[18px] ${className ?? ""}`}
       role={src ? "img" : undefined}
       aria-label={src ? hint : undefined}
       style={

@@ -37,7 +37,7 @@ export function SignalCard({
   const left = now === null ? null : secondsUntil(signal.launchAt, now);
 
   return (
-    <article className="flex flex-col bg-rr-surface transition-colors hover:bg-rr-surface-hi">
+    <article className="flex flex-col self-start bg-rr-surface transition-colors hover:bg-rr-surface-hi">
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[210px] sm:h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />

@@ -59,7 +59,7 @@ export function RadarFeed({
 
   return (
     <div className="min-h-screen bg-rr-bg font-rr-sans text-rr-text">
-      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 bg-[linear-gradient(#f4f3f1_72%,rgba(244,243,241,0.86)_92%,rgba(244,243,241,0))] px-4 sm:px-11 pb-[18px] pt-6">
+      <header className="sticky top-0 z-40 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 border-b border-rr-hair bg-rr-bg px-4 sm:px-11 pb-[18px] pt-6">
         <div className="flex items-baseline gap-5">
           <div className="font-rr-display text-[25px] tracking-[0.01em]">Release Radar</div>
           <div className="font-rr-mono text-[10.5px] uppercase tracking-[0.18em] text-rr-faint">
