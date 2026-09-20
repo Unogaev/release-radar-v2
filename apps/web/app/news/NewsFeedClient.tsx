@@ -5,6 +5,7 @@ import type { NewsItem } from "@/lib/radar/types";
 
 const TAG_STYLE: Record<NewsItem["kind"], { label: string; className: string }> = {
   NEWS: { label: "NEWS", className: "bg-rr-hair text-rr-muted" },
+  MARKET: { label: "MARKET", className: "bg-rr-apply-bg text-rr-apply" },
   RELEASE: { label: "RELEASE", className: "bg-rr-client-bg text-rr-client" },
   SIGNAL: { label: "SIGNAL", className: "bg-rr-buy-bg text-rr-buy" },
   ALERT: { label: "ALERT", className: "bg-rr-risk-bg text-rr-risk" },

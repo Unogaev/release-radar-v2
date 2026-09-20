@@ -302,12 +302,20 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const scannedAtSource = sourceRows.find((s) => s.lastCheckedAt)?.lastCheckedAt;
 
-  const newsSignals = await prisma.signal.findMany({
+  const rawNewsSignals = await prisma.signal.findMany({
     where: { productVariantId: null },
     orderBy: { observedAt: "desc" },
-    take: 15,
+    take: 50,
     include: { source: true },
   });
+  const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|porsche|ferrari|lamborghini|collection|capsule|new arrivals?)\b/i;
+  const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
+  const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
+  const newsSignals = rawNewsSignals.filter((signal) => {
+    const headline = signal.rawText ?? "";
+    if (!PRODUCT_NEWS.test(headline)) return false;
+    return !ENTERTAINMENT_ONLY.test(headline) || COMMERCE_CONTEXT.test(headline);
+  }).slice(0, 18);
 
   const releaseVariants = await prisma.productVariant.findMany({
     where: {
@@ -389,7 +397,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     }),
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
-      kind: "NEWS" as const,
+      kind: (/\b(auction|sold|resale|record|profit|flipped)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
       headline: (s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
       sourceUrl: s.url ?? null,
