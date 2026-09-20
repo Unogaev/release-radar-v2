@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createGenericRssAdapter, createStructuredDataAdapter } from "../../../../collectors/genericAdapter";
 import { runSourcePipeline } from "../../../../collectors/pipeline";
+import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -60,5 +61,6 @@ export async function GET(req: NextRequest) {
     results.push(runResult);
   }
 
-  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, results });
+  const remindersCreated = await createDueReleaseReminders();
+  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, remindersCreated, results });
 }

@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter, Manrope, IBM_Plex_Mono } from "next/font/google";
+import { Inter, Manrope, IBM_Plex_Mono, Cormorant_Garamond } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { LanguageProvider } from "@/lib/i18n";
 
@@ -26,6 +26,13 @@ const rrMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const rrEditorial = Cormorant_Garamond({
+  subsets: ["latin", "cyrillic"],
+  weight: ["500", "600", "700"],
+  variable: "--font-rr-editorial",
+  display: "swap",
+});
+
 export const metadata = {
   title: "Release Radar",
   description: "Personal action-first release intelligence",
@@ -46,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="ru"
-      className={`${inter.variable} ${rrSans.variable} ${rrDisplay.variable} ${rrMono.variable}`}
+      className={`${inter.variable} ${rrSans.variable} ${rrDisplay.variable} ${rrMono.variable} ${rrEditorial.variable}`}
     >
       <body className="app-shell font-sans min-h-screen">
         <SessionProviderWrapper>

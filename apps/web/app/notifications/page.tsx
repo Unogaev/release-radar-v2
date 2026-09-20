@@ -11,11 +11,21 @@ interface AlertItem {
   sentAt: string | null;
 }
 
+function vapidKeyToBuffer(value: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  const bytes = Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
 export default function NotificationsPage() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [loading, setLoading] = useState(false);
   const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [pushActive, setPushActive] = useState(false);
+  const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
   const deliveredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -24,6 +34,16 @@ export default function NotificationsPage() {
       return;
     }
     setPermission(Notification.permission);
+    fetch("/api/push/public-key", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => setPushConfigured(Boolean(data.configured)))
+      .catch(() => setPushConfigured(false));
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration("/")
+        .then((registration) => registration?.pushManager.getSubscription())
+        .then((subscription) => setPushActive(Boolean(subscription)))
+        .catch(() => setPushActive(false));
+    }
   }, []);
 
   const fetchAlerts = useCallback(async () => {
@@ -70,21 +90,56 @@ export default function NotificationsPage() {
   }, [fetchAlerts, deliverNew]);
 
   const requestPermission = async () => {
-    if (!("Notification" in window)) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setTestMessage("Этот браузер не поддерживает Web Push.");
+      return;
+    }
     const result = await Notification.requestPermission();
     setPermission(result);
+    if (result !== "granted") return;
+    setLoading(true);
+    setTestMessage(null);
+    try {
+      const keyResponse = await fetch("/api/push/public-key", { cache: "no-store" });
+      const keyData = await keyResponse.json();
+      if (!keyData.configured || !keyData.publicKey) {
+        setPushConfigured(false);
+        setTestMessage("Серверный ключ Push ещё не настроен. Интерфейс готов, но доставка при закрытом сайте пока не активируется.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKeyToBuffer(keyData.publicKey),
+      });
+      const save = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subscription: subscription.toJSON() }),
+      });
+      if (!save.ok) throw new Error("subscription_save_failed");
+      setPushConfigured(true);
+      setPushActive(true);
+      setTestMessage("Push включён. Уведомления смогут приходить даже при закрытом сайте.");
+    } catch {
+      setPushActive(false);
+      setTestMessage("Не удалось активировать Push на этом устройстве.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sendTest = async () => {
     setLoading(true);
     setTestMessage(null);
     try {
-      const res = await fetch("/api/notifications/test", { method: "POST" });
+      const res = await fetch("/api/push/test", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         setTestMessage(data.error ?? "Не удалось отправить тестовое уведомление.");
       } else {
-        setTestMessage("Тестовое уведомление создано. Оно появится ниже и сработает в браузере, если разрешение выдано.");
+        setTestMessage("Тестовый Push отправлен на подписанные устройства.");
         const items = await fetchAlerts();
         if (items) deliverNew(items);
       }
@@ -99,8 +154,7 @@ export default function NotificationsPage() {
         <Link href="/now" className="mb-4 inline-flex text-xs font-semibold text-rr-accent">← Вернуться в центр действий</Link>
         <h1 className="font-rr-display text-2xl text-rr-text">Уведомления</h1>
         <p className="text-sm text-rr-text-dim mt-1">
-          Push-уведомления браузера (Notification API). Срабатывают, пока страница открыта или свёрнута на десктопе.
-          Полная доставка в закрытый браузер пока не реализована.
+          Настоящий Web Push для BUY NOW, APPLY NOW, неожиданных рестоков и контрольных напоминаний. Работает при закрытом сайте; на iPhone Release Radar нужно добавить на главный экран.
         </p>
       </header>
 
@@ -108,20 +162,21 @@ export default function NotificationsPage() {
         {permission === "unsupported" && (
           <span className="text-sm text-rr-muted">Уведомления не поддерживаются в этом браузере.</span>
         )}
-        {permission !== "unsupported" && permission !== "granted" && (
+        {permission !== "unsupported" && (!pushActive || permission !== "granted") && (
           <button
             onClick={requestPermission}
+            disabled={loading}
             className="rounded-lg border border-rr-hair bg-rr-surface px-3.5 py-2 text-sm text-rr-text hover:bg-rr-surface-hi"
           >
-            {permission === "denied" ? "Заблокировано (проверьте настройки браузера)" : "Включить уведомления"}
+            {loading ? "Подключение..." : permission === "denied" ? "Заблокировано (проверьте настройки браузера)" : "Включить Push"}
           </button>
         )}
-        {permission === "granted" && (
-          <span className="text-sm text-rr-ok self-center">Уведомления включены</span>
+        {permission === "granted" && pushActive && (
+          <span className="text-sm text-rr-ok self-center">Push активен на этом устройстве</span>
         )}
         <button
           onClick={sendTest}
-          disabled={loading}
+          disabled={loading || !pushActive || pushConfigured === false}
           className="rounded-lg border border-rr-hair bg-rr-surface px-3.5 py-2 text-sm text-rr-text hover:bg-rr-surface-hi disabled:opacity-50"
         >
           {loading ? "Отправка..." : "Отправить тестовое уведомление"}

@@ -55,10 +55,10 @@ module.exports = {
         stencil: "#55545e",
         ghost: "#3d3c44",
 
-        accent: "#e7e5df",
-        "accent-hi": "#fdfcf9",
-        "accent-soft": "rgba(231,229,223,0.08)",
-        "accent-chip": "rgba(231,229,223,0.12)",
+        accent: "#c6a66b",
+        "accent-hi": "#e6cf9d",
+        "accent-soft": "rgba(198,166,107,0.10)",
+        "accent-chip": "rgba(198,166,107,0.14)",
 
         warn: "#d9a44d",
         ok: "#6fbf8f",
@@ -84,6 +84,7 @@ module.exports = {
         sans: ["'Inter'", "system-ui", "sans-serif"],
         "rr-sans": ["var(--font-rr-sans)", "Helvetica Neue", "sans-serif"],
         "rr-display": ["var(--font-rr-display)", "var(--font-rr-sans)", "serif"],
+        "rr-editorial": ["var(--font-rr-editorial)", "Georgia", "serif"],
         "rr-mono": ["var(--font-rr-mono)", "ui-monospace", "monospace"],
       },
       boxShadow: {

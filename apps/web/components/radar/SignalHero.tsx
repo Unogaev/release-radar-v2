@@ -69,7 +69,7 @@ export function SignalHero({
           <div className="mb-3 font-rr-mono text-[10.5px] uppercase tracking-[0.24em] text-rr-muted">
             {signal.brand}
           </div>
-          <h1 className="text-pretty font-rr-display text-[28px] sm:text-[40px] leading-[1.04] tracking-[-0.012em]">
+          <h1 className="text-pretty font-rr-editorial text-[36px] font-semibold sm:text-[52px] leading-[0.96] tracking-[-0.02em]">
             {signal.model}
           </h1>
           {hasRefOrSku && (

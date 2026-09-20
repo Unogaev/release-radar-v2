@@ -60,7 +60,7 @@ export function SignalCard({
           <div className="mb-[9px] font-rr-mono text-[10px] uppercase tracking-[0.22em] text-rr-muted">
             {signal.brand}
           </div>
-          <h2 className="text-pretty font-rr-display text-[21px] sm:text-[27px] leading-[1.1] tracking-[-0.008em]">
+          <h2 className="text-pretty font-rr-editorial text-[27px] font-semibold sm:text-[34px] leading-[1] tracking-[-0.012em]">
             {signal.model}
           </h2>
           {hasRefOrSku && (

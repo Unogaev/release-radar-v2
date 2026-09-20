@@ -9,14 +9,14 @@ export type NotificationStage =
   | "price_status_change";
 
 const STAGE_HEADLINE: Record<NotificationStage, string> = {
-  first_detection: "New signal detected",
-  t_minus_72h: "Launch in 72 hours",
-  t_minus_24h: "Launch in 24 hours",
-  t_minus_3h: "Launch in 3 hours",
-  t_minus_1h: "Launch in 1 hour",
-  opening_hour: "Launch window is open",
-  unexpected_restock: "Unexpected restock",
-  price_status_change: "Price or status changed",
+  first_detection: "Новый сильный сигнал",
+  t_minus_72h: "До старта около 72 часов",
+  t_minus_24h: "До старта около 24 часов",
+  t_minus_3h: "До старта около 3 часов",
+  t_minus_1h: "До старта около 1 часа",
+  opening_hour: "Продажи открываются сейчас",
+  unexpected_restock: "Неожиданный ресток",
+  price_status_change: "Изменилась цена или доступность",
 };
 
 export interface NotificationContent {
@@ -33,15 +33,14 @@ export interface NotificationContent {
 
 export function formatNotification(input: NotificationContent): { title: string; body: string } {
   const headline = STAGE_HEADLINE[input.stage];
-  const title = headline + ": " + input.brand + " " + input.model;
+  const title = headline + " · " + input.brand + " " + input.model;
 
   const lines: string[] = [];
-  lines.push("Status: " + input.status);
-  if (input.sku) lines.push("SKU: " + input.sku);
-  lines.push("Price: " + (input.priceUsd != null ? "$" + input.priceUsd.toFixed(2) : "unknown"));
-  lines.push("Store: " + (input.store ?? "unknown"));
-  if (input.etTime) lines.push("ET time: " + input.etTime);
-  if (input.primaryUrl) lines.push("Link: " + input.primaryUrl);
+  lines.push("Действие: " + input.status);
+  if (input.sku) lines.push("SKU / Ref: " + input.sku);
+  lines.push("Цена: " + (input.priceUsd != null ? "$" + input.priceUsd.toFixed(2) : "уточняется"));
+  lines.push("Магазин: " + (input.store ?? "уточняется"));
+  if (input.etTime) lines.push("Время по Майами: " + input.etTime);
 
   return { title, body: lines.join("\n") };
 }
