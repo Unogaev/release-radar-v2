@@ -112,9 +112,9 @@ export function MetaRow({
   return (
     <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-xs text-rr-text-dim">
       <span className="font-medium text-rr-text">{store}</span>
-      <span className="h-2.5 w-px bg-[rgba(22,21,20,0.14)]" />
+      <span className="h-2.5 w-px bg-rr-hair" />
       <span>{stock}</span>
-      <span className="h-2.5 w-px bg-[rgba(22,21,20,0.14)]" />
+      <span className="h-2.5 w-px bg-rr-hair" />
       <span className="font-rr-mono text-[10.5px] text-rr-faint">{checked}</span>
     </div>
   );
@@ -154,7 +154,7 @@ export function WhyBlock({
             className={`font-rr-mono tracking-[0.08em] ${
               hero
                 ? "bg-rr-accent-chip px-[9px] py-[5px] text-[10px] text-rr-text"
-                : "bg-[rgba(22,21,20,0.05)] px-2 py-[5px] text-[9.5px] text-rr-text-dim"
+                : "bg-rr-well px-2 py-[5px] text-[9.5px] text-rr-text-dim"
             }`}
           >
             {f}
@@ -256,10 +256,10 @@ export function ActionRow({
             ? "opacity-40 cursor-not-allowed bg-transparent border border-rr-accent text-rr-accent"
             : "border border-rr-accent text-rr-accent hover:bg-rr-accent hover:text-[#faf9f7]"
         }`
-          : `border border-[rgba(22,21,20,0.14)] transition-colors ${secondarySizing} ${
+          : `border border-rr-hair transition-colors ${secondarySizing} ${
               disabled
                 ? "opacity-40 cursor-not-allowed text-rr-faint"
-                : "bg-[rgba(22,21,20,0.03)] text-rr-text hover:bg-[rgba(22,21,20,0.07)]"
+                : "bg-rr-well text-rr-text hover:bg-[rgba(255,255,255,0.09)]"
             }`;
 
         if (primary && primaryHref && !disabled) {

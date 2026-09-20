@@ -71,7 +71,7 @@ export function FeedEmpty({
         <button
           type="button"
           onClick={onReset}
-          className="bg-rr-well px-5 py-3 text-[12.5px] text-rr-text transition-colors hover:bg-[rgba(22,21,20,0.09)]"
+          className="bg-rr-well px-5 py-3 text-[12.5px] text-rr-text transition-colors hover:bg-[rgba(255,255,255,0.09)]"
         >
           {t("empty_reset_button")}
         </button>

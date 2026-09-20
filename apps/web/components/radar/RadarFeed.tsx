@@ -73,7 +73,7 @@ export function RadarFeed({
           >
             {t("nav_menu")}
           </Link>
-          <Link href="/notifications" className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(22,21,20,0.05)] text-[11px] font-rr-mono uppercase" aria-label="Alerts">Alt</Link>
+          <Link href="/notifications" className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-rr-well text-[11px] font-rr-mono uppercase text-rr-text" aria-label="Alerts">Alt</Link>
             <div className="hidden md:flex items-center gap-5">
               <Link
             href="/now/add"
@@ -81,7 +81,7 @@ export function RadarFeed({
           >
             + {t("add_signal")}
           </Link>
-          <div className="flex items-center gap-1 rounded-full bg-[rgba(22,21,20,0.05)] p-0.5">
+          <div className="flex items-center gap-1 rounded-full bg-rr-well p-0.5">
             <button
               type="button"
               onClick={() => setLang("ru")}
@@ -107,7 +107,7 @@ export function RadarFeed({
           <span className="font-rr-display text-xl text-rr-accent">
             {signedMoney(totalProfit(visible))}
           </span>
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#161514] font-rr-mono text-[10px] tracking-[0.08em] text-[#efece7]">
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-rr-surface-hi font-rr-mono text-[10px] tracking-[0.08em] text-[#efece7]">
             AK
           </span>
             </div>
@@ -126,7 +126,7 @@ export function RadarFeed({
               className={`whitespace-nowrap rounded-full px-[17px] py-[9px] text-[12.5px] tracking-[0.02em] transition-colors ${
                 active
                   ? "bg-rr-text text-[#faf9f7]"
-                  : "bg-[rgba(22,21,20,0.04)] text-[#8f8c86] hover:bg-[rgba(22,21,20,0.08)] hover:text-rr-text"
+                  : "bg-rr-well text-[#8f8c86] hover:bg-[rgba(255,255,255,0.09)] hover:text-rr-text"
               }`}
             >
               {f.label}
