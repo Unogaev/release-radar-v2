@@ -30,7 +30,7 @@ export function TopBar() {
 
   const healthColor =
     health === "LIVE"
-      ? "text-lime bg-lime/10 border-lime/30"
+      ? "text-rr-accent bg-rr-accent-soft border-rr-frame"
       : health === "DEGRADED"
       ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
       : "text-zinc-500 bg-zinc-700/10 border-zinc-600/30";
@@ -47,13 +47,13 @@ export function TopBar() {
   }
 
   return (
-    <div className="border-b border-graphite-700 bg-graphite-950/95 backdrop-blur px-4 md:px-6 py-3 flex items-center gap-4">
-      <div className="hidden md:flex items-center gap-2 flex-1 max-w-md bg-graphite-900 border border-graphite-700 rounded-lg px-3 py-1.5">
-        <Search size={14} className="text-graphite-500" />
+    <div className="border-b border-rr-frame bg-rr-bg/95 backdrop-blur px-4 md:px-6 py-3 flex items-center gap-4">
+      <div className="hidden md:flex items-center gap-2 flex-1 max-w-md bg-rr-surface border border-rr-frame rounded-lg px-3 py-1.5">
+        <Search size={14} className="text-rr-muted" />
         <input
           type="text"
           placeholder={t("search_placeholder")}
-          className="bg-transparent text-sm text-graphite-200 placeholder:text-graphite-500 outline-none flex-1"
+          className="bg-transparent text-sm text-rr-text placeholder:text-rr-muted outline-none flex-1"
         />
       </div>
 
@@ -64,7 +64,7 @@ export function TopBar() {
           <span className="w-1.5 h-1.5 rounded-full bg-current" />
           {health}
         </span>
-        <span className="hidden lg:inline text-[11px] text-graphite-500 tabular-nums">
+        <span className="hidden lg:inline text-[11px] text-rr-muted tabular-nums">
           {stats?.lastCheckedAt
             ? `${t("scan_at")}${new Date(stats.lastCheckedAt).toLocaleString(
                 lang === "ru" ? "ru-RU" : "en-US",
@@ -75,18 +75,18 @@ export function TopBar() {
         <button
           onClick={runScan}
           disabled={scanning}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-graphite-700 text-graphite-200 text-xs font-medium hover:border-lime/40 hover:text-lime transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rr-frame text-rr-text text-xs font-medium hover:border-rr-accent/40 hover:text-rr-accent transition-colors disabled:opacity-50"
         >
           <RefreshCw size={13} className={scanning ? "animate-spin" : ""} />
           {t("run_scan")}
         </button>
-        <button className="p-2 rounded-lg border border-graphite-700 text-graphite-400 hover:text-graphite-100 transition-colors">
+        <button className="p-2 rounded-lg border border-rr-frame text-rr-text-dim hover:text-rr-text transition-colors">
           <Bell size={15} />
         </button>
         <button
           onClick={() => setLang(lang === "ru" ? "en" : "ru")}
           title={lang === "ru" ? "Switch to English" : "Переключить на русский"}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-graphite-700 text-graphite-300 text-xs font-semibold hover:border-lime/40 hover:text-lime transition-colors"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-rr-frame text-rr-text-dim text-xs font-semibold hover:border-rr-accent/40 hover:text-rr-accent transition-colors"
         >
           <Languages size={13} />
           {lang === "ru" ? "EN" : "RU"}

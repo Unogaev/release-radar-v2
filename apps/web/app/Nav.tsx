@@ -41,9 +41,9 @@ export function Nav() {
 
   return (
     <>
-      <nav className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-graphite-700 bg-graphite-950 p-4 justify-between">
+      <nav className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-rr-frame bg-rr-bg p-4 justify-between">
         <div>
-          <div className="text-lime font-bold text-sm tracking-[0.15em] mb-8 px-2">
+          <div className="text-rr-accent font-bold text-sm tracking-[0.15em] mb-8 px-2">
             RELEASE RADAR
           </div>
           <div className="space-y-0.5">
@@ -56,11 +56,11 @@ export function Nav() {
                   href={s.href}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                     isActive
-                      ? "bg-graphite-800 text-graphite-100"
-                      : "text-graphite-400 hover:text-graphite-100 hover:bg-graphite-900"
+                      ? "bg-rr-surface-hi text-rr-text"
+                      : "text-rr-text-dim hover:text-rr-text hover:bg-rr-surface"
                   }`}
                 >
-                  <Icon size={16} className={isActive ? "text-lime" : ""} />
+                  <Icon size={16} className={isActive ? "text-rr-accent" : ""} />
                   {t(s.key)}
                 </Link>
               );
@@ -68,7 +68,7 @@ export function Nav() {
           </div>
           <Link
             href="/signals/quick"
-            className="flex items-center gap-2 mt-6 px-2.5 py-2 rounded-lg text-[12px] text-graphite-500 hover:text-graphite-300 transition-colors"
+            className="flex items-center gap-2 mt-6 px-2.5 py-2 rounded-lg text-[12px] text-rr-muted hover:text-rr-text-dim transition-colors"
           >
             <Plus size={14} />
             {t("add_signal")}
@@ -76,15 +76,15 @@ export function Nav() {
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-2 px-2.5 py-2 text-[12px] text-graphite-500 hover:text-graphite-200 text-left"
+          className="flex items-center gap-2 px-2.5 py-2 text-[12px] text-rr-muted hover:text-rr-text text-left"
         >
           <LogOut size={14} />
           {t("sign_out")}
         </button>
       </nav>
 
-      <nav className="md:hidden border-b border-graphite-700 bg-graphite-950 p-3 sticky top-0 z-20">
-        <div className="text-lime font-bold text-xs tracking-[0.12em] mb-2 px-1">RELEASE RADAR</div>
+      <nav className="md:hidden border-b border-rr-frame bg-rr-bg p-3 sticky top-0 z-20">
+        <div className="text-rr-accent font-bold text-xs tracking-[0.12em] mb-2 px-1">RELEASE RADAR</div>
         <div className="flex gap-1 overflow-x-auto pb-1">
           {SECTIONS.map((s) => {
             const Icon = s.icon;
@@ -94,10 +94,10 @@ export function Nav() {
                 key={s.href}
                 href={s.href}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] whitespace-nowrap ${
-                  isActive ? "bg-graphite-800 text-graphite-100" : "bg-graphite-900 text-graphite-400"
+                  isActive ? "bg-rr-surface-hi text-rr-text" : "bg-rr-surface text-rr-text-dim"
                 }`}
               >
-                <Icon size={13} className={isActive ? "text-lime" : ""} />
+                <Icon size={13} className={isActive ? "text-rr-accent" : ""} />
                 {t(s.key)}
               </Link>
             );

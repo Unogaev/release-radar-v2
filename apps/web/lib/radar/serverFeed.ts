@@ -161,8 +161,12 @@ export async function getRealFeed(): Promise<FeedPayload> {
     take: 10,
   });
 
+  const releaseVariantImages = await Promise.all(
+    releaseVariants.map((v) => getProductImage(v.product.brand, titleCase(v.product.normalizedModel)))
+  );
+
   const newsItems: NewsItem[] = [
-    ...releaseVariants.map((v) => ({
+    ...releaseVariants.map((v, i) => ({
       id: "release:" + v.id,
       kind: "RELEASE" as const,
       headline: v.product.brand + " " + titleCase(v.product.normalizedModel),
@@ -170,6 +174,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       model: titleCase(v.product.normalizedModel),
       source: "confirmed release",
       sourceUrl: null,
+      imageUrl: releaseVariantImages[i] ?? undefined,
       observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
     })),
@@ -181,6 +186,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       model: s.model,
       source: s.store,
       sourceUrl: s.primaryUrl ?? null,
+      imageUrl: s.imageUrl,
       observedAt: s.checkedAt,
       launchAt: s.launchAt,
     })),

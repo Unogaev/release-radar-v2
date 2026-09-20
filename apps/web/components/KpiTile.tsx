@@ -14,12 +14,12 @@ export function KpiTile({
   small?: boolean;
 }) {
   return (
-    <div className="border border-graphite-700 rounded-xl p-3 bg-graphite-900">
-      <div className="flex items-center gap-1.5 text-graphite-500 text-[11px] uppercase tracking-wide">
+    <div className="border border-rr-frame rounded-xl p-3 bg-rr-surface">
+      <div className="flex items-center gap-1.5 text-rr-muted text-[11px] uppercase tracking-wide">
         <Icon size={12} />
         {label}
       </div>
-      <div className={`mt-1.5 font-semibold tabular-nums ${small ? "text-sm" : "text-xl"} ${accent ?? "text-graphite-100"}`}>
+      <div className={`mt-1.5 font-semibold tabular-nums ${small ? "text-sm" : "text-xl"} ${accent ?? "text-rr-text"}`}>
         {value}
       </div>
     </div>

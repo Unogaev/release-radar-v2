@@ -21,7 +21,7 @@ function Field({ label, name, type = "text", step, defaultValue, placeholder }: 
 function Check({ label, name, defaultChecked }: { label: string; name: string; defaultChecked?: boolean }) {
   return (
     <label className="flex items-center gap-2 text-sm text-rr-text-dim">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="accent-ember-500" />
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="accent-rr-accent" />
       {label}
     </label>
   );

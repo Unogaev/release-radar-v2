@@ -3,6 +3,11 @@ import { getDecisionDetail } from "@/lib/data";
 import { formatMoneyMinor, formatDateEt, STATUS_COLOR, simpleLabel } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { confirmPurchase } from "./actions";
+import { getProductImage } from "@/lib/radar/fetchImage";
+
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default async function SignalDetailPage({ params }: { params: { id: string } }) {
   await requireUserId();
@@ -11,14 +16,25 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
 
   const pv = decision.productVariant;
   const releaseEvent = pv.releaseEvents[0];
+  const modelLabel = titleCase(pv.product.normalizedModel);
+  const imageUrl = await getProductImage(pv.product.brand, modelLabel);
 
   return (
     <div className="max-w-2xl space-y-6">
+      {imageUrl && (
+        <div
+          className="h-[220px] sm:h-[280px] rounded-xl bg-rr-frame bg-cover bg-center"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+          role="img"
+          aria-label={`${pv.product.brand} ${modelLabel}`}
+        />
+      )}
+
       <header className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs text-rr-text-dim">{pv.product.category}</div>
-          <h1 className="font-display text-2xl text-white">
-            {pv.product.brand} {pv.product.normalizedModel}
+          <h1 className="font-display text-2xl text-rr-text">
+            {pv.product.brand} {modelLabel}
           </h1>
           <div className="text-sm text-rr-text-dim mt-0.5">{pv.variantLabel}</div>
         </div>

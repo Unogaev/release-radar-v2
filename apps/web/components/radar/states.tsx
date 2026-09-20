@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/i18n";
 export function FeedSkeleton() {
   return (
     <div className="animate-pulse px-4 sm:px-11">
-      <div className="grid bg-[#f1efec]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}>
+      <div className="grid bg-rr-frame" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}>
         <div className="min-h-[300px] sm:min-h-[540px] self-start bg-rr-frame" />
         <div className="flex flex-col gap-6 px-5 sm:px-10 pb-[20px] sm:pb-[30px] pt-[24px] sm:pt-[38px]">
           <div className="h-3 w-24 bg-rr-well" />
