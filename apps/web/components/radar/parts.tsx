@@ -178,7 +178,9 @@ export function ImageFrame({
 }) {
   return (
     <div
-      className={`relative flex items-end self-start overflow-hidden bg-rr-frame p-[18px] ${className ?? ""}`}
+      className={`relative flex overflow-hidden bg-rr-frame p-[18px] self-start ${
+        src ? "items-end" : "items-center justify-center"
+      } ${className ?? ""}`}
       role={src ? "img" : undefined}
       aria-label={src ? hint : undefined}
       style={
@@ -190,14 +192,19 @@ export function ImageFrame({
             }
           : {
               backgroundImage:
-                "repeating-linear-gradient(132deg, rgba(22,21,20,0.06) 0 1px, transparent 1px 12px)",
+                "repeating-linear-gradient(132deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 12px)",
             }
       }
     >
-      {!src && hint && (
-        <span className="font-rr-mono text-[9.5px] uppercase tracking-[0.18em] text-rr-stencil">
-          {hint}
-        </span>
+      {!src && (
+        <div className="flex flex-col items-center gap-2 text-center px-6">
+          <span className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-stencil">
+            {"Фото не найдено"}
+          </span>
+          {hint && (
+            <span className="max-w-[26ch] text-[11px] leading-snug text-rr-faint">{hint}</span>
+          )}
+        </div>
       )}
       {children}
     </div>
