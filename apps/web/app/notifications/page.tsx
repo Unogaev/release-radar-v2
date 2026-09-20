@@ -81,9 +81,9 @@ export default function NotificationsPage() {
       const res = await fetch("/api/notifications/test", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        setTestMessage(data.error ?? "Failed to send test notification.");
+        setTestMessage(data.error ?? "Не удалось отправить тестовое уведомление.");
       } else {
-        setTestMessage("Test notification created. It will appear below and fire in your browser if permission is granted.");
+        setTestMessage("Тестовое уведомление создано. Оно появится ниже и сработает в браузере, если разрешение выдано.");
         const items = await fetchAlerts();
         if (items) deliverNew(items);
       }
@@ -93,58 +93,66 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px 16px" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>Notifications</h1>
-      <p style={{ color: "#666", marginBottom: 20, fontSize: 14 }}>
-        Browser notifications (Notification API). These fire while this page/app is open or
-        backgrounded on desktop. Full push delivery to a closed browser is not implemented yet.
-      </p>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header>
+        <h1 className="font-rr-display text-2xl text-rr-text">Уведомления</h1>
+        <p className="text-sm text-rr-text-dim mt-1">
+          Push-уведомления браузера (Notification API). Срабатывают, пока страница открыта или свёрнута на десктопе.
+          Полная доставка в закрытый браузер пока не реализована.
+        </p>
+      </header>
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center gap-3 border border-rr-hair rounded-2xl bg-rr-surface p-4">
         {permission === "unsupported" && (
-          <span style={{ fontSize: 14, color: "#999" }}>Notifications are not supported in this browser.</span>
+          <span className="text-sm text-rr-muted">Уведомления не поддерживаются в этом браузере.</span>
         )}
         {permission !== "unsupported" && permission !== "granted" && (
-          <button onClick={requestPermission} style={btnStyle}>
-            {permission === "denied" ? "Notifications blocked (check browser settings)" : "Enable notifications"}
+          <button
+            onClick={requestPermission}
+            className="rounded-lg border border-rr-hair bg-rr-surface px-3.5 py-2 text-sm text-rr-text hover:bg-rr-surface-hi"
+          >
+            {permission === "denied" ? "Заблокировано (проверьте настройки браузера)" : "Включить уведомления"}
           </button>
         )}
         {permission === "granted" && (
-          <span style={{ fontSize: 14, color: "#16a34a", alignSelf: "center" }}>Notifications enabled</span>
+          <span className="text-sm text-rr-ok self-center">Уведомления включены</span>
         )}
-        <button onClick={sendTest} disabled={loading} style={btnStyle}>
-          {loading ? "Sending..." : "Send test notification"}
+        <button
+          onClick={sendTest}
+          disabled={loading}
+          className="rounded-lg border border-rr-hair bg-rr-surface px-3.5 py-2 text-sm text-rr-text hover:bg-rr-surface-hi disabled:opacity-50"
+        >
+          {loading ? "Отправка..." : "Отправить тестовое уведомление"}
         </button>
       </div>
 
       {testMessage && (
-        <div style={{ fontSize: 13, color: "#444", marginBottom: 16, padding: 10, background: "#f5f5f5", borderRadius: 8 }}>
-          {testMessage}
-        </div>
+        <div className="rounded-xl bg-rr-well px-4 py-3 text-sm text-rr-text-dim">{testMessage}</div>
       )}
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>History</h2>
-      {alerts.length === 0 && <p style={{ color: "#888", fontSize: 14 }}>No notifications yet.</p>}
-      <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-        {alerts.map((a) => (
-          <li key={a.id} style={{ border: "1px solid #e5e5e5", borderRadius: 10, padding: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{a.title}</div>
-            <div style={{ fontSize: 13, color: "#555", whiteSpace: "pre-line", marginTop: 4 }}>{a.body}</div>
-            <div style={{ fontSize: 11, color: "#999", marginTop: 6 }}>
-              {a.sentAt ? "Delivered" : "Pending delivery"} · channel: {a.channel}
+      <div>
+        <h2 className="text-base font-medium text-rr-text mb-3">История</h2>
+        {alerts.length === 0 ? (
+          <div className="rounded-2xl border border-rr-hair bg-rr-surface px-6 py-10 text-center">
+            <div className="font-rr-display text-[15px] text-rr-text">Пока нет уведомлений</div>
+            <div className="mt-1 text-[12.5px] text-rr-text-dim">
+              Здесь появится история, как только сработает первый сигнал.
             </div>
-          </li>
-        ))}
-      </ul>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3 list-none p-0">
+            {alerts.map((a) => (
+              <li key={a.id} className="rounded-2xl border border-rr-hair bg-rr-surface p-4">
+                <div className="text-sm font-medium text-rr-text">{a.title}</div>
+                <div className="text-sm text-rr-text-dim mt-1 whitespace-pre-line">{a.body}</div>
+                <div className="text-xs text-rr-muted mt-2">
+                  {a.sentAt ? "Доставлено" : "Ожидает доставки"} · канал: {a.channel}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
-
-const btnStyle: React.CSSProperties = {
-  padding: "8px 14px",
-  borderRadius: 8,
-  border: "1px solid #ccc",
-  background: "#fff",
-  cursor: "pointer",
-  fontSize: 14,
-};
