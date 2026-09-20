@@ -15,8 +15,9 @@ body {
 
 .app-shell {
   background:
-    radial-gradient(ellipse at top, rgba(22, 21, 20, 0.03), transparent 60%),
-    #f4f3f1;
+    radial-gradient(ellipse at top, rgba(231, 229, 223, 0.04), transparent 60%),
+    #0e0e11;
+  color: #f4f3ef;
 }
 
 .status-badge {
