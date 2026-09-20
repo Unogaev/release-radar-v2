@@ -7,7 +7,7 @@
 // Usage:
 //   OWNER_EMAIL="you@example.com" OWNER_PASSWORD="your-password" npx tsx scripts/seedOwner.ts
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma";
 import { SourceAdapter } from "@adapters/SourceAdapter";
 import { classifyEvidenceLevel } from "@domain/evidence/ladder";
 import { AvailabilityEvidence } from "@domain/evidence/types";

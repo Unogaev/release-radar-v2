@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+node_modules/
+apps/web/node_modules/
+apps/web/generated/prisma/
+apps/web/.next/
+*.log
+.DS_Store

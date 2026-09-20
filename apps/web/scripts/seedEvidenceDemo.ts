@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma";
 
 if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
   console.error("REFUSED: this seed script must not run in production.");
