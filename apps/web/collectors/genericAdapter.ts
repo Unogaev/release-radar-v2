@@ -35,36 +35,22 @@ export function createGenericRssAdapter(config: GenericSourceConfig): SourceAdap
 
     async identify(raw: RawSignal): Promise<ProductCandidate[]> {
       const text = raw.rawText;
-      const RELEASE_PATTERNS: { regex: RegExp; confidence: number }[] = [
-        { regex: /^(.+?)\s+launches\s+today(?:\s+on\s+(\w+))?/i, confidence: 0.85 },
-        { regex: /^(.+?)\s+(?:is\s+)?available\s+now(?:\s+on\s+(\w+))?/i, confidence: 0.8 },
-        { regex: /^(.+?)\s+out\s+now(?:\s+on\s+(\w+))?/i, confidence: 0.8 },
-        { regex: /^(.+?)\s+launches\s+on\s+([A-Z][a-z]+ \d{1,2})/i, confidence: 0.75 },
-        { regex: /^(.+?)\s+(?:releases|drops)\s+on\s+([A-Z][a-z]+ \d{1,2})/i, confidence: 0.75 },
-      ];
-      for (const { regex, confidence } of RELEASE_PATTERNS) {
-        const match = regex.exec(text);
-        if (match && match[1]) {
-          return [
-            {
-              brand: config.defaultBrand ?? "Unknown",
-              model: match[1].trim(),
-              exactIdentifier: null,
-              variant: match[2] ?? null,
-              confidence,
-            },
-          ];
-        }
-      }
-      const words = text.split(/\s+/).filter(Boolean);
-      const brand = config.defaultBrand ?? (words[0] ?? "Unknown");
+      // MVP fix: the previous version tried to regex-extract a short
+      // "product name" out of the article headline (e.g. matching
+      // "X launches today" / "X out now"). Editorial blog titles from
+      // PlayStation Blog / Xbox Wire / Sneaker News rarely follow that
+      // template, so the non-greedy regex frequently captured a random
+      // trailing clause instead of the real subject — producing garbled,
+      // misleading card titles. Showing the real, full headline is more
+      // honest than a mis-extracted fragment, so we no longer guess.
+      const brand = config.defaultBrand ?? (text.split(/\s+/).filter(Boolean)[0] ?? "Unknown");
       return [
         {
           brand,
           model: text,
           exactIdentifier: null,
           variant: null,
-          confidence: 0.3,
+          confidence: 0.6,
         },
       ];
     },
