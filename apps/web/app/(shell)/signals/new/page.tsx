@@ -5,14 +5,14 @@ function Field({ label, name, type = "text", step, defaultValue, placeholder }: 
 }) {
   return (
     <div>
-      <label className="block text-xs text-ink-600 mb-1">{label}</label>
+      <label className="block text-xs text-rr-text-dim mb-1">{label}</label>
       <input
         name={name}
         type={type}
         step={step}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm text-black placeholder:text-ink-500 focus:outline-none focus:border-ember-500"
+        className="w-full bg-rr-surface border border-rr-hair rounded px-3 py-2 text-sm text-black placeholder:text-rr-muted focus:outline-none focus:border-rr-accent"
       />
     </div>
   );
@@ -20,7 +20,7 @@ function Field({ label, name, type = "text", step, defaultValue, placeholder }: 
 
 function Check({ label, name, defaultChecked }: { label: string; name: string; defaultChecked?: boolean }) {
   return (
-    <label className="flex items-center gap-2 text-sm text-ink-300">
+    <label className="flex items-center gap-2 text-sm text-rr-text-dim">
       <input type="checkbox" name={name} defaultChecked={defaultChecked} className="accent-ember-500" />
       {label}
     </label>
@@ -32,11 +32,11 @@ function Select({ label, name, options, defaultValue }: {
 }) {
   return (
     <div>
-      <label className="block text-xs text-ink-600 mb-1">{label}</label>
+      <label className="block text-xs text-rr-text-dim mb-1">{label}</label>
       <select
         name={name}
         defaultValue={defaultValue}
-        className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm text-black placeholder:text-ink-500 focus:outline-none focus:border-ember-500"
+        className="w-full bg-rr-surface border border-rr-hair rounded px-3 py-2 text-sm text-black placeholder:text-rr-muted focus:outline-none focus:border-rr-accent"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -48,8 +48,8 @@ function Select({ label, name, options, defaultValue }: {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border border-ink-700 rounded-lg p-4 space-y-3">
-      <div className="text-xs uppercase tracking-widest text-ember-400">{title}</div>
+    <div className="border border-rr-hair rounded-lg p-4 space-y-3">
+      <div className="text-xs uppercase tracking-widest text-rr-accent">{title}</div>
       {children}
     </div>
   );
@@ -60,7 +60,7 @@ export default function NewSignalPage() {
     <div className="max-w-2xl space-y-6">
       <header>
         <h1 className="font-display text-2xl text-white">Новый сигнал</h1>
-        <p className="text-sm text-ink-600 mt-1">
+        <p className="text-sm text-rr-text-dim mt-1">
           Каждое поле здесь — прямой вход в hard gate. Ничего не додумывается движком.
         </p>
       </header>
@@ -142,8 +142,8 @@ export default function NewSignalPage() {
           </div>
         </Section>
 
-        <details className="border border-ink-700 rounded-lg p-4">
-          <summary className="text-xs uppercase tracking-widest text-ember-400 cursor-pointer">
+        <details className="border border-rr-hair rounded-lg p-4">
+          <summary className="text-xs uppercase tracking-widest text-rr-accent cursor-pointer">
             + Application / Raffle (если применимо)
           </summary>
           <div className="pt-3 space-y-2">
@@ -159,8 +159,8 @@ export default function NewSignalPage() {
           </div>
         </details>
 
-        <details className="border border-ink-700 rounded-lg p-4">
-          <summary className="text-xs uppercase tracking-widest text-ember-400 cursor-pointer">
+        <details className="border border-rr-hair rounded-lg p-4">
+          <summary className="text-xs uppercase tracking-widest text-rr-accent cursor-pointer">
             + Время события / Prepare
           </summary>
           <div className="pt-3 space-y-3">
@@ -185,8 +185,8 @@ export default function NewSignalPage() {
           </div>
         </details>
 
-        <details className="border border-ink-700 rounded-lg p-4">
-          <summary className="text-xs uppercase tracking-widest text-ember-400 cursor-pointer">
+        <details className="border border-rr-hair rounded-lg p-4">
+          <summary className="text-xs uppercase tracking-widest text-rr-accent cursor-pointer">
             + Client First / Source Now
           </summary>
           <div className="pt-3 space-y-2">
@@ -224,7 +224,7 @@ export default function NewSignalPage() {
 
         <button
           type="submit"
-          className="w-full bg-ember-500 hover:bg-ember-400 text-ink-950 font-medium rounded px-4 py-3 text-sm tracking-wide transition-colors"
+          className="w-full bg-rr-accent hover:bg-rr-accent-hi text-rr-bg font-medium rounded px-4 py-3 text-sm tracking-wide transition-colors"
         >
           Прогнать через decision engine
         </button>

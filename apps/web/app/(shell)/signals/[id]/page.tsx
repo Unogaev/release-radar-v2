@@ -16,30 +16,30 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
     <div className="max-w-2xl space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs text-ink-600">{pv.product.category}</div>
+          <div className="text-xs text-rr-text-dim">{pv.product.category}</div>
           <h1 className="font-display text-2xl text-white">
             {pv.product.brand} {pv.product.normalizedModel}
           </h1>
-          <div className="text-sm text-ink-600 mt-0.5">{pv.variantLabel}</div>
+          <div className="text-sm text-rr-text-dim mt-0.5">{pv.variantLabel}</div>
         </div>
         <span
-          className={`status-badge shrink-0 px-3 py-1.5 rounded text-ink-950 ${STATUS_COLOR[decision.status]}`}
+          className={`status-badge shrink-0 px-3 py-1.5 rounded ${STATUS_COLOR[decision.status]}`}
         >
           {simpleLabel(decision.status)}
         </span>
       </header>
 
       <Section title="Решение">
-        <p className="text-sm text-ink-300">{decision.rationale}</p>
-        <div className="text-xs text-ink-600 mt-2">
+        <p className="text-sm text-rr-text-dim">{decision.rationale}</p>
+        <div className="text-xs text-rr-text-dim mt-2">
           rule_version {decision.ruleVersion} · evidence_confidence {decision.evidenceConfidence}/100
         </div>
         {decision.blockedReasons.length > 0 && (
           <div className="mt-3">
-            <div className="text-xs text-ink-600 mb-1">Почему не выше по статусу:</div>
+            <div className="text-xs text-rr-text-dim mb-1">Почему не выше по статусу:</div>
             <ul className="space-y-1">
               {decision.blockedReasons.map((r, i) => (
-                <li key={i} className="text-xs text-status-skip">— {r}</li>
+                <li key={i} className="text-xs text-rr-muted">— {r}</li>
               ))}
             </ul>
           </div>
@@ -49,9 +49,9 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
       {releaseEvent && (
         <Section title="Событие">
           {releaseEvent.timePrecision === "tba" ? (
-            <span className="status-badge text-status-prepare">TIME TBA</span>
+            <span className="status-badge text-rr-prepare">TIME TBA</span>
           ) : (
-            <div className="text-sm text-ember-400">{formatDateEt(releaseEvent.startAtUtc)}</div>
+            <div className="text-sm text-rr-accent">{formatDateEt(releaseEvent.startAtUtc)}</div>
           )}
         </Section>
       )}
@@ -60,9 +60,9 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
         <Section title="Рынок">
           {pv.marketSales.length > 0 && (
             <div className="mb-3">
-              <div className="text-xs text-ink-600 mb-1">Completed sales</div>
+              <div className="text-xs text-rr-text-dim mb-1">Completed sales</div>
               {pv.marketSales.map((s) => (
-                <div key={s.id} className="text-sm text-ink-300 flex justify-between">
+                <div key={s.id} className="text-sm text-rr-text-dim flex justify-between">
                   <span>{s.platform}</span>
                   <span>{formatMoneyMinor(s.priceMinor, s.currency)}</span>
                 </div>
@@ -71,9 +71,9 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
           )}
           {pv.marketAsks.length > 0 && (
             <div>
-              <div className="text-xs text-ink-600 mb-1">Asks (не sales)</div>
+              <div className="text-xs text-rr-text-dim mb-1">Asks (не sales)</div>
               {pv.marketAsks.map((a) => (
-                <div key={a.id} className="text-sm text-ink-600 flex justify-between">
+                <div key={a.id} className="text-sm text-rr-text-dim flex justify-between">
                   <span>{a.platform}</span>
                   <span>{formatMoneyMinor(a.priceMinor, a.currency)}</span>
                 </div>
@@ -85,13 +85,13 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
 
       <Section title="Evidence trail">
         {pv.evidence.length === 0 ? (
-          <p className="text-sm text-ink-600">Нет записей.</p>
+          <p className="text-sm text-rr-text-dim">Нет записей.</p>
         ) : (
           <ul className="space-y-2">
             {pv.evidence.map((e) => (
-              <li key={e.id} className="text-sm border-l-2 border-ink-700 pl-3">
-                <div className="text-ink-300">{e.level}</div>
-                <div className="text-xs text-ink-600">
+              <li key={e.id} className="text-sm border-l-2 border-rr-hair pl-3">
+                <div className="text-rr-text-dim">{e.level}</div>
+                <div className="text-xs text-rr-text-dim">
                   {formatDateEt(e.observedAt)} · {e.source.name}
                 </div>
               </li>
@@ -104,19 +104,19 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
         <form action={confirmPurchase.bind(null, pv.id, decision.id)}>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="block text-xs text-ink-600 mb-1">Фактическая стоимость ($)</label>
+              <label className="block text-xs text-rr-text-dim mb-1">Фактическая стоимость ($)</label>
               <input
                 name="actualCost"
                 type="number"
                 step="0.01"
                 required
-                className="w-full bg-ink-900 border border-ink-700 rounded px-3 py-2 text-sm"
+                className="w-full bg-rr-surface border border-rr-hair rounded px-3 py-2 text-sm"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="w-full bg-ember-500 hover:bg-ember-400 text-ink-950 font-medium rounded px-4 py-3 text-sm tracking-wide"
+            className="w-full bg-rr-accent hover:bg-rr-accent-hi text-rr-bg font-medium rounded px-4 py-3 text-sm tracking-wide"
           >
             Подтвердить покупку (E5_USER_CONFIRMED)
           </button>
@@ -128,8 +128,8 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border border-ink-700 rounded-lg p-4">
-      <div className="text-xs uppercase tracking-widest text-ember-400 mb-2">{title}</div>
+    <div className="border border-rr-hair rounded-lg p-4">
+      <div className="text-xs uppercase tracking-widest text-rr-accent mb-2">{title}</div>
       {children}
     </div>
   );

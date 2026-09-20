@@ -1,27 +1,27 @@
 import "./globals.css";
-import { Inter, Archivo, Bodoni_Moda, IBM_Plex_Mono } from "next/font/google";
+import { Inter, Manrope, IBM_Plex_Mono } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { LanguageProvider } from "@/lib/i18n";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans" });
 
-const rrSans = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const rrSans = Manrope({
+  subsets: ["latin", "cyrillic"],
+  weight: ["500", "600", "700", "800"],
   variable: "--font-rr-sans",
   display: "swap",
 });
 
-const rrDisplay = Bodoni_Moda({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const rrDisplay = Manrope({
+  subsets: ["latin", "cyrillic"],
+  weight: ["500", "600", "700", "800"],
   variable: "--font-rr-display",
   display: "swap",
 });
 
 const rrMono = IBM_Plex_Mono({
   subsets: ["latin", "cyrillic-ext"],
-  weight: ["400", "500"],
+  weight: ["500", "600", "700"],
   variable: "--font-rr-mono",
   display: "swap",
 });
@@ -37,7 +37,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#f4f3f1",
+  themeColor: "#0a0a0c",
   width: "device-width",
   initialScale: 1,
 };

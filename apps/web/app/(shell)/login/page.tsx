@@ -34,10 +34,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="font-display text-2xl text-ember-400 text-center mb-1 tracking-wide">
+        <div className="font-display text-2xl text-rr-accent text-center mb-1 tracking-wide">
           Release Radar
         </div>
-        <div className="text-xs text-ink-600 text-center mb-10 tracking-widest uppercase">
+        <div className="text-xs text-rr-text-dim text-center mb-10 tracking-widest uppercase">
           Private access
         </div>
 
@@ -49,7 +49,7 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-ink-900 border border-ink-700 rounded px-4 py-3 text-sm focus:outline-none focus:border-ember-500 transition-colors"
+              className="w-full bg-rr-surface border border-rr-hair rounded px-4 py-3 text-sm focus:outline-none focus:border-rr-accent transition-colors"
             />
           </div>
           <div>
@@ -59,16 +59,16 @@ export default function LoginPage() {
               placeholder="Пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-ink-900 border border-ink-700 rounded px-4 py-3 text-sm focus:outline-none focus:border-ember-500 transition-colors"
+              className="w-full bg-rr-surface border border-rr-hair rounded px-4 py-3 text-sm focus:outline-none focus:border-rr-accent transition-colors"
             />
           </div>
 
-          {error && <div className="text-status-skip text-xs text-center">{error}</div>}
+          {error && <div className="text-rr-muted text-xs text-center">{error}</div>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-ember-500 hover:bg-ember-400 text-ink-950 font-medium rounded px-4 py-3 text-sm tracking-wide transition-colors disabled:opacity-50"
+            className="w-full bg-rr-accent hover:bg-rr-accent-hi text-rr-bg font-medium rounded px-4 py-3 text-sm tracking-wide transition-colors disabled:opacity-50"
           >
             {loading ? "Вход..." : "Войти"}
           </button>

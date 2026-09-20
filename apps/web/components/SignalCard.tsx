@@ -27,31 +27,31 @@ export function SignalCard({ signal }: { signal: SignalCardData }) {
   return (
     <Link
       href={`/signals/${signal.id}`}
-      className="group flex items-start gap-4 border border-graphite-700 hover:border-graphite-600 bg-graphite-900 rounded-xl p-4 transition-colors"
+      className="group flex items-start gap-4 border border-rr-frame hover:border-rr-frame bg-rr-surface rounded-xl p-4 transition-colors"
     >
-      <div className="w-12 h-12 shrink-0 rounded-lg bg-graphite-800 border border-graphite-700 flex items-center justify-center text-graphite-500 text-[10px] uppercase tracking-wide">
+      <div className="w-12 h-12 shrink-0 rounded-lg bg-rr-surface-hi border border-rr-frame flex items-center justify-center text-rr-muted text-[10px] uppercase tracking-wide">
         {signal.category.slice(0, 3)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-graphite-100 font-medium truncate">
+            <div className="text-rr-text font-medium truncate">
               {`${signal.brand} ${signal.model}`.replace(/^\[DEMO\]\s*/i, "")}
             </div>
-            <div className="text-xs text-graphite-400 mt-0.5">
+            <div className="text-xs text-rr-text-dim mt-0.5">
               {signal.variantLabel}
               {signal.sku ? ` · SKU ${signal.sku}` : ""}
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             {`${signal.brand} ${signal.model}`.toUpperCase().includes("[DEMO]") && (
-              <span className="text-[9px] font-semibold tracking-wide text-graphite-500 bg-graphite-800 border border-graphite-700 rounded px-1.5 py-0.5">DEMO</span>
+              <span className="text-[9px] font-semibold tracking-wide text-rr-muted bg-rr-surface-hi border border-rr-frame rounded px-1.5 py-0.5">DEMO</span>
             )}
             <StatusBadge status={signal.status} />
           </div>
         </div>
-        <p className="text-xs text-graphite-400 mt-2 line-clamp-2">{signal.rationale}</p>
-        <div className="flex items-center gap-3 mt-2 text-[11px] text-graphite-500 tabular-nums">
+        <p className="text-xs text-rr-text-dim mt-2 line-clamp-2">{signal.rationale}</p>
+        <div className="flex items-center gap-3 mt-2 text-[11px] text-rr-muted tabular-nums">
           <span>Confidence: {signal.evidenceConfidence}%</span>
           <span>·</span>
           <span>{timeAgo(signal.createdAt)}</span>
