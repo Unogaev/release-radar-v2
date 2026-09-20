@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Bell, CalendarDays, CheckCircle2, Newspaper, Radar, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Bell, CalendarDays, CheckCircle2, Menu, Newspaper, Radar, RefreshCw, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import type { FeedPayload, NewsItem, RadarCategory } from "@/lib/radar/types";
 import { derive, sortSignals } from "@/lib/radar/derive";
@@ -51,10 +51,11 @@ const COPY = {
 
 function NewsCard({ item, lang }: { item: NewsItem; lang: "ru" | "en" }) {
   const observed = new Date(item.observedAt);
+  const hasImage = Boolean(item.imageUrl);
   return (
     <article className="group overflow-hidden rounded-[22px] border border-white/10 bg-[#14171c] transition hover:-translate-y-0.5 hover:border-white/20">
-      <div className="relative aspect-[16/9] overflow-hidden bg-[#1b1f26]">
-        {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(201,255,83,.12),transparent_38%),linear-gradient(135deg,#20252d,#111318)]" />}
+      <div className={`relative overflow-hidden bg-[#1b1f26] ${hasImage ? "aspect-[16/9]" : "h-20"}`}>
+        {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,rgba(201,255,83,.16),transparent_42%),linear-gradient(135deg,#20252d,#111318)]" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
         <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/45 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 backdrop-blur">{item.kind}</span>
       </div>
@@ -84,8 +85,8 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
     <div className="min-h-screen bg-[#0a0c0f] font-rr-sans text-white">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0c0f]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#c9ff53] text-[#0a0c0f]"><Radar size={19} strokeWidth={2.4} /></div><div><div className="text-[15px] font-extrabold tracking-[-0.02em]">Release Radar</div><div className="text-[10px] uppercase tracking-[0.18em] text-white/35">Miami · ET · ZIP 33160</div></div></div>
-          <div className="flex items-center gap-2 sm:gap-3"><Link href="/news" className="hidden rounded-full border border-white/10 px-4 py-2 text-xs text-white/65 transition hover:border-white/25 hover:text-white sm:inline-flex"><Newspaper className="mr-2" size={14} />{c.allNews}</Link><Link href="/notifications" aria-label={c.alerts} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/65"><Bell size={16} /></Link><div className="flex rounded-full border border-white/10 p-1 text-[10px] font-bold">{(["ru", "en"] as const).map((l) => <button key={l} onClick={() => setLang(l)} className={`rounded-full px-2.5 py-1 ${lang === l ? "bg-white text-black" : "text-white/40"}`}>{l.toUpperCase()}</button>)}</div></div>
+          <div className="flex min-w-0 items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#c9ff53] text-[#0a0c0f]"><Radar size={19} strokeWidth={2.4} /></div><div className="min-w-0"><div className="whitespace-nowrap text-[15px] font-extrabold tracking-[-0.02em]">Release Radar</div><div className="hidden text-[10px] uppercase tracking-[0.18em] text-white/35 sm:block">Miami · ET · ZIP 33160</div></div></div>
+          <div className="flex items-center gap-2 sm:gap-3"><Link href="/radar" aria-label={lang === "ru" ? "Все разделы" : "All sections"} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/65 transition hover:border-white/25 hover:text-white"><Menu size={16} /></Link><Link href="/news" className="hidden rounded-full border border-white/10 px-4 py-2 text-xs text-white/65 transition hover:border-white/25 hover:text-white sm:inline-flex"><Newspaper className="mr-2" size={14} />{c.allNews}</Link><Link href="/notifications" aria-label={c.alerts} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/65"><Bell size={16} /></Link><div className="flex rounded-full border border-white/10 p-1 text-[10px] font-bold">{(["ru", "en"] as const).map((l) => <button key={l} onClick={() => setLang(l)} className={`rounded-full px-2.5 py-1 ${lang === l ? "bg-white text-black" : "text-white/40"}`}>{l.toUpperCase()}</button>)}</div></div>
         </div>
       </header>
 

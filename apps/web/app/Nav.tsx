@@ -9,12 +9,8 @@ import {
   Radio,
   Clock,
   Calendar,
-  TrendingUp,
   RadioTower,
-  ScrollText,
   ShoppingBag,
-  Users,
-  Settings,
   Plus,
   LogOut,
   Newspaper,
@@ -26,12 +22,8 @@ const SECTIONS = [
   { href: "/soon", key: "nav_upcoming", icon: Clock },
   { href: "/news", key: "nav_news", icon: Newspaper },
   { href: "/calendar", key: "nav_calendar", icon: Calendar },
-  { href: "/market", key: "nav_market", icon: TrendingUp },
   { href: "/sources", key: "nav_sources", icon: RadioTower },
-  { href: "/logs", key: "nav_logs", icon: ScrollText },
   { href: "/purchases", key: "nav_purchases", icon: ShoppingBag },
-  { href: "/clients", key: "nav_clients", icon: Users },
-  { href: "/settings", key: "nav_settings", icon: Settings },
 ] as const;
 
 export function Nav() {
@@ -102,6 +94,14 @@ export function Nav() {
               </Link>
             );
           })}
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="shrink-0 flex items-center gap-1.5 rounded-lg bg-rr-surface px-3 py-1.5 text-[11px] text-rr-text-dim"
+          >
+            <LogOut size={13} />
+            {t("sign_out")}
+          </button>
         </div>
       </nav>
     </>

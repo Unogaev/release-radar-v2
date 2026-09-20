@@ -21,13 +21,14 @@ export function RadarFeedClient({
       case "buy":
         break;
       case "source":
+        router.push(`/signals/${id}`);
         break;
       case "calendar":
+        router.push(`/calendar?signal=${encodeURIComponent(id)}`);
         break;
       case "publish":
         break;
     }
-    console.info("radar action", { id, action });
   };
 
   return (

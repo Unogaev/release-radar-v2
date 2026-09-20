@@ -85,7 +85,7 @@ export function Ledger({
   size?: "sm" | "lg";
 }) {
   return (
-    <div className="grid grid-cols-3 gap-px bg-rr-hair">
+    <div className="grid grid-cols-1 gap-px bg-rr-hair sm:grid-cols-3">
       {items.map((item) => (
         <div key={item.label} className={`bg-rr-surface ${size === "lg" ? "px-4 py-4" : "px-[13px] py-3"}`}>
           <div className="mb-[6px] font-rr-mono text-[9px] uppercase tracking-[0.16em] whitespace-nowrap text-rr-faint">
@@ -239,7 +239,9 @@ export function ActionRow({
     publish: { full: t("action_publish_full"), short: t("action_publish_short") },
   };
   const hero = variant === "hero";
-  const order: SignalAction[] = ["buy", "source", "calendar", "publish"];
+  // Publishing is intentionally hidden until a real destination and delivery
+  // confirmation exist. Never render a control that only looks functional.
+  const order: SignalAction[] = ["buy", "source", "calendar"];
   return (
     <div className="mt-auto flex flex-wrap gap-2 pt-1">
       {order.map((action) => {

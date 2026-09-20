@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 interface AlertItem {
   id: string;
@@ -95,6 +96,7 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
+        <Link href="/now" className="mb-4 inline-flex text-xs font-semibold text-rr-accent">← Вернуться в центр действий</Link>
         <h1 className="font-rr-display text-2xl text-rr-text">Уведомления</h1>
         <p className="text-sm text-rr-text-dim mt-1">
           Push-уведомления браузера (Notification API). Срабатывают, пока страница открыта или свёрнута на десктопе.

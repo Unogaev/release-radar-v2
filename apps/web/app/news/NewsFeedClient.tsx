@@ -53,6 +53,7 @@ export function NewsFeedClient({ items }: { items: NewsItem[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
+        <Link href="/now" className="mb-4 inline-flex text-xs font-semibold text-rr-accent">← Вернуться в центр действий</Link>
         <h1 className="font-rr-display text-[22px] tracking-[-0.01em]">Новости и релизы</h1>
         <p className="mt-1 text-[13px] text-rr-text-dim">
           NEWS / RELEASE / SIGNAL / ALERT — хронологическая лента, не смешивается с подтверждёнными сигналами покупки.
