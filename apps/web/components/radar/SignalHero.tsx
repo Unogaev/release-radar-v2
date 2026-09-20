@@ -18,6 +18,7 @@ import {
   ImageFrame,
   KindBadge,
   Ledger,
+  MarketSnapshot,
   MetaRow,
   StatusBadge,
   WhyBlock,
@@ -60,6 +61,7 @@ export function SignalHero({
           <StatusBadge status={signal.status} />
           <KindBadge>{t(kindKey)}</KindBadge>
         </div>
+        {signal.imageSourceUrl && <a href={signal.imageSourceUrl} target="_blank" rel="noreferrer" className="absolute bottom-4 right-4 bg-black/60 px-2.5 py-1.5 font-rr-mono text-[8px] uppercase tracking-[0.14em] text-white/65">official image ↗</a>}
       </ImageFrame>
 
       <div className="flex flex-col gap-5 px-5 sm:px-10 pb-[18px] sm:pb-[26px] pt-[22px] sm:pt-[30px]">
@@ -104,10 +106,12 @@ export function SignalHero({
           size="lg"
           items={[
             { label: "Retail", value: money(signal.retail) },
-            { label: t("label_cost"), value: money(signal.cost) },
-            { label: t("label_resale"), value: money(signal.expectedResale) },
+            { label: lang === "ru" ? "С налогом Miami" : "Miami taxed", value: money(signal.cost) },
+            { label: lang === "ru" ? "Медиана продаж" : "Sold median", value: money(signal.expectedResale) },
           ]}
         />
+
+        <MarketSnapshot signal={signal} />
 
         <MetaRow
           store={signal.store}

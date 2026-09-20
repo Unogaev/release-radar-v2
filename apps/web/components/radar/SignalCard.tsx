@@ -16,6 +16,7 @@ import {
   Figure,
   ImageFrame,
   Ledger,
+  MarketSnapshot,
   MetaRow,
   StatusBadge,
   WhyBlock,
@@ -51,6 +52,7 @@ export function SignalCard({
         <div className="absolute right-[18px] top-[18px] bg-[rgba(11,10,9,0.62)] px-2.5 py-[5px]">
           <Countdown secondsLeft={left} label={countdown} />
         </div>
+        {signal.imageSourceUrl && <a href={signal.imageSourceUrl} target="_blank" rel="noreferrer" className="absolute bottom-3 right-3 bg-black/60 px-2 py-1 font-rr-mono text-[8px] uppercase tracking-[0.12em] text-white/65">official image ↗</a>}
       </ImageFrame>
 
       <div className="flex flex-1 flex-col gap-[18px] px-6 pb-6 pt-[22px]">
@@ -86,10 +88,12 @@ export function SignalCard({
         <Ledger
           items={[
             { label: "Retail", value: money(signal.retail) },
-            { label: t("label_cost"), value: money(signal.cost) },
-            { label: t("label_resale"), value: money(signal.expectedResale) },
+            { label: lang === "ru" ? "С налогом 7%" : "With 7% tax", value: money(signal.cost) },
+            { label: lang === "ru" ? "Медиана продаж" : "Sold median", value: money(signal.expectedResale) },
           ]}
         />
+
+        <MarketSnapshot signal={signal} compact />
 
         <MetaRow
           store={signal.store}

@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { SignalStatus } from "@/lib/radar/types";
+import type { DerivedSignal, SignalStatus } from "@/lib/radar/types";
 import { useLanguage } from "@/lib/i18n";
+import { money } from "@/lib/radar/format";
 
 export const STATUS_STYLE: Record<SignalStatus, { label: string; className: string }> = {
   buy: { label: "BUY NOW", className: "bg-rr-buy text-white" },
@@ -116,6 +117,48 @@ export function MetaRow({
       <span>{stock}</span>
       <span className="h-2.5 w-px bg-rr-hair" />
       <span className="font-rr-mono text-[10.5px] text-rr-faint">{checked}</span>
+    </div>
+  );
+}
+
+const LIQUIDITY_LABEL = {
+  ru: { hot: "высокая", active: "активная", thin: "низкая", unverified: "нет данных" },
+  en: { hot: "high", active: "active", thin: "thin", unverified: "no data" },
+};
+
+export function MarketSnapshot({ signal, compact = false }: { signal: DerivedSignal; compact?: boolean }) {
+  const { lang } = useLanguage();
+  const copy = lang === "ru"
+    ? { completed: "Продажи", asks: "Asks от", exit: "Выход для +20%", liquidity: "Ликвидность", samples: "сделок" }
+    : { completed: "Completed", asks: "Asks from", exit: "Exit for +20%", liquidity: "Liquidity", samples: "sales" };
+  const completedRange = signal.completedSalesCount
+    ? `${money(signal.completedLow)}–${money(signal.completedHigh)}`
+    : "—";
+
+  return (
+    <div className={`grid gap-px overflow-hidden border border-rr-hair bg-rr-hair ${compact ? "grid-cols-2" : "grid-cols-2 lg:grid-cols-4"}`}>
+      <div className="bg-rr-well px-3 py-3.5">
+        <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-faint">{copy.completed}</div>
+        <div className="mt-1.5 text-sm font-semibold">{completedRange}</div>
+        <div className="mt-1 text-[10px] text-rr-faint">{signal.completedSalesCount} {copy.samples}</div>
+      </div>
+      <div className="bg-rr-well px-3 py-3.5">
+        <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-faint">{copy.asks}</div>
+        <div className="mt-1.5 text-sm font-semibold">{money(signal.askFloor)}</div>
+        <div className="mt-1 text-[10px] text-rr-faint">{lang === "ru" ? "не продажа" : "not a sale"}</div>
+      </div>
+      {!compact && <>
+        <div className="bg-rr-well px-3 py-3.5">
+          <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-faint">{copy.exit}</div>
+          <div className="mt-1.5 text-sm font-semibold text-rr-accent">{money(signal.minExit20)}</div>
+          <div className="mt-1 text-[10px] text-rr-faint">{signal.marketplaceFeePct}% fee + ${signal.shippingEstimate}</div>
+        </div>
+        <div className="bg-rr-well px-3 py-3.5">
+          <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-faint">{copy.liquidity}</div>
+          <div className="mt-1.5 text-sm font-semibold">{LIQUIDITY_LABEL[lang][signal.liquidity]}</div>
+          <div className="mt-1 text-[10px] text-rr-faint">30d completed</div>
+        </div>
+      </>}
     </div>
   );
 }

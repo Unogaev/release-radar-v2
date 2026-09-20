@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
-import { getProductImage } from "./fetchImage";
+import { getPageImage, getProductImage } from "./fetchImage";
 import type { NewsItem } from "./types";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
@@ -28,6 +28,26 @@ const CATEGORY_MAP: Record<string, RadarCategory> = {
   cars: "cars",
   automobiles: "cars",
 };
+
+const MIAMI_DADE_TAX_RATE = 0.07;
+const MARKETPLACE_FEE_RATE = 0.13;
+const OUTBOUND_SHIPPING_ESTIMATE = 20;
+
+function median(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function liquidityFor(sales: { observedAt: Date }[]): Signal["liquidity"] {
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recent = sales.filter((sale) => sale.observedAt.getTime() >= cutoff).length;
+  if (recent >= 10) return "hot";
+  if (recent >= 3) return "active";
+  if (sales.length > 0) return "thin";
+  return "unverified";
+}
 
 
 function titleCase(s: string): string {
@@ -144,8 +164,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
           identifiers: true,
           releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
           availabilityChecks: { orderBy: { checkedAt: "desc" }, take: 1 },
-          marketSales: { orderBy: { observedAt: "desc" }, take: 1 },
-          marketAsks: { orderBy: { observedAt: "desc" }, take: 1 },
+          marketSales: { orderBy: { observedAt: "desc" }, take: 30 },
+          marketAsks: { orderBy: { observedAt: "desc" }, take: 20 },
         },
       },
     },
@@ -161,25 +181,31 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const product = pv.product;
         const release = pv.releaseEvents[0];
         const check = pv.availabilityChecks[0];
-        const sale = pv.marketSales[0];
-        const ask = pv.marketAsks[0];
+        const sales = pv.marketSales;
+        const asks = pv.marketAsks;
 
         const categories: RadarCategory[] = ["now"];
         if (map.extraCategory) categories.push(map.extraCategory);
         const mappedCat = CATEGORY_MAP[product.category];
         if (mappedCat) categories.push(mappedCat);
 
-        const expectedResale = sale ? sale.priceMinor / 100 : ask ? ask.priceMinor / 100 : null;
         const brand = product.brand;
         const model = titleCase(product.normalizedModel);
-        const imageUrl = (await getProductImage(brand, model)) ?? undefined;
 
-        // Real acquisition cost = the confirmed retail/checkout price. No fees or
-        // taxes are modeled, so cost never differs from retail — never fabricated.
+        // Acquisition cost includes the known Miami-Dade 7% sales tax. Marketplace
+        // fees and outbound shipping are applied only on the exit side below.
         const retail = check?.priceUsd ?? null;
-        const cost = retail;
+        const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
         const ctaConfirmed = check?.ctaState === "enabled";
         const primaryUrl = check?.url ?? null;
+        const image = await getProductImage(brand, model, primaryUrl);
+        const salePrices = sales.map((sale) => sale.priceMinor / 100);
+        const askPrices = asks.map((ask) => ask.priceMinor / 100);
+        const completedMedian = median(salePrices);
+        const expectedResale = completedMedian;
+        const minExit20 = cost === null
+          ? null
+          : (cost * 1.2 + OUTBOUND_SHIPPING_ESTIMATE) / (1 - MARKETPLACE_FEE_RATE);
 
         const sku = pickIdentifier(pv.identifiers, (k) => k.includes("sku")) ?? "—";
         const reference =
@@ -194,7 +220,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const missing: string[] = [];
         if (bucket === "buy" || bucket === "apply") {
           if (retail === null) missing.push("price");
-          if (!imageUrl) missing.push("photo");
+          if (!image) missing.push("photo");
           if (!primaryUrl) missing.push("link");
           if (bucket === "buy" && !ctaConfirmed) missing.push("cta");
         }
@@ -216,11 +242,23 @@ export async function getRealFeed(): Promise<FeedPayload> {
           model,
           reference,
           sku,
-          imageUrl,
+          imageUrl: image?.url,
           imageHint: `${brand} ${model}`,
+          imageSourceUrl: image?.sourceUrl,
+          imageProvenance: image?.provenance,
           retail,
           cost,
           expectedResale,
+          completedLow: salePrices.length ? Math.min(...salePrices) : null,
+          completedMedian,
+          completedHigh: salePrices.length ? Math.max(...salePrices) : null,
+          completedSalesCount: salePrices.length,
+          askFloor: askPrices.length ? Math.min(...askPrices) : null,
+          minExit20,
+          marketplaceFeePct: MARKETPLACE_FEE_RATE * 100,
+          shippingEstimate: OUTBOUND_SHIPPING_ESTIMATE,
+          taxRatePct: MIAMI_DADE_TAX_RATE * 100,
+          liquidity: liquidityFor(sales),
           store: check?.sellerOfRecord ?? "—",
           stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
           primaryUrl,
@@ -281,6 +319,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     include: {
       product: true,
       releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
+      evidence: { orderBy: { observedAt: "desc" }, take: 1 },
     },
   });
 
@@ -294,9 +333,14 @@ export async function getRealFeed(): Promise<FeedPayload> {
     take: 10,
   });
 
-  const releaseVariantImages = await Promise.all(
-    releaseVariants.map((v) => getProductImage(v.product.brand, titleCase(v.product.normalizedModel)))
-  );
+  const [releaseVariantImages, newsSignalImages] = await Promise.all([
+    Promise.all(releaseVariants.map((v) => getProductImage(
+      v.product.brand,
+      titleCase(v.product.normalizedModel),
+      v.evidence[0]?.url ?? null
+    ))),
+    Promise.all(newsSignals.map((signal) => getPageImage(signal.url))),
+  ]);
 
   const newsItems: NewsItem[] = [
     ...releaseVariants.map((v, i) => ({
@@ -306,8 +350,9 @@ export async function getRealFeed(): Promise<FeedPayload> {
       brand: v.product.brand,
       model: titleCase(v.product.normalizedModel),
       source: "confirmed release",
-      sourceUrl: null,
-      imageUrl: releaseVariantImages[i] ?? undefined,
+      sourceUrl: v.evidence[0]?.url ?? null,
+      imageUrl: releaseVariantImages[i]?.url,
+      imageSourceUrl: releaseVariantImages[i]?.sourceUrl,
       observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
     })),
@@ -320,6 +365,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       source: s.store,
       sourceUrl: s.primaryUrl ?? null,
       imageUrl: s.imageUrl,
+      imageSourceUrl: s.imageSourceUrl,
       observedAt: s.checkedAt,
       launchAt: s.launchAt,
     })),
@@ -341,12 +387,14 @@ export async function getRealFeed(): Promise<FeedPayload> {
         launchAt: null,
       };
     }),
-    ...newsSignals.map((s) => ({
+    ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
       kind: "NEWS" as const,
       headline: (s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
       sourceUrl: s.url ?? null,
+      imageUrl: newsSignalImages[i]?.url,
+      imageSourceUrl: newsSignalImages[i]?.sourceUrl,
       observedAt: s.observedAt.toISOString(),
       launchAt: null,
     })),

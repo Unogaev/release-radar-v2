@@ -17,11 +17,25 @@ export interface Signal {
 
   imageUrl?: string;
   imageHint?: string;
+  imageSourceUrl?: string;
+  imageProvenance?: "product-page" | "official-page" | "official-search";
 
   /** null — данных о цене пока нет (не выдумываем цифры). */
   retail: number | null;
   cost: number | null;
   expectedResale: number | null;
+  /** Lowest and median completed sales. Asking prices never populate these fields. */
+  completedLow: number | null;
+  completedMedian: number | null;
+  completedHigh: number | null;
+  completedSalesCount: number;
+  askFloor: number | null;
+  /** Estimated exit required to retain 20% net return after marketplace fee and shipping. */
+  minExit20: number | null;
+  marketplaceFeePct: number;
+  shippingEstimate: number;
+  taxRatePct: number;
+  liquidity: "hot" | "active" | "thin" | "unverified";
 
   store: string;
   stock: string;
@@ -60,6 +74,7 @@ export interface NewsItem {
   source: string;
   sourceUrl?: string | null;
   imageUrl?: string;
+  imageSourceUrl?: string;
   observedAt: string;
   launchAt?: string | null;
 }
