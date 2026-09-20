@@ -1,4 +1,3 @@
-import { parse as parseHtml } from "node-html-parser";
 
 export interface StructuredProductData {
   name: string | null;
@@ -13,12 +12,19 @@ export async function fetchStructuredProductData(url: string): Promise<Structure
   const res = await fetch(url, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } });
   if (!res.ok) throw new Error(`Page fetch failed: ${res.status} ${url}`);
   const html = await res.text();
-  const root = parseHtml(html);
 
-  const scripts = root.querySelectorAll('script[type="application/ld+json"]');
-  for (const script of scripts) {
+  // MVP fix: full-DOM parsing of an entire storefront homepage (heavy,
+  // deeply-nested client-rendered markup) was tripping node-html-parser's
+  // "Maximum nested tags exceeded" safety guard, so this source never
+  // produced data. We only need the <script type="application/ld+json">
+  // payloads, so extract them directly from the raw HTML with a regex
+  // instead of building a full DOM tree.
+  const scriptMatches = html.matchAll(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+  );
+  for (const match of scriptMatches) {
     try {
-      const json = JSON.parse(script.text);
+      const json = JSON.parse(match[1]);
       const candidates = Array.isArray(json) ? json : [json];
       for (const candidate of candidates) {
         const node = candidate["@graph"]
