@@ -13,13 +13,22 @@ export interface RunResult {
   error: string | null;
 }
 
+// NOTE (MVP fix): a flat 50 across every component always yields a
+// weighted score of 50, which is BELOW the 65 "skip" threshold in
+// score.ts — meaning every auto-collected item was silently discarded
+// as SKIP, regardless of real evidence. We have no real demand/scarcity
+// model yet, so this is an honest placeholder, not a fabricated signal:
+// it deliberately lands just above the skip threshold so a genuinely
+// detected, evidence-backed item defaults to WATCH (visible, non-
+// actionable) instead of vanishing. Replace with real per-category
+// scoring once a demand/scarcity data source exists.
 const DEFAULT_SCORE: ScoreComponents = {
-  demand: 50,
-  scarcity: 50,
-  margin: 50,
-  access: 50,
-  logistics: 50,
-  userFit: 50,
+  demand: 70,
+  scarcity: 60,
+  margin: 60,
+  access: 70,
+  logistics: 70,
+  userFit: 60,
 };
 
 export async function runSourcePipeline(
@@ -164,8 +173,9 @@ export async function runSourcePipeline(
 
       const decisionResult = decide(ctx);
 
-      if (decisionResult.status === "SKIP") continue;
-
+      // MVP fix: persist every decision, including SKIP, so the audit
+      // trail and /soon "why we skipped this" view have real data instead
+      // of these items vanishing silently before ever reaching the DB.
       const decisionRow = await prisma.decision.create({
         data: {
           productVariantId: variant.id,
@@ -177,19 +187,24 @@ export async function runSourcePipeline(
         },
       });
       result.decisionsCreated += 1;
-      try {
-        await createFirstDetectionAlert({
-          decisionId: decisionRow.id,
-          productVariantId: variant.id,
-          brand: product.brand,
-          model: product.normalizedModel,
-          status: decisionResult.status,
-          priceUsd,
-          store: availability.sellerOfRecord ?? null,
-          primaryUrl: (availability as unknown as { url?: string | null }).url ?? null,
-        });
-      } catch (alertErr: any) {
-        console.error("Failed to create alert:", alertErr?.message ?? alertErr);
+
+      // Only notify for statuses that warrant the user's attention — SKIP
+      // is informational/audit-only and should never page anyone.
+      if (decisionResult.status !== "SKIP") {
+        try {
+          await createFirstDetectionAlert({
+            decisionId: decisionRow.id,
+            productVariantId: variant.id,
+            brand: product.brand,
+            model: product.normalizedModel,
+            status: decisionResult.status,
+            priceUsd,
+            store: availability.sellerOfRecord ?? null,
+            primaryUrl: (availability as unknown as { url?: string | null }).url ?? null,
+          });
+        } catch (alertErr: any) {
+          console.error("Failed to create alert:", alertErr?.message ?? alertErr);
+        }
       }
     }
   } catch (err: any) {
