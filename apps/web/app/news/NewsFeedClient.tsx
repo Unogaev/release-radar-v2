@@ -41,29 +41,29 @@ function brandCover(label: string): string {
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diffMs / 60000);
-  if (min < 1) return "\u0442\u043e\u043b\u044c\u043a\u043e \u0447\u0442\u043e";
-  if (min < 60) return min + " \u043c\u0438\u043d \u043d\u0430\u0437\u0430\u0434";
+  if (min < 1) return "только что";
+  if (min < 60) return min + " мин назад";
   const hrs = Math.floor(min / 60);
-  if (hrs < 24) return hrs + " \u0447 \u043d\u0430\u0437\u0430\u0434";
+  if (hrs < 24) return hrs + " ч назад";
   const days = Math.floor(hrs / 24);
-  return days + " \u0434\u043d " + (days === 1 ? "\u043d\u0430\u0437\u0430\u0434" : "\u043d\u0430\u0437\u0430\u0434");
+  return days + " дн " + (days === 1 ? "назад" : "назад");
 }
 
 export function NewsFeedClient({ items }: { items: NewsItem[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-rr-display text-[22px] tracking-[-0.01em]">\u041d\u043e\u0432\u043e\u0441\u0442\u0438 \u0438 \u0440\u0435\u043b\u0438\u0437\u044b</h1>
+        <h1 className="font-rr-display text-[22px] tracking-[-0.01em]">Новости и релизы</h1>
         <p className="mt-1 text-[13px] text-rr-text-dim">
-          NEWS / RELEASE / SIGNAL / ALERT \u2014 \u0445\u0440\u043e\u043d\u043e\u043b\u043e\u0433\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043b\u0435\u043d\u0442\u0430, \u043d\u0435 \u0441\u043c\u0435\u0448\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0441 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u043c\u0438 \u0441\u0438\u0433\u043d\u0430\u043b\u0430\u043c\u0438 \u043f\u043e\u043a\u0443\u043f\u043a\u0438.
+          NEWS / RELEASE / SIGNAL / ALERT — хронологическая лента, не смешивается с подтверждёнными сигналами покупки.
         </p>
       </div>
 
       {items.length === 0 ? (
         <div className="rounded-2xl border border-rr-hair bg-rr-surface px-6 py-10 text-center">
-          <div className="font-rr-display text-[15px]">\u041f\u043e\u043a\u0430 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435\u0442</div>
+          <div className="font-rr-display text-[15px]">Пока ничего нет</div>
           <div className="mt-1 text-[12.5px] text-rr-text-dim">
-            \u041d\u043e\u0432\u043e\u0441\u0442\u0438, \u0440\u0435\u043b\u0438\u0437\u044b \u0438 \u0430\u043b\u0435\u0440\u0442\u044b \u043f\u043e\u044f\u0432\u044f\u0442\u0441\u044f \u0437\u0434\u0435\u0441\u044c, \u043a\u0430\u043a \u0442\u043e\u043b\u044c\u043a\u043e \u0431\u0443\u0434\u0443\u0442 \u0441\u043e\u0431\u0440\u0430\u043d\u044b \u043f\u0430\u0439\u043f\u043b\u0430\u0439\u043d\u043e\u043c.
+            Новости, релизы и алерты появятся здесь, как только будут собраны пайплайном.
           </div>
         </div>
       ) : (
@@ -80,7 +80,7 @@ export function NewsFeedClient({ items }: { items: NewsItem[] }) {
                   </span>
                   <div className="mt-1 truncate text-[13px] font-medium leading-snug">{item.headline}</div>
                   <div className="mt-0.5 font-rr-mono text-[10px] text-rr-faint">
-                    {item.source} \u00b7 {timeAgo(item.observedAt)}
+                    {item.source} · {timeAgo(item.observedAt)}
                   </div>
                 </div>
               </div>
