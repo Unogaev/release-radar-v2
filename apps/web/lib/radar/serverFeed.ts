@@ -6,14 +6,16 @@ import type { NewsItem } from "./types";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
-  [DecisionStatus.APPLY_NOW]: { bucket: "buy", kindLabel: "now" },
   [DecisionStatus.CONTACT_DEALER]: { bucket: "buy", kindLabel: "now" },
   [DecisionStatus.SOURCE_NOW]: { bucket: "buy", kindLabel: "now" },
+  [DecisionStatus.APPLY_NOW]: { bucket: "apply", kindLabel: "now" },
   [DecisionStatus.APPLY_RESERVE]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
   [DecisionStatus.RESERVE_PICKUP]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
   [DecisionStatus.PREPARE]: { bucket: "prepare", kindLabel: "soon", extraCategory: "soon" },
-  [DecisionStatus.VERIFY]: { bucket: "prepare", kindLabel: "verify", extraCategory: "soon" },
-  [DecisionStatus.VERIFY_IN_STORE]: { bucket: "prepare", kindLabel: "verify", extraCategory: "soon" },
+  [DecisionStatus.VERIFY]: { bucket: "watch", kindLabel: "verify", extraCategory: "soon" },
+  [DecisionStatus.VERIFY_IN_STORE]: { bucket: "watch", kindLabel: "verify", extraCategory: "soon" },
+  [DecisionStatus.WATCH]: { bucket: "watch", kindLabel: "watch" },
+  [DecisionStatus.WATCH_RESTOCK]: { bucket: "watch", kindLabel: "watch" },
   [DecisionStatus.CLIENT_FIRST]: { bucket: "client", kindLabel: "client" },
 };
 

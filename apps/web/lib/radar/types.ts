@@ -1,4 +1,4 @@
-export type SignalStatus = "buy" | "prepare" | "client";
+export type SignalStatus = "buy" | "apply" | "prepare" | "watch" | "client";
 
 export type RadarCategory =
   | "now" | "soon" | "restock" | "trend" | "clearance"

@@ -5,8 +5,10 @@ import type { SignalStatus } from "@/lib/radar/types";
 import { useLanguage } from "@/lib/i18n";
 
 export const STATUS_STYLE: Record<SignalStatus, { label: string; className: string }> = {
-  buy: { label: "BUY NOW", className: "bg-rr-accent text-[#faf9f7]" },
-  prepare: { label: "PREPARE", className: "bg-[rgba(22,21,20,0.06)] text-rr-text" },
+  buy: { label: "BUY NOW", className: "bg-rr-buy text-white" },
+  apply: { label: "APPLY NOW", className: "bg-rr-apply text-white" },
+  prepare: { label: "PREPARE", className: "bg-rr-prepare text-white" },
+  watch: { label: "VERIFY / WATCH", className: "bg-[rgba(255,255,255,0.94)] text-rr-watch border border-rr-watch" },
   client: { label: "CLIENT FIRST", className: "bg-rr-client-bg text-rr-client" },
 };
 
@@ -209,14 +211,16 @@ export function ActionRow({
   variant = "card",
   primaryHref,
   disabledActions = [],
+  status,
 }: {
   onAction: (action: SignalAction) => void;
   variant?: "card" | "hero";
   /** Реальная ссылка для кнопки "Купить". Если нет — кнопка неактивна. */
   primaryHref?: string | null;
   disabledActions?: SignalAction[];
+  status?: SignalStatus;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const actionLabels: Record<SignalAction, { full: string; short: string }> = {
     buy: { full: t("action_buy"), short: t("action_buy") },
     source: { full: t("action_source_full"), short: t("action_source_short") },
@@ -228,7 +232,19 @@ export function ActionRow({
   return (
     <div className="mt-auto flex flex-wrap gap-2 pt-1">
       {order.map((action) => {
-        const label = hero ? actionLabels[action].full : actionLabels[action].short;
+        const statusCta: Record<string, { ru: string; en: string }> = {
+          buy: { ru: "Купить сейчас", en: "Buy now" },
+          apply: { ru: "Подать заявку", en: "Apply now" },
+          prepare: { ru: "Подготовиться", en: "Prepare" },
+          watch: { ru: "Проверить", en: "Verify" },
+          client: { ru: "Найти клиента", en: "Find client" },
+        };
+        const label =
+          action === "buy" && status && statusCta[status]
+            ? statusCta[status][lang === "en" ? "en" : "ru"]
+            : hero
+            ? actionLabels[action].full
+            : actionLabels[action].short;
         const primary = action === "buy";
         const disabled = disabledActions.includes(action) || (primary && !primaryHref);
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";

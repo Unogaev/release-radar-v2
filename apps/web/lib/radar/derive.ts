@@ -1,6 +1,6 @@
 import type { DerivedSignal, Signal, SignalStatus } from "./types";
 
-const PRIORITY: Record<SignalStatus, number> = { buy: 0, prepare: 1, client: 2 };
+const PRIORITY: Record<SignalStatus, number> = { buy: 0, apply: 1, prepare: 2, watch: 3, client: 4 };
 
 export function derive(signal: Signal): DerivedSignal {
   const hasNumbers = signal.cost !== null && signal.expectedResale !== null;
