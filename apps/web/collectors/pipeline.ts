@@ -3,7 +3,7 @@ import { SourceAdapter } from "@adapters/SourceAdapter";
 import { classifyEvidenceLevel } from "@domain/evidence/ladder";
 import { AvailabilityEvidence } from "@domain/evidence/types";
 import { decide, DecisionContext, requiresClientFirstOverride } from "@domain/decision/decisionEngine";
-import { createFirstDetectionAlert } from "../lib/notifications/alerts";
+import { createFirstDetectionAlert, createPriceStatusChangeAlert, createUnexpectedRestockAlert } from "../lib/notifications/alerts";
 import { ScoreComponents } from "@domain/scoring/score";
 
 export interface RunResult {
@@ -76,6 +76,15 @@ export async function runSourcePipeline(
           data: { productId: product.id, variantLabel: best.variant ?? "default" },
         });
       }
+
+      const previousAvailability = await prisma.availabilityCheck.findFirst({
+        where: { productVariantId: variant.id },
+        orderBy: { checkedAt: "desc" },
+      });
+      const previousDecision = await prisma.decision.findFirst({
+        where: { productVariantId: variant.id },
+        orderBy: { createdAt: "desc" },
+      });
 
       const availability: AvailabilityEvidence = await adapter.checkAvailability(
         { productVariantId: variant.id, sellerId: "unknown" },
@@ -192,7 +201,7 @@ export async function runSourcePipeline(
       // is informational/audit-only and should never page anyone.
       if (decisionResult.status !== "SKIP") {
         try {
-          await createFirstDetectionAlert({
+          const alertInput = {
             decisionId: decisionRow.id,
             productVariantId: variant.id,
             brand: product.brand,
@@ -201,7 +210,18 @@ export async function runSourcePipeline(
             priceUsd,
             store: availability.sellerOfRecord ?? null,
             primaryUrl: (availability as unknown as { url?: string | null }).url ?? null,
-          });
+          };
+          const wasUnavailable = previousAvailability &&
+            previousAvailability.ctaState !== "enabled" &&
+            previousAvailability.checkoutState !== "reached_checkout";
+          const isAvailable = availability.ctaState === "enabled" || availability.checkoutState === "reached_checkout";
+          const previousPrice = previousAvailability?.priceUsd ?? null;
+          const priceChanged = previousPrice !== null && priceUsd !== null && Math.abs(previousPrice - priceUsd) >= 0.01;
+          const statusChanged = previousDecision && previousDecision.status !== decisionResult.status;
+
+          if (wasUnavailable && isAvailable) await createUnexpectedRestockAlert(alertInput);
+          else if (priceChanged || statusChanged) await createPriceStatusChangeAlert(alertInput);
+          else await createFirstDetectionAlert(alertInput);
         } catch (alertErr: any) {
           console.error("Failed to create alert:", alertErr?.message ?? alertErr);
         }

@@ -19,7 +19,7 @@ async function getOwnerUserId(): Promise<string | null> {
   return owner?.id ?? null;
 }
 
-export async function createFirstDetectionAlert(input: CreateAlertInput): Promise<void> {
+async function createSignalAlert(input: CreateAlertInput, stage: NotificationStage, dedupeSuffix?: string): Promise<void> {
   const userId = await getOwnerUserId();
   if (!userId) {
     // Honest no-op: no owner account exists yet (seedOwner.ts not run), so there is
@@ -27,8 +27,7 @@ export async function createFirstDetectionAlert(input: CreateAlertInput): Promis
     return;
   }
 
-  const stage: NotificationStage = "first_detection";
-  const dedupeKey = input.productVariantId + ":" + stage;
+  const dedupeKey = input.productVariantId + ":" + stage + (dedupeSuffix ? ":" + dedupeSuffix : "");
 
   const existing = await prisma.alert.findFirst({
     where: { decisionId: input.decisionId, channel: "browser", dedupeKey },
@@ -62,6 +61,18 @@ export async function createFirstDetectionAlert(input: CreateAlertInput): Promis
     tag: dedupeKey,
   });
   if (delivery.sent > 0) await prisma.alert.update({ where: { id: alert.id }, data: { sentAt: new Date() } });
+}
+
+export async function createFirstDetectionAlert(input: CreateAlertInput): Promise<void> {
+  return createSignalAlert(input, "first_detection");
+}
+
+export async function createUnexpectedRestockAlert(input: CreateAlertInput): Promise<void> {
+  return createSignalAlert(input, "unexpected_restock", input.decisionId);
+}
+
+export async function createPriceStatusChangeAlert(input: CreateAlertInput): Promise<void> {
+  return createSignalAlert(input, "price_status_change", input.decisionId);
 }
 
 function reminderStage(hoursLeft: number): NotificationStage | null {
