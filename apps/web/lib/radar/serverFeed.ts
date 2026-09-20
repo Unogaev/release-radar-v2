@@ -34,6 +34,102 @@ function titleCase(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * The generic RSS adapter (editorial blogs like PlayStation Blog / Xbox
+ * Wire) has no product-identification step at all: identify() just copies
+ * the article headline into `model` (see collectors/genericAdapter.ts).
+ * That headline still goes through the same pipeline as a real product and
+ * can end up with a WATCH decision, which then shows up on /now looking
+ * like an actionable product card even though it's just news.
+ *
+ * A row is a genuinely tracked product only if at least ONE independent
+ * piece of real-world verification exists for it: a confirmed identifier
+ * (SKU/reference), a confirmed seller of record, a confirmed price, or an
+ * officially confirmed release event. Pure RSS guesses have none of these —
+ * the raw article itself is still shown correctly on /news.
+ */
+function isTrackedProduct(pv: {
+  identifiers: { kind: string; value: string }[];
+  releaseEvents: { id: string }[];
+}, check: { sellerOfRecord: string | null; priceUsd: number | null } | undefined): boolean {
+  return (
+    pv.identifiers.length > 0 ||
+    Boolean(check?.sellerOfRecord) ||
+    check?.priceUsd != null ||
+    pv.releaseEvents.length > 0
+  );
+}
+
+function pickIdentifier(
+  identifiers: { kind: string; value: string }[],
+  match: (kindLower: string) => boolean
+): string | null {
+  return identifiers.find((i) => match(i.kind.toLowerCase()))?.value ?? null;
+}
+
+const MISSING_LABEL: Record<string, { ru: string; en: string }> = {
+  price: { ru: "цена", en: "price" },
+  photo: { ru: "фото", en: "photo" },
+  link: { ru: "ссылка на магазин", en: "store link" },
+  cta: { ru: "подтверждённая кнопка покупки", en: "confirmed buy button" },
+};
+
+function buildWhy(
+  bucket: SignalStatus,
+  downgraded: boolean,
+  missing: string[],
+  store: string | null,
+  confidence: number
+): { ru: string; en: string } {
+  if (downgraded) {
+    const ru = missing.map((m) => MISSING_LABEL[m]?.ru ?? m).join(", ");
+    const en = missing.map((m) => MISSING_LABEL[m]?.en ?? m).join(", ");
+    return {
+      ru: `Не хватает подтверждённых данных (${ru}) — сигнал переведён в режим наблюдения, чтобы не вводить в заблуждение.`,
+      en: `Missing confirmed data (${en}) — shown as Watch instead of an action so it doesn't mislead you.`,
+    };
+  }
+  const at = { ru: store ? ` у ${store}` : "", en: store ? ` at ${store}` : "" };
+  switch (bucket) {
+    case "buy":
+      return {
+        ru: `Товар подтверждён в наличии${at.ru}, цена и ссылка на оформление проверены.`,
+        en: `Confirmed in stock${at.en} — price and checkout link verified.`,
+      };
+    case "apply":
+      return {
+        ru: `Заявка/лист ожидания открыты${at.ru} — можно податься прямо сейчас.`,
+        en: `Application/waitlist is open${at.en} — you can apply right now.`,
+      };
+    case "prepare":
+      return {
+        ru: "Дата подтверждена официально, продажи ещё не начались — есть время подготовиться.",
+        en: "Date is officially confirmed, sales haven't started yet — time to prepare.",
+      };
+    case "client":
+      return {
+        ru: "Высокая стоимость или риск по этому товару — сначала нужен подтверждённый клиент.",
+        en: "High value or risk on this item — a confirmed client is needed before acting.",
+      };
+    case "watch":
+    default:
+      return {
+        ru: `Пока недостаточно подтверждённых данных для действия (уверенность ${confidence}%) — сигнал в режиме наблюдения.`,
+        en: `Not enough confirmed data yet to act (confidence ${confidence}%) — this signal is in watch mode.`,
+      };
+  }
+}
+
+function buildFactors(downgraded: boolean, missing: string[], confidence: number): { ru: string[]; en: string[] } {
+  if (downgraded) {
+    return {
+      ru: [`Нет данных: ${missing.map((m) => MISSING_LABEL[m]?.ru ?? m).join(", ")}`],
+      en: [`Missing: ${missing.map((m) => MISSING_LABEL[m]?.en ?? m).join(", ")}`],
+    };
+  }
+  return { ru: [`Уверенность ${confidence}%`], en: [`Confidence ${confidence}%`] };
+}
+
 export async function getRealFeed(): Promise<FeedPayload> {
   const statuses = Object.keys(STATUS_MAP);
 
@@ -58,6 +154,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const signals: Signal[] = await Promise.all(
     decisions
       .filter((d) => STATUS_MAP[d.status])
+      .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
       .map(async (d) => {
         const map = STATUS_MAP[d.status];
         const pv = d.productVariant;
@@ -77,27 +174,63 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const model = titleCase(product.normalizedModel);
         const imageUrl = (await getProductImage(brand, model)) ?? undefined;
 
+        // Real acquisition cost = the confirmed retail/checkout price. No fees or
+        // taxes are modeled, so cost never differs from retail — never fabricated.
+        const retail = check?.priceUsd ?? null;
+        const cost = retail;
+        const ctaConfirmed = check?.ctaState === "enabled";
+        const primaryUrl = check?.url ?? null;
+
+        const sku = pickIdentifier(pv.identifiers, (k) => k.includes("sku")) ?? "—";
+        const reference =
+          pickIdentifier(pv.identifiers, (k) => /ref|upc|mpn|model/.test(k)) ?? "—";
+
+        // Honesty gate: an actionable (buy/apply) card without a confirmed price,
+        // photo, working store link or (for "buy") a confirmed active CTA is not
+        // a finished, trustworthy card — show it as WATCH instead of pretending
+        // it's ready to act on.
+        let bucket = map.bucket;
+        let kindLabel = map.kindLabel;
+        const missing: string[] = [];
+        if (bucket === "buy" || bucket === "apply") {
+          if (retail === null) missing.push("price");
+          if (!imageUrl) missing.push("photo");
+          if (!primaryUrl) missing.push("link");
+          if (bucket === "buy" && !ctaConfirmed) missing.push("cta");
+        }
+        const downgraded = missing.length > 0;
+        if (downgraded) {
+          bucket = "watch";
+          kindLabel = "watch";
+        }
+
+        const why = buildWhy(bucket, downgraded, missing, check?.sellerOfRecord ?? null, d.evidenceConfidence);
+        const factors = buildFactors(downgraded, missing, d.evidenceConfidence);
+
         return {
           id: d.id,
-          status: map.bucket,
-          kindLabel: map.kindLabel,
+          status: bucket,
+          kindLabel,
           categories,
           brand,
           model,
-          reference: pv.identifiers[0]?.value ?? "—",
-          sku: pv.identifiers[1]?.value ?? pv.identifiers[0]?.value ?? "—",
+          reference,
+          sku,
           imageUrl,
           imageHint: `${brand} ${model}`,
-          retail: null,
-          cost: null,
+          retail,
+          cost,
           expectedResale,
           store: check?.sellerOfRecord ?? "—",
           stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
-          primaryUrl: check?.url ?? null,
+          primaryUrl,
           checkedAt: (check?.checkedAt ?? d.createdAt).toISOString(),
           launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
-          why: d.rationale,
-          factors: d.blockedReasons.length ? d.blockedReasons : [`Confidence ${d.evidenceConfidence}%`],
+          ctaConfirmed,
+          why: why.ru,
+          whyEn: why.en,
+          factors: factors.ru,
+          factorsEn: factors.en,
         } satisfies Signal;
       })
   );

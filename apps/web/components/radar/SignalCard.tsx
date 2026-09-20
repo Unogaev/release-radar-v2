@@ -35,6 +35,12 @@ export function SignalCard({
 }) {
   const { t, lang } = useLanguage();
   const left = now === null ? null : secondsUntil(signal.launchAt, now);
+  const hasRefOrSku = signal.reference !== "—" || signal.sku !== "—";
+  const isLiveConfirmed = signal.status === "buy" && signal.ctaConfirmed;
+  const rawCountdown = left === null ? "—" : countdownLabel(left);
+  const countdown = rawCountdown === "LIVE" && !isLiveConfirmed ? t("countdown_started") : rawCountdown;
+  const why = lang === "en" ? signal.whyEn : signal.why;
+  const factors = lang === "en" ? signal.factorsEn : signal.factors;
 
   return (
     <article className="flex flex-col self-start bg-rr-surface transition-colors hover:bg-rr-surface-hi">
@@ -43,7 +49,7 @@ export function SignalCard({
           <StatusBadge status={signal.status} />
         </div>
         <div className="absolute right-[18px] top-[18px] bg-[rgba(11,10,9,0.62)] px-2.5 py-[5px]">
-          <Countdown secondsLeft={left} label={left === null ? "—" : countdownLabel(left)} />
+          <Countdown secondsLeft={left} label={countdown} />
         </div>
       </ImageFrame>
 
@@ -55,9 +61,13 @@ export function SignalCard({
           <h2 className="text-pretty font-rr-display text-[21px] sm:text-[27px] leading-[1.1] tracking-[-0.008em]">
             {signal.model}
           </h2>
-          <div className="mt-[9px] font-rr-mono text-[10.5px] text-rr-stencil">
-            REF {signal.reference} · SKU {signal.sku}
-          </div>
+          {hasRefOrSku && (
+            <div className="mt-[9px] font-rr-mono text-[10.5px] text-rr-stencil">
+              {signal.reference !== "—" && `${t("ref_sku_ref")} ${signal.reference}`}
+              {signal.reference !== "—" && signal.sku !== "—" && " · "}
+              {signal.sku !== "—" && `${t("ref_sku_sku")} ${signal.sku}`}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-x-[26px] gap-y-4">
@@ -87,9 +97,14 @@ export function SignalCard({
           checked={now === null ? t("checked_recently") : checkedLabel(signal.checkedAt, now, lang)}
         />
 
-        {showWhy && <WhyBlock why={signal.why} factors={signal.factors} />}
+        {showWhy && <WhyBlock why={why} factors={factors} />}
 
-        <ActionRow onAction={(a) => onAction(signal.id, a)} primaryHref={signal.primaryUrl} status={signal.status} />
+        <ActionRow
+          onAction={(a) => onAction(signal.id, a)}
+          primaryHref={signal.primaryUrl}
+          status={signal.status}
+          ctaConfirmed={signal.ctaConfirmed}
+        />
       </div>
     </article>
   );

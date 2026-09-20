@@ -1,6 +1,6 @@
 export function money(value: number | null): string {
   if (value === null) return "—";
-  return "€" + Math.round(value).toLocaleString("ru-RU").replace(/ /g, " ");
+  return "$" + Math.round(value).toLocaleString("ru-RU").replace(/ /g, " ");
 }
 
 export function signedMoney(value: number | null): string {

@@ -29,8 +29,15 @@ export interface Signal {
   checkedAt: string;
   launchAt: string;
 
+  /** true only when the store's own buy button is confirmed active (ctaState "enabled"). */
+  ctaConfirmed: boolean;
+
+  /** Russian explanation (default UI language). */
   why: string;
+  /** English explanation, shown when the UI language is switched to EN. */
+  whyEn: string;
   factors: string[];
+  factorsEn: string[];
 }
 
 export interface DerivedSignal extends Signal {

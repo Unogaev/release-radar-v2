@@ -176,6 +176,7 @@ export function ImageFrame({
   className?: string;
   children?: ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       className={`relative flex overflow-hidden bg-rr-frame p-[18px] self-start ${
@@ -199,7 +200,7 @@ export function ImageFrame({
       {!src && (
         <div className="flex flex-col items-center gap-2 text-center px-6">
           <span className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-stencil">
-            {"Фото не найдено"}
+            {t("photo_not_found")}
           </span>
           {hint && (
             <span className="max-w-[26ch] text-[11px] leading-snug text-rr-faint">{hint}</span>
@@ -219,6 +220,7 @@ export function ActionRow({
   primaryHref,
   disabledActions = [],
   status,
+  ctaConfirmed,
 }: {
   onAction: (action: SignalAction) => void;
   variant?: "card" | "hero";
@@ -226,6 +228,8 @@ export function ActionRow({
   primaryHref?: string | null;
   disabledActions?: SignalAction[];
   status?: SignalStatus;
+  /** Для status="buy": кнопка активна только если магазин подтвердил рабочий CTA. */
+  ctaConfirmed?: boolean;
 }) {
   const { t, lang } = useLanguage();
   const actionLabels: Record<SignalAction, { full: string; short: string }> = {
@@ -253,7 +257,9 @@ export function ActionRow({
             ? actionLabels[action].full
             : actionLabels[action].short;
         const primary = action === "buy";
-        const disabled = disabledActions.includes(action) || (primary && !primaryHref);
+        const buyNotConfirmed = status === "buy" && ctaConfirmed === false;
+        const disabled =
+          disabledActions.includes(action) || (primary && (!primaryHref || buyNotConfirmed));
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
         const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
 
