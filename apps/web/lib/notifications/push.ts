@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createECDH, createHash, createHmac } from "crypto";
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 
@@ -10,12 +10,38 @@ export type BrowserPushSubscription = {
 
 type PushPayload = { title: string; body: string; url?: string; tag?: string };
 
+type VapidKeys = { publicKey: string; privateKey: string };
+
+function base64Url(value: Buffer): string {
+  return value.toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+function vapidKeys(): VapidKeys | null {
+  if (process.env.WEB_PUSH_PUBLIC_KEY && process.env.WEB_PUSH_PRIVATE_KEY) {
+    return { publicKey: process.env.WEB_PUSH_PUBLIC_KEY, privateKey: process.env.WEB_PUSH_PRIVATE_KEY };
+  }
+  const serverSecret = process.env.NEXTAUTH_SECRET
+    ?? process.env.AUTH_SECRET
+    ?? process.env.MOWALOLA_CRON_SECRET
+    ?? process.env.CRON_SECRET;
+  if (!serverSecret) return null;
+
+  // Domain-separated derivation keeps the VAPID identity stable without storing
+  // another production secret. Only the public point is ever sent to a browser.
+  const privateKey = createHmac("sha256", serverSecret)
+    .update("release-radar:web-push:v1")
+    .digest();
+  const ecdh = createECDH("prime256v1");
+  ecdh.setPrivateKey(privateKey);
+  return { publicKey: base64Url(ecdh.getPublicKey(undefined, "uncompressed")), privateKey: base64Url(privateKey) };
+}
+
 export function pushConfigured(): boolean {
-  return Boolean(process.env.WEB_PUSH_PUBLIC_KEY && process.env.WEB_PUSH_PRIVATE_KEY);
+  return vapidKeys() !== null;
 }
 
 export function pushPublicKey(): string | null {
-  return process.env.WEB_PUSH_PUBLIC_KEY ?? null;
+  return vapidKeys()?.publicKey ?? null;
 }
 
 export function subscriptionId(endpoint: string): string {
@@ -23,11 +49,12 @@ export function subscriptionId(endpoint: string): string {
 }
 
 function configureWebPush(): boolean {
-  if (!pushConfigured()) return false;
+  const keys = vapidKeys();
+  if (!keys) return false;
   webpush.setVapidDetails(
     process.env.WEB_PUSH_SUBJECT ?? "mailto:eunogaev@gmail.com",
-    process.env.WEB_PUSH_PUBLIC_KEY as string,
-    process.env.WEB_PUSH_PRIVATE_KEY as string
+    keys.publicKey,
+    keys.privateKey
   );
   return true;
 }
