@@ -42,6 +42,25 @@ export async function getSoonEvents(userId: string) {
   });
 }
 
+export async function getCalendarEvents(userId: string) {
+  const rangeStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const rangeEnd = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+  return prisma.releaseEvent.findMany({
+    where: {
+      startAtUtc: { gte: rangeStart, lte: rangeEnd },
+    },
+    orderBy: { startAtUtc: "asc" },
+    include: {
+      productVariant: {
+        include: {
+          product: true,
+          decisions: { orderBy: { createdAt: "desc" }, take: 1 },
+        },
+      },
+    },
+  });
+}
+
 export async function getRadarSignals() {
   // НА РАДАРЕ: official announcements without open sales, first-generation
   // categories, athlete/celebrity debuts, potential post-release deficit —
