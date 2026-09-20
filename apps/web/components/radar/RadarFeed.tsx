@@ -73,7 +73,9 @@ export function RadarFeed({
           >
             {t("nav_menu")}
           </Link>
-          <Link
+          <Link href="/notifications" className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(22,21,20,0.05)] text-[11px] font-rr-mono uppercase" aria-label="Alerts">Alt</Link>
+            <div className="hidden md:flex items-center gap-5">
+              <Link
             href="/now/add"
             className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-accent transition-colors hover:text-rr-accent-hi"
           >
@@ -108,6 +110,7 @@ export function RadarFeed({
           <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#161514] font-rr-mono text-[10px] tracking-[0.08em] text-[#efece7]">
             AK
           </span>
+            </div>
         </div>
       </header>
 
