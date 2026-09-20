@@ -17,12 +17,14 @@ import {
   Settings,
   Plus,
   LogOut,
+  Newspaper,
 } from "lucide-react";
 
 const SECTIONS = [
   { href: "/now", key: "nav_command_center", icon: LayoutDashboard },
   { href: "/radar", key: "nav_live_signals", icon: Radio },
   { href: "/soon", key: "nav_upcoming", icon: Clock },
+  { href: "/news", key: "nav_news", icon: Newspaper },
   { href: "/calendar", key: "nav_calendar", icon: Calendar },
   { href: "/market", key: "nav_market", icon: TrendingUp },
   { href: "/sources", key: "nav_sources", icon: RadioTower },
