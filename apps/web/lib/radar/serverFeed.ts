@@ -151,6 +151,16 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
+  const BUCKET_LABEL: Record<string, string> = { buy: "BUY NOW", apply: "APPLY NOW" };
+
+  const signalNewsSource = signals.filter((s) => s.status === "buy" || s.status === "apply").slice(0, 10);
+
+  const recentAlerts = await prisma.alert.findMany({
+    where: { channel: "browser", NOT: { dedupeKey: { endsWith: ":first_detection" } } },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+
   const newsItems: NewsItem[] = [
     ...releaseVariants.map((v) => ({
       id: "release:" + v.id,
@@ -163,6 +173,35 @@ export async function getRealFeed(): Promise<FeedPayload> {
       observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
     })),
+    ...signalNewsSource.map((s) => ({
+      id: "signal:" + s.id,
+      kind: "SIGNAL" as const,
+      headline: s.brand + " " + s.model + " \u2014 " + (BUCKET_LABEL[s.status] ?? s.status.toUpperCase()),
+      brand: s.brand,
+      model: s.model,
+      source: s.store,
+      sourceUrl: s.primaryUrl ?? null,
+      observedAt: s.checkedAt,
+      launchAt: s.launchAt,
+    })),
+    ...recentAlerts.map((a) => {
+      let headline = "\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u0441\u0438\u0433\u043d\u0430\u043b\u0443";
+      try {
+        const parsed = JSON.parse(a.payload) as { title?: string };
+        if (parsed.title) headline = parsed.title;
+      } catch {
+        /* keep honest fallback text */
+      }
+      return {
+        id: "alert:" + a.id,
+        kind: "ALERT" as const,
+        headline,
+        source: "Release Radar",
+        sourceUrl: null,
+        observedAt: a.createdAt.toISOString(),
+        launchAt: null,
+      };
+    }),
     ...newsSignals.map((s) => ({
       id: "news:" + s.id,
       kind: "NEWS" as const,
@@ -172,7 +211,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       observedAt: s.observedAt.toISOString(),
       launchAt: null,
     })),
-  ];
+  ].sort((a, b) => new Date(b.observedAt).getTime() - new Date(a.observedAt).getTime());
 
   return {
     signals,
