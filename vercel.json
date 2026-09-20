@@ -1,6 +1,6 @@
 {
   "crons": [
-    { "path": "/api/cron/mowalola", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/collect", "schedule": "*/15 * * * *" }
+    { "path": "/api/cron/collect", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/mowalola", "schedule": "0 14 * * *" }
   ]
 }

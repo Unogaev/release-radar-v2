@@ -4,8 +4,12 @@ import { createGenericRssAdapter, createStructuredDataAdapter } from "../../../.
 import { runSourcePipeline } from "../../../../collectors/pipeline";
 
 export async function GET(req: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronSecret) {
+    return NextResponse.json({ error: "cron_not_configured" }, { status: 503 });
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
