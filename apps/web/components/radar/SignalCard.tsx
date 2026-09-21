@@ -44,7 +44,7 @@ export function SignalCard({
   const factors = lang === "en" ? signal.factorsEn : signal.factors;
 
   return (
-    <article className="flex flex-col self-start bg-rr-surface transition-colors hover:bg-rr-surface-hi">
+    <article className="flex flex-col self-start overflow-hidden rounded-[24px] border border-white/10 bg-rr-surface shadow-[0_24px_70px_rgba(0,0,0,.24)] transition hover:-translate-y-0.5 hover:border-rr-accent/25 hover:bg-rr-surface-hi">
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[210px] sm:h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />
@@ -70,6 +70,21 @@ export function SignalCard({
               {signal.sku !== "—" && `${t("ref_sku_sku")} ${signal.sku}`}
             </div>
           )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full border border-rr-accent/20 bg-rr-accent-soft px-2.5 py-1 font-rr-mono text-[8.5px] uppercase tracking-[0.12em] text-rr-accent">
+              {signal.store}
+            </span>
+            {signal.ctaConfirmed && (
+              <span className="rounded-full border border-rr-accent/20 bg-rr-accent-soft px-2.5 py-1 font-rr-mono text-[8.5px] uppercase tracking-[0.12em] text-rr-accent">
+                CTA verified
+              </span>
+            )}
+            {signal.completedSalesCount > 0 && (
+              <span className="rounded-full border border-white/10 bg-white/[.035] px-2.5 py-1 font-rr-mono text-[8.5px] uppercase tracking-[0.12em] text-rr-text-dim">
+                {signal.completedSalesCount} completed
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-end gap-x-[26px] gap-y-4">

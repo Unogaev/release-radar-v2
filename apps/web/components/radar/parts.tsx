@@ -19,7 +19,7 @@ export const MONO_LABEL =
 export function StatusBadge({ status }: { status: SignalStatus }) {
   const s = STATUS_STYLE[status];
   return (
-    <span className={`px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] ${s.className}`}>
+    <span className={`rounded-full px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] ${s.className}`}>
       {s.label}
     </span>
   );
@@ -27,7 +27,7 @@ export function StatusBadge({ status }: { status: SignalStatus }) {
 
 export function KindBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="bg-[rgba(11,10,9,0.6)] px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-[#f1eee8]">
+    <span className="rounded-full bg-[rgba(11,10,9,0.6)] px-3 py-[7px] font-rr-mono text-[9.5px] uppercase tracking-[0.2em] text-[#f1eee8]">
       {children}
     </span>
   );
@@ -312,7 +312,7 @@ export function ActionRow({
       ? `font-semibold transition-colors ${sizing} ${
           disabled
             ? "opacity-40 cursor-not-allowed bg-transparent border border-rr-accent text-rr-accent"
-            : "border border-rr-accent text-rr-accent hover:bg-rr-accent hover:text-[#faf9f7]"
+            : "border border-rr-accent bg-rr-accent text-[#07130d] shadow-[0_0_34px_rgba(54,217,138,.14)] hover:bg-rr-accent-hi"
         }`
           : `border border-rr-hair transition-colors ${secondarySizing} ${
               disabled

@@ -31,7 +31,7 @@ body {
 
 * { box-sizing: border-box; }
 
-::selection { background: rgba(198, 166, 107, 0.32); color: white; }
+::selection { background: rgba(54, 217, 138, 0.34); color: white; }
 
 ::-webkit-scrollbar { width: 10px; height: 8px; }
 ::-webkit-scrollbar-track { background: #0a0c0f; }

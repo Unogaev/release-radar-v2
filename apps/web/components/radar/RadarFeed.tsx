@@ -63,7 +63,7 @@ function NewsCard({ item, lang, featured = false }: { item: NewsItem; lang: "ru"
       <div className={`flex flex-col p-5 ${featured ? "justify-end sm:p-7" : ""}`}>
         <h3 className={`line-clamp-3 font-semibold leading-tight text-white ${featured ? "text-[22px] sm:text-[26px]" : "text-[17px]"}`}>{headline}</h3>
         <div className="mt-5 flex items-center justify-between gap-3 text-xs text-white/45"><span className="truncate">{item.source}</span><span className="shrink-0">{observed.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", { month: "short", day: "numeric" })}</span></div>
-        {item.sourceUrl && <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#c6a66b]">{lang === "ru" ? "Открыть источник" : "Open source"}<ArrowUpRight size={13} /></a>}
+        {item.sourceUrl && <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#36d98a]">{lang === "ru" ? "Открыть источник" : "Open source"}<ArrowUpRight size={13} /></a>}
       </div>
     </article>
   );
@@ -74,7 +74,7 @@ function MobileNewsRail({ items, lang }: { items: NewsItem[]; lang: "ru" | "en" 
   return (
     <section className="mt-7 border-y border-white/10 py-6 lg:hidden">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <div><div className="text-[9px] font-semibold uppercase tracking-[.2em] text-[#c6a66b]">Market wire</div><h2 className="mt-1 font-rr-editorial text-[28px] font-semibold">{lang === "ru" ? "Новости рынка" : "Market news"}</h2></div>
+        <div><div className="text-[9px] font-semibold uppercase tracking-[.2em] text-[#36d98a]">Market wire</div><h2 className="mt-1 font-rr-editorial text-[28px] font-semibold">{lang === "ru" ? "Новости рынка" : "Market news"}</h2></div>
         <Link href="/news" className="mb-1 shrink-0 text-[11px] font-semibold text-white/60">{lang === "ru" ? "Все" : "All"} ↗</Link>
       </div>
       <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -88,7 +88,7 @@ function MobileNewsRail({ items, lang }: { items: NewsItem[]; lang: "ru" | "en" 
           </a>
         ))}
       </div>
-      <Link href="/now/add" className="mt-4 flex items-center justify-between rounded-[16px] border border-[#c6a66b]/25 bg-[#c6a66b]/[.07] px-4 py-3 text-[12px] font-semibold text-[#d7bb85]"><span>{lang === "ru" ? "Увидели новинку или ресток? Пришлите скрин" : "Spotted a release or restock? Send a screenshot"}</span><ArrowUpRight size={14} /></Link>
+      <Link href="/now/add" className="mt-4 flex items-center justify-between rounded-[16px] border border-[#36d98a]/25 bg-[#36d98a]/[.07] px-4 py-3 text-[12px] font-semibold text-[#68efad]"><span>{lang === "ru" ? "Увидели новинку или ресток? Пришлите скрин" : "Spotted a release or restock? Send a screenshot"}</span><ArrowUpRight size={14} /></Link>
     </section>
   );
 }
@@ -110,15 +110,15 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
     <div className="min-h-screen bg-[#0b0b0c] font-rr-sans text-[#f3efe8]">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0b0c]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-12">
-          <div className="flex min-w-0 items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#c6a66b]/45 bg-[#c6a66b]/10 text-[#d7bb85]"><Radar size={19} strokeWidth={2} /></div><div className="min-w-0"><div className="whitespace-nowrap text-[15px] font-semibold tracking-[-0.02em]">Release Radar</div><div className="hidden text-[10px] uppercase tracking-[0.18em] text-white/35 sm:block">Private buying desk · Miami</div></div></div>
+          <div className="flex min-w-0 items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#36d98a]/45 bg-[#36d98a]/10 text-[#68efad] shadow-[0_0_28px_rgba(54,217,138,.12)]"><Radar size={19} strokeWidth={2} /></div><div className="min-w-0"><div className="whitespace-nowrap text-[15px] font-semibold tracking-[-0.02em]">Release Radar</div><div className="hidden text-[10px] uppercase tracking-[0.18em] text-white/35 sm:block">Private buying desk · Miami</div></div></div>
           <div className="flex items-center gap-2 sm:gap-3"><Link href="/radar" aria-label={lang === "ru" ? "Все разделы" : "All sections"} className="hidden h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/65 transition hover:border-white/25 hover:text-white sm:flex"><Menu size={16} /></Link><Link href="/now/add" aria-label={lang === "ru" ? "Добавить сигнал" : "Add signal"} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#ece5d9] px-3 text-xs font-bold text-[#171513] sm:gap-2 sm:px-3.5"><Plus size={14} /><span>{c.submit}</span></Link><Link href="/news" aria-label={c.allNews} className="hidden h-9 items-center gap-2 rounded-full border border-white/10 px-2.5 text-xs text-white/65 transition hover:border-white/25 hover:text-white sm:inline-flex lg:px-4"><Newspaper size={14} /><span className="hidden lg:inline">{c.allNews}</span></Link><Link href="/notifications" aria-label={c.alerts} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/65"><Bell size={16} /></Link><div className="hidden rounded-full border border-white/10 p-1 text-[10px] font-bold sm:flex">{(["ru", "en"] as const).map((l) => <button key={l} onClick={() => setLang(l)} className={`rounded-full px-2.5 py-1 ${lang === l ? "bg-[#ece5d9] text-[#171513]" : "text-white/40"}`}>{l.toUpperCase()}</button>)}</div></div>
         </div>
         <div className="border-t border-white/[.055] bg-[#0e0e0f]">
           <div className="mx-auto flex max-w-[1500px] items-center gap-4 overflow-hidden px-4 py-2.5 sm:px-8 lg:px-12">
-            <Link href="/news" className="shrink-0 text-[9px] font-bold uppercase tracking-[.2em] text-[#c6a66b]">{lang === "ru" ? "Лента рынка" : "Market wire"}</Link>
+            <Link href="/news" className="shrink-0 text-[9px] font-bold uppercase tracking-[.2em] text-[#36d98a]">{lang === "ru" ? "Лента рынка" : "Market wire"}</Link>
             <div className="h-3 w-px shrink-0 bg-white/10" />
             <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {news.slice(0, 4).map((item) => <a key={item.id} href={item.sourceUrl ?? "/news"} target={item.sourceUrl ? "_blank" : undefined} rel={item.sourceUrl ? "noreferrer" : undefined} className="flex shrink-0 items-center gap-2 text-[11px] text-white/58 transition hover:text-white"><span className="max-w-[280px] truncate sm:max-w-[420px]">{decodeHtmlEntities(item.headline)}</span><ArrowUpRight size={11} className="text-[#c6a66b]" /></a>)}
+              {news.slice(0, 4).map((item) => <a key={item.id} href={item.sourceUrl ?? "/news"} target={item.sourceUrl ? "_blank" : undefined} rel={item.sourceUrl ? "noreferrer" : undefined} className="flex shrink-0 items-center gap-2 text-[11px] text-white/58 transition hover:text-white"><span className="max-w-[280px] truncate sm:max-w-[420px]">{decodeHtmlEntities(item.headline)}</span><ArrowUpRight size={11} className="text-[#36d98a]" /></a>)}
               {news.length === 0 && <span className="text-[11px] text-white/35">{c.emptyNews}</span>}
             </div>
           </div>

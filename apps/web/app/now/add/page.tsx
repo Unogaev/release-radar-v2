@@ -78,9 +78,9 @@ export default function AddSignalPage() {
 
       {!savedId && (
         <div className="flex flex-col gap-5 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
-          <div className="rounded-[18px] border border-dashed border-[#c6a66b]/35 bg-[#c6a66b]/[.05] p-5">
-            <label className="mb-3 block text-[13px] font-semibold text-[#d7bb85]">Скриншоты / фото</label>
-            <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="block w-full text-[12px] text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-[#ece5d9] file:px-4 file:py-2.5 file:text-[12px] file:font-bold file:text-[#171513]" />
+          <div className="rounded-[18px] border border-dashed border-[#36d98a]/35 bg-[#36d98a]/[.05] p-5">
+            <label className="mb-3 block text-[13px] font-semibold text-[#68efad]">Скриншоты / фото</label>
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="block w-full text-[12px] text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-[#36d98a] file:px-4 file:py-2.5 file:text-[12px] file:font-bold file:text-[#07130d]" />
             <p className="mt-3 text-[11px] leading-4 text-white/35">Можно выбрать до 5 изображений: общий вид, цена, SKU и наличие.</p>
             {files.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{files.map((selected) => <span key={`${selected.name}:${selected.size}`} className="max-w-full truncate rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/55">{selected.name}</span>)}</div>}
           </div>
@@ -93,7 +93,7 @@ export default function AddSignalPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#c6a66b]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#36d98a]/50"
             />
           </div>
           <div>
@@ -105,7 +105,7 @@ export default function AddSignalPage() {
               onChange={(e) => setComment(e.target.value)}
               rows={2}
               placeholder="Например: увидел в Instagram, проверить цену и возможность перепродажи"
-              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#c6a66b]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#36d98a]/50"
             />
           </div>
           {error && <div className="text-[12.5px] text-rr-warn">{error}</div>}
@@ -113,7 +113,7 @@ export default function AddSignalPage() {
             type="button"
             onClick={handleSubmit}
             disabled={loading || (files.length === 0 && !url)}
-            className="w-full rounded-full bg-[#ece5d9] px-5 py-3.5 text-[13px] font-bold text-[#171513] transition hover:bg-white disabled:opacity-40"
+            className="w-full rounded-full bg-[#36d98a] px-5 py-3.5 text-[13px] font-bold text-[#07130d] shadow-[0_0_30px_rgba(54,217,138,.12)] transition hover:bg-[#68efad] disabled:opacity-40"
           >
             {loading ? "Распознаю и сохраняю..." : "Отправить на проверку"}
           </button>
