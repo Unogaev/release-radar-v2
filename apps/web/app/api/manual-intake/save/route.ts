@@ -5,10 +5,39 @@ import { DecisionStatus } from "@domain/decision/types";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { brand, model, sku, category, seller, url, comment, markAsClient, confidence } = body;
+    const { brand, model, sku, category, seller, url, comment, markAsClient, confidence, attachmentNames } = body;
 
+    let manualSource = await prisma.source.findFirst({ where: { sourceType: "MANUAL" } });
+    if (!manualSource) {
+      manualSource = await prisma.source.create({
+        data: {
+          name: "Ручной ввод",
+          sourceClass: "C_signal",
+          url: "manual://intake",
+          parseVersion: "1",
+          sourceType: "MANUAL",
+          category: "other",
+        },
+      });
+    }
+
+    // A screenshot can be valuable even when vision cannot name the exact product.
+    // Keep it in the review queue instead of forcing the user to complete a long form.
     if (!brand || !model) {
-      return NextResponse.json({ error: "Бренд и модель обязательны" }, { status: 400 });
+      const details = [
+        comment && `Комментарий: ${comment}`,
+        category && `Категория: ${category}`,
+        Array.isArray(attachmentNames) && attachmentNames.length > 0 && `Файлы: ${attachmentNames.join(", ")}`,
+        "Товар распознан не полностью — требуется ручная проверка.",
+      ].filter(Boolean).join("\n");
+      const signal = await prisma.signal.create({
+        data: {
+          sourceId: manualSource.id,
+          rawText: details,
+          url: url || null,
+        },
+      });
+      return NextResponse.json({ ok: true, signalId: signal.id, queuedForReview: true });
     }
 
     const normalizedModel = String(model).trim();
@@ -33,20 +62,6 @@ export async function POST(req: NextRequest) {
     if (sku) {
       await prisma.identifier.create({
         data: { productVariantId: variant.id, kind: "sku", value: String(sku) },
-      });
-    }
-
-    let manualSource = await prisma.source.findFirst({ where: { sourceType: "MANUAL" } });
-    if (!manualSource) {
-      manualSource = await prisma.source.create({
-        data: {
-          name: "Ручной ввод",
-          sourceClass: "C_signal",
-          url: "manual://intake",
-          parseVersion: "1",
-          sourceType: "MANUAL",
-          category: "other",
-        },
       });
     }
 
