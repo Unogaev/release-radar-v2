@@ -79,7 +79,7 @@ export function NewsFeedClient({ items }: { items: NewsItem[] }) {
                 <img src={cover} alt="" referrerPolicy="no-referrer" className="h-16 w-16 flex-none rounded-xl object-cover sm:h-20 sm:w-20" />
                 <div className="min-w-0 flex-1">
                   <span className={`inline-block rounded px-1.5 py-0.5 font-rr-mono text-[8.5px] font-bold uppercase tracking-[0.06em] ${tag.className}`}>
-                    {tag.label}
+                    {tag.label}{item.category ? ` · ${item.category}` : ""}
                   </span>
                   <div className="mt-1 line-clamp-2 text-[13px] font-medium leading-snug">{decodeHtmlEntities(item.headline)}</div>
                   <div className="mt-0.5 font-rr-mono text-[10px] text-rr-faint">

@@ -276,16 +276,18 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const sourceRows = await prisma.source.findMany({
     orderBy: { lastCheckedAt: "desc" },
-    take: 8,
+    take: 60,
   });
 
   const sources: SourceHealth[] = sourceRows.map((s) => {
     const state: SourceHealth["state"] =
-      s.adapterStatus === "active" ? "ok" : s.adapterStatus === "disabled" ? "manual" : "down";
+      s.sourceType === "MANUAL" || s.adapterStatus === "manual" || s.adapterStatus === "disabled"
+        ? "manual"
+        : s.adapterStatus === "active" ? "ok" : "down";
     const detail = s.lastCheckedAt
       ? `${Math.max(0, Math.round((Date.now() - s.lastCheckedAt.getTime()) / 60000))} мин`
       : "—";
-    return { name: s.name, state, detail };
+    return { name: s.name, category: s.category, state, detail };
   });
 
   const recentDecisions = await prisma.decision.findMany({
@@ -306,17 +308,29 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const rawNewsSignals = await prisma.signal.findMany({
     where: { productVariantId: null },
     orderBy: { observedAt: "desc" },
-    take: 50,
+    take: 300,
     include: { source: true },
   });
-  const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|porsche|ferrari|lamborghini|collection|capsule|new arrivals?)\b/i;
+  const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|radeon|gpu|camera|leica|canon|nikon|fujifilm|dji|porsche|ferrari|lamborghini|electric|ev|vehicle|car|lego|brick|collectible|trading card|memorabilia|fragrance|perfume|jewelry|handbag|archive|clearance|deal|collection|capsule|new arrivals?)\b/i;
   const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
   const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
+  const seenNews = new Set<string>();
+  const perSource = new Map<string, number>();
+  const perCategory = new Map<string, number>();
   const newsSignals = rawNewsSignals.filter((signal) => {
     const headline = decodeHtmlEntities(signal.rawText ?? "");
     if (!PRODUCT_NEWS.test(headline)) return false;
-    return !ENTERTAINMENT_ONLY.test(headline) || COMMERCE_CONTEXT.test(headline);
-  }).slice(0, 18);
+    if (ENTERTAINMENT_ONLY.test(headline) && !COMMERCE_CONTEXT.test(headline)) return false;
+    const key = signal.url?.trim().toLowerCase() || headline.trim().toLowerCase().replace(/\s+/g, " ");
+    if (!key || seenNews.has(key)) return false;
+    const sourceCount = perSource.get(signal.sourceId) ?? 0;
+    const categoryCount = perCategory.get(signal.source.category) ?? 0;
+    if (sourceCount >= 4 || categoryCount >= 8) return false;
+    seenNews.add(key);
+    perSource.set(signal.sourceId, sourceCount + 1);
+    perCategory.set(signal.source.category, categoryCount + 1);
+    return true;
+  }).slice(0, 36);
 
   const releaseVariants = await prisma.productVariant.findMany({
     where: {
@@ -359,6 +373,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       brand: v.product.brand,
       model: titleCase(v.product.normalizedModel),
       source: "confirmed release",
+      category: v.product.category,
       sourceUrl: v.evidence[0]?.url ?? null,
       imageUrl: releaseVariantImages[i]?.url,
       imageSourceUrl: releaseVariantImages[i]?.sourceUrl,
@@ -372,6 +387,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       brand: s.brand,
       model: s.model,
       source: s.store,
+      category: s.categories.find((category) => !["now", "soon"].includes(category)),
       sourceUrl: s.primaryUrl ?? null,
       imageUrl: s.imageUrl,
       imageSourceUrl: s.imageSourceUrl,
@@ -391,6 +407,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         kind: "ALERT" as const,
         headline,
         source: "Release Radar",
+        category: "alerts",
         sourceUrl: null,
         observedAt: a.createdAt.toISOString(),
         launchAt: null,
@@ -401,6 +418,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       kind: (/\b(auction|sold|resale|record|profit|flipped)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
       headline: decodeHtmlEntities(s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
+      category: s.source.category,
       sourceUrl: s.url ?? null,
       imageUrl: newsSignalImages[i]?.url,
       imageSourceUrl: newsSignalImages[i]?.sourceUrl,

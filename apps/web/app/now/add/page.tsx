@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 
 type Extracted = {
@@ -30,6 +30,38 @@ export default function AddSignalPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedWithoutRecognition, setSavedWithoutRecognition] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function readJson(response: Response): Promise<Record<string, any>> {
+    const body = await response.text();
+    if (!body) return {};
+    try {
+      return JSON.parse(body) as Record<string, any>;
+    } catch {
+      throw new Error(response.ok ? "Сервер вернул некорректный ответ" : `Ошибка сервера (${response.status})`);
+    }
+  }
+
+  async function saveForReview(extracted: Extracted | null, recognitionError?: string) {
+    const saveRes = await fetch("/api/manual-intake/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(extracted ?? {}),
+        url: extracted?.url || url.trim() || null,
+        comment: [comment.trim(), recognitionError ? `Автораспознавание не завершилось: ${recognitionError}` : ""]
+          .filter(Boolean)
+          .join("\n"),
+        attachmentNames: files.map((file) => file.name),
+        markAsClient: false,
+      }),
+    });
+    const saveData = await readJson(saveRes);
+    if (!saveRes.ok) throw new Error(saveData.error || "Ошибка сохранения");
+    setSavedWithoutRecognition(!extracted);
+    setSavedId(saveData.decisionId || saveData.signalId || "saved");
+  }
 
   async function handleSubmit() {
     setError(null);
@@ -40,25 +72,21 @@ export default function AddSignalPage() {
       if (url) form.append("url", url);
       if (comment) form.append("comment", comment);
 
-      const extractRes = await fetch("/api/manual-intake/extract", { method: "POST", body: form });
-      const extractData = await extractRes.json();
-      if (!extractRes.ok) throw new Error(extractData.error || "Ошибка распознавания");
-
-      const extracted = (extractData.extracted ?? {}) as Extracted;
-      const saveRes = await fetch("/api/manual-intake/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...extracted,
-          url: extracted.url || url || null,
-          comment,
-          attachmentNames: files.map((file) => file.name),
-          markAsClient: false,
-        }),
-      });
-      const saveData = await saveRes.json();
-      if (!saveRes.ok) throw new Error(saveData.error || "Ошибка сохранения");
-      setSavedId(saveData.decisionId || saveData.signalId || "saved");
+      try {
+        const extractRes = await fetch("/api/manual-intake/extract", { method: "POST", body: form });
+        const extractData = await readJson(extractRes);
+        if (!extractRes.ok) throw new Error(extractData.error || "Ошибка распознавания");
+        await saveForReview((extractData.extracted ?? {}) as Extracted);
+      } catch (recognitionError) {
+        // Recognition is enrichment, not the intake gate. On mobile Safari, a
+        // large/odd image or a temporary vision API failure must never discard
+        // what the user submitted. The filename, link and comment are retained
+        // in the manual review queue and can be checked by a person.
+        await saveForReview(
+          null,
+          recognitionError instanceof Error ? recognitionError.message : "неизвестная ошибка"
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -80,9 +108,26 @@ export default function AddSignalPage() {
         <div className="flex flex-col gap-5 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
           <div className="rounded-[18px] border border-dashed border-[#36d98a]/35 bg-[#36d98a]/[.05] p-5">
             <label className="mb-3 block text-[13px] font-semibold text-[#68efad]">Скриншоты / фото</label>
-            <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="block w-full text-[12px] text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-[#36d98a] file:px-4 file:py-2.5 file:text-[12px] file:font-bold file:text-[#07130d]" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              onChange={(e) => {
+                setError(null);
+                setFiles(Array.from(e.target.files ?? []).slice(0, 5));
+              }}
+              className="sr-only"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex max-w-full items-center rounded-full bg-[#36d98a] px-5 py-3 text-[13px] font-bold text-[#07130d] transition hover:bg-[#68efad]"
+            >
+              {files.length ? "Изменить фото" : "Выбрать фото"}
+            </button>
             <p className="mt-3 text-[11px] leading-4 text-white/35">Можно выбрать до 5 изображений: общий вид, цена, SKU и наличие.</p>
-            {files.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{files.map((selected) => <span key={`${selected.name}:${selected.size}`} className="max-w-full truncate rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/55">{selected.name}</span>)}</div>}
+            {files.length > 0 && <div className="mt-3 grid min-w-0 gap-2">{files.map((selected) => <div key={`${selected.name}:${selected.size}`} className="min-w-0 truncate rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/55">{selected.name}</div>)}</div>}
           </div>
           <div>
             <label className="mb-1 block font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
@@ -124,7 +169,9 @@ export default function AddSignalPage() {
         <div className="flex flex-col gap-4 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
           <div className="font-rr-display text-[22px]">Отправлено на проверку</div>
           <p className="text-[13px] text-rr-text-dim">
-            Фото, ссылка и комментарий приняты. Даже если товар распознан не полностью, находка сохранена и не потеряется.
+            {savedWithoutRecognition
+              ? "Находка сохранена в ручную очередь. Автораспознавание не завершилось, но ссылка, комментарий и данные о выбранных файлах не потеряны."
+              : "Фото распознано, ссылка и комментарий приняты. Находка сохранена и не потеряется."}
           </p>
           <div className="flex gap-2">
             <Link href="/now" className="bg-rr-accent px-5 py-3 text-[12.5px] font-semibold text-[#100e0c] transition-colors hover:bg-rr-accent-hi">
@@ -137,6 +184,8 @@ export default function AddSignalPage() {
                 setFiles([]);
                 setUrl("");
                 setComment("");
+                setSavedWithoutRecognition(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
               }}
               className="border border-[rgba(241,238,232,0.18)] px-5 py-3 text-[12.5px] text-rr-faint transition-colors hover:text-rr-text"
             >

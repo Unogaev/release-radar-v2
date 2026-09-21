@@ -27,8 +27,9 @@ export default async function SourcesPage() {
       isEnabled: true,
     },
   });
-  const healthy = sources.filter((s) => s.isEnabled && s.adapterStatus === "active").length;
-  const attention = sources.filter((s) => s.isEnabled && s.adapterStatus !== "active").length;
+  const healthy = sources.filter((s) => s.isEnabled && s.sourceType !== "MANUAL" && s.adapterStatus === "active").length;
+  const manual = sources.filter((s) => s.isEnabled && s.sourceType === "MANUAL").length;
+  const attention = sources.filter((s) => s.isEnabled && s.sourceType !== "MANUAL" && s.adapterStatus !== "active").length;
 
   return (
     <div className="space-y-6">
@@ -37,8 +38,9 @@ export default async function SourcesPage() {
         <p className="mt-1 text-sm text-rr-text-dim">Реальное состояние подключённых сборщиков и время последней проверки.</p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl border border-rr-hair bg-rr-surface p-4"><div className="text-xs text-rr-muted">Работают</div><div className="mt-1 text-2xl font-semibold text-rr-ok">{healthy}</div></div>
+        <div className="rounded-2xl border border-rr-hair bg-rr-surface p-4"><div className="text-xs text-rr-muted">Ручные official</div><div className="mt-1 text-2xl font-semibold text-rr-apply">{manual}</div></div>
         <div className="rounded-2xl border border-rr-hair bg-rr-surface p-4"><div className="text-xs text-rr-muted">Требуют внимания</div><div className="mt-1 text-2xl font-semibold text-rr-risk">{attention}</div></div>
       </div>
 
@@ -50,7 +52,7 @@ export default async function SourcesPage() {
                 <a href={source.url} target="_blank" rel="noreferrer" className="font-medium text-rr-text hover:text-rr-accent">{source.name}</a>
                 <div className="mt-1 text-xs text-rr-muted">{source.category} · {source.sourceType} · trust {source.trustLevel}/5</div>
               </div>
-              <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${statusTone(source.adapterStatus, source.isEnabled)}`}>{source.isEnabled ? source.adapterStatus : "disabled"}</span>
+              <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${statusTone(source.adapterStatus, source.isEnabled)}`}>{!source.isEnabled ? "disabled" : source.sourceType === "MANUAL" ? "manual check" : source.adapterStatus}</span>
             </div>
             <div className="mt-4 grid gap-2 text-xs text-rr-text-dim sm:grid-cols-3">
               <div><span className="text-rr-muted">Проверка:</span> {source.lastCheckedAt ? formatDateEt(source.lastCheckedAt) : "—"}</div>

@@ -61,6 +61,7 @@ export interface DerivedSignal extends Signal {
 
 export interface SourceHealth {
   name: string;
+  category?: string;
   state: "ok" | "throttled" | "manual" | "down";
   detail: string;
 }
@@ -72,6 +73,7 @@ export interface NewsItem {
   brand?: string;
   model?: string;
   source: string;
+  category?: string;
   sourceUrl?: string | null;
   imageUrl?: string;
   imageSourceUrl?: string;

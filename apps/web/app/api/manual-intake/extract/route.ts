@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
@@ -57,21 +60,29 @@ ${comment ? `Комментарий пользователя: ${comment}` : ""}`
       });
     }
 
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Распознавание временно недоступно — находка будет сохранена для ручной проверки" }, { status: 503 });
+    }
+
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: contentParts as never }],
       max_tokens: 800,
+      response_format: { type: "json_object" },
     });
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+    const parsed = JSON.parse(raw);
 
     return NextResponse.json({
       extracted: { ...parsed, url: parsed.url || url || null },
     });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error("manual-intake extraction failed", e);
+    return NextResponse.json(
+      { error: "Не удалось автоматически распознать изображение — находка будет сохранена для ручной проверки" },
+      { status: 502 }
+    );
   }
 }
