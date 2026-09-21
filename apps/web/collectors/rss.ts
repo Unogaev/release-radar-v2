@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { DiscoveredItem } from "./types";
+import { decodeHtmlEntities } from "@/lib/radar/text";
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
 
@@ -29,7 +30,7 @@ export async function fetchRssItems(feedUrl: string, limit = 20): Promise<Discov
         typeof it.link === "string" ? it.link : it.link?.["@_href"] ?? it.link?.[0]?.["@_href"] ?? null;
       return {
         url: link ?? "",
-        title: String(it.title ?? "").trim(),
+        title: decodeHtmlEntities(String(it.title ?? "")),
         publishedAt: it.pubDate ?? it.published ?? it.updated ?? null,
         summary: it.description ?? it.summary ?? null,
       };

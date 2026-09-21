@@ -43,7 +43,7 @@ const FIELD_LABELS: [keyof Extracted, string][] = [
 ];
 
 export default function AddSignalPage() {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [comment, setComment] = useState("");
@@ -58,7 +58,7 @@ export default function AddSignalPage() {
     setLoading(true);
     try {
       const form = new FormData();
-      if (file) form.append("image", file);
+      files.forEach((file) => form.append("images", file));
       if (url) form.append("url", url);
       if (text) form.append("text", text);
       if (comment) form.append("comment", comment);
@@ -99,21 +99,22 @@ export default function AddSignalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-rr-bg px-11 py-10 font-rr-sans text-rr-text">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-rr-display text-[28px]">Добавить сигнал вручную</h1>
+    <div className="min-h-screen bg-[#0b0b0c] px-4 py-6 font-rr-sans text-[#f3efe8] sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-2xl">
+      <div className="mb-7 flex items-start justify-between gap-5">
+        <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.2em] text-[#c6a66b]">Manual intake</div><h1 className="font-rr-display text-[28px] leading-tight sm:text-[34px]">Прислать находку</h1><p className="mt-2 max-w-lg text-[13px] leading-5 text-white/45">Загрузи скрины новинки, рестока или поста из ленты. Радар распознает товар и сохранит его на проверку.</p></div>
         <Link href="/now" className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint hover:text-rr-text">
-          ← Назад в ленту
+          Закрыть ×
         </Link>
       </div>
 
       {!extracted && (
-        <div className="flex max-w-xl flex-col gap-4 bg-rr-surface p-6">
-          <div>
-            <label className="mb-1 block font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
-              Скриншот / фото
-            </label>
-            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-[13px]" />
+        <div className="flex flex-col gap-5 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
+          <div className="rounded-[18px] border border-dashed border-[#c6a66b]/35 bg-[#c6a66b]/[.05] p-5">
+            <label className="mb-3 block text-[13px] font-semibold text-[#d7bb85]">Скриншоты / фото</label>
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="block w-full text-[12px] text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-[#ece5d9] file:px-4 file:py-2.5 file:text-[12px] file:font-bold file:text-[#171513]" />
+            <p className="mt-3 text-[11px] leading-4 text-white/35">Можно выбрать до 5 изображений: общий вид, цена, SKU и наличие.</p>
+            {files.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{files.map((selected) => <span key={`${selected.name}:${selected.size}`} className="max-w-full truncate rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/55">{selected.name}</span>)}</div>}
           </div>
           <div>
             <label className="mb-1 block font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
@@ -124,14 +125,14 @@ export default function AddSignalPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full bg-[rgba(241,238,232,0.06)] px-3 py-2 text-[13px] outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#c6a66b]/50"
             />
           </div>
           <div>
             <label className="mb-1 block font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
               Текст (если нет фото)
             </label>
-            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} className="w-full bg-[rgba(241,238,232,0.06)] px-3 py-2 text-[13px] outline-none" />
+            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Скопируй подпись к посту или название товара" className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#c6a66b]/50" />
           </div>
           <div>
             <label className="mb-1 block font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
@@ -142,15 +143,15 @@ export default function AddSignalPage() {
               onChange={(e) => setComment(e.target.value)}
               rows={2}
               placeholder="радар это не увидел / запрос клиента / проверить restock..."
-              className="w-full bg-[rgba(241,238,232,0.06)] px-3 py-2 text-[13px] outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 text-[14px] outline-none focus:border-[#c6a66b]/50"
             />
           </div>
           {error && <div className="text-[12.5px] text-rr-warn">{error}</div>}
           <button
             type="button"
             onClick={handleExtract}
-            disabled={loading || (!file && !url && !text)}
-            className="self-start bg-rr-accent px-5 py-3 text-[12.5px] font-semibold text-[#100e0c] transition-colors hover:bg-rr-accent-hi disabled:opacity-40"
+            disabled={loading || (files.length === 0 && !url && !text)}
+            className="w-full rounded-full bg-[#ece5d9] px-5 py-3.5 text-[13px] font-bold text-[#171513] transition hover:bg-white disabled:opacity-40"
           >
             {loading ? "Распознаю..." : "Распознать"}
           </button>
@@ -158,7 +159,7 @@ export default function AddSignalPage() {
       )}
 
       {extracted && !savedId && (
-        <div className="flex max-w-xl flex-col gap-4 bg-rr-surface p-6">
+        <div className="flex flex-col gap-4 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
           <div className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-rr-faint">
             Результат анализа {extracted.confidence != null ? `· уверенность ${extracted.confidence}%` : ""}
           </div>
@@ -203,7 +204,7 @@ export default function AddSignalPage() {
       )}
 
       {savedId && (
-        <div className="flex max-w-xl flex-col gap-4 bg-rr-surface p-6">
+        <div className="flex flex-col gap-4 rounded-[24px] border border-white/10 bg-[#141414] p-5 sm:p-7">
           <div className="font-rr-display text-[22px]">Сохранено</div>
           <p className="text-[13px] text-rr-text-dim">
             Сигнал добавлен в ленту (статус — требует проверки). Полная автоматическая проверка магазина и цены
@@ -218,7 +219,7 @@ export default function AddSignalPage() {
               onClick={() => {
                 setExtracted(null);
                 setSavedId(null);
-                setFile(null);
+                setFiles([]);
                 setUrl("");
                 setText("");
                 setComment("");
@@ -230,6 +231,7 @@ export default function AddSignalPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

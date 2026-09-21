@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { NewsItem } from "@/lib/radar/types";
+import { decodeHtmlEntities } from "@/lib/radar/text";
 
 const TAG_STYLE: Record<NewsItem["kind"], { label: string; className: string }> = {
   NEWS: { label: "NEWS", className: "bg-rr-hair text-rr-muted" },
@@ -75,12 +76,12 @@ export function NewsFeedClient({ items }: { items: NewsItem[] }) {
             const cover = item.imageUrl ?? brandCover(item.brand ?? item.source);
             const body = (
               <div className="flex items-center gap-3 px-4 py-3">
-                <img src={cover} alt="" className="h-12 w-12 flex-none rounded-xl object-cover" />
+                <img src={cover} alt="" referrerPolicy="no-referrer" className="h-16 w-16 flex-none rounded-xl object-cover sm:h-20 sm:w-20" />
                 <div className="min-w-0 flex-1">
                   <span className={`inline-block rounded px-1.5 py-0.5 font-rr-mono text-[8.5px] font-bold uppercase tracking-[0.06em] ${tag.className}`}>
                     {tag.label}
                   </span>
-                  <div className="mt-1 truncate text-[13px] font-medium leading-snug">{item.headline}</div>
+                  <div className="mt-1 line-clamp-2 text-[13px] font-medium leading-snug">{decodeHtmlEntities(item.headline)}</div>
                   <div className="mt-0.5 font-rr-mono text-[10px] text-rr-faint">
                     {item.source} · {timeAgo(item.observedAt)}
                   </div>

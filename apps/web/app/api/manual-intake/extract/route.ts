@@ -4,12 +4,14 @@ import OpenAI from "openai";
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
-    const file = form.get("image") as File | null;
+    const files = form.getAll("images").filter((value): value is File => value instanceof File && value.size > 0).slice(0, 5);
+    const legacyFile = form.get("image") as File | null;
+    if (legacyFile?.size && files.length === 0) files.push(legacyFile);
     const url = (form.get("url") as string) || "";
     const text = (form.get("text") as string) || "";
     const comment = (form.get("comment") as string) || "";
 
-    if (!file && !url && !text) {
+    if (files.length === 0 && !url && !text) {
       return NextResponse.json({ error: "Нужно приложить фото, ссылку или текст" }, { status: 400 });
     }
 
@@ -42,7 +44,10 @@ ${comment ? `Комментарий пользователя: ${comment}` : ""}`
 
     const contentParts: Array<Record<string, unknown>> = [{ type: "text", text: promptText }];
 
-    if (file) {
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: "Каждый файл должен быть не больше 10 МБ" }, { status: 400 });
+      }
       const bytes = await file.arrayBuffer();
       const base64 = Buffer.from(bytes).toString("base64");
       const mime = file.type || "image/png";

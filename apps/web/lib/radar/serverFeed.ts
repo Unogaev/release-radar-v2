@@ -3,6 +3,7 @@ import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
 import { getPageImage, getProductImage } from "./fetchImage";
 import type { NewsItem } from "./types";
+import { decodeHtmlEntities } from "./text";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
@@ -312,7 +313,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
   const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
   const newsSignals = rawNewsSignals.filter((signal) => {
-    const headline = signal.rawText ?? "";
+    const headline = decodeHtmlEntities(signal.rawText ?? "");
     if (!PRODUCT_NEWS.test(headline)) return false;
     return !ENTERTAINMENT_ONLY.test(headline) || COMMERCE_CONTEXT.test(headline);
   }).slice(0, 18);
@@ -398,7 +399,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
       kind: (/\b(auction|sold|resale|record|profit|flipped)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
-      headline: (s.rawText ?? "New signal detected").slice(0, 140),
+      headline: decodeHtmlEntities(s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
       sourceUrl: s.url ?? null,
       imageUrl: newsSignalImages[i]?.url,

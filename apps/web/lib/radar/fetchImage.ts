@@ -8,6 +8,7 @@ export type ResolvedImage = {
 
 const cache = new Map<string, ResolvedImage | null>();
 const FETCH_TIMEOUT_MS = 7_000;
+const REJECTED_IMAGE = /(?:logo|avatar|author|icon|emoji|badge|spinner|loader|placeholder|tracking|pixel|advert|doubleclick|gravatar)/i;
 
 function isPublicHttpUrl(value: string): boolean {
   try {
@@ -29,11 +30,50 @@ function isPublicHttpUrl(value: string): boolean {
 function absoluteUrl(candidate: string | undefined, pageUrl: string): string | null {
   if (!candidate) return null;
   try {
-    const url = new URL(candidate.trim(), pageUrl).toString();
-    return isPublicHttpUrl(url) ? url : null;
+    const normalized = candidate.trim().replace(/&amp;/g, "&");
+    if (!normalized || normalized.startsWith("data:") || normalized.startsWith("blob:")) return null;
+    const url = new URL(normalized, pageUrl).toString();
+    return isPublicHttpUrl(url) && !REJECTED_IMAGE.test(url) ? url : null;
   } catch {
     return null;
   }
+}
+
+function largestSrcset(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return value.split(",").map((entry) => {
+    const [url, descriptor = "0"] = entry.trim().split(/\s+/);
+    return { url, size: Number.parseFloat(descriptor) || 0 };
+  }).filter((entry) => entry.url).sort((a, b) => b.size - a.size)[0]?.url;
+}
+
+function contentImageCandidates(root: ReturnType<typeof parse>): string[] {
+  const selectors = [
+    "article img", ".entry-content img", ".post-content img", ".article-content img",
+    "main img", "img.wp-post-image", "img",
+  ];
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+  for (const selector of selectors) {
+    for (const image of root.querySelectorAll(selector)) {
+      const descriptor = [image.getAttribute("class"), image.getAttribute("id"), image.getAttribute("alt")].filter(Boolean).join(" ");
+      if (REJECTED_IMAGE.test(descriptor)) continue;
+      const width = Number.parseInt(image.getAttribute("width") ?? "0", 10);
+      const height = Number.parseInt(image.getAttribute("height") ?? "0", 10);
+      if ((width && width < 280) || (height && height < 180)) continue;
+      const candidate = largestSrcset(image.getAttribute("srcset") ?? image.getAttribute("data-srcset"))
+        ?? image.getAttribute("data-lazy-src")
+        ?? image.getAttribute("data-original")
+        ?? image.getAttribute("data-src")
+        ?? image.getAttribute("src");
+      if (candidate && !seen.has(candidate)) {
+        seen.add(candidate);
+        candidates.push(candidate);
+      }
+    }
+    if (candidates.length >= 8) break;
+  }
+  return candidates;
 }
 
 function jsonLdImages(value: unknown): string[] {
@@ -66,25 +106,37 @@ async function imageFromPage(pageUrl: string, provenance: ResolvedImage["provena
     const response = await fetch(pageUrl, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ReleaseRadar/1.0; +https://release-radar-v2.vercel.app)",
-        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
       },
       redirect: "follow",
     });
-    if (!response.ok || !(response.headers.get("content-type") ?? "").includes("text/html")) {
+    if (!response.ok) {
       cache.set(key, null);
       return null;
     }
-    const root = parse(await response.text());
+    const html = await response.text();
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType && !contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
+      cache.set(key, null);
+      return null;
+    }
+    const root = parse(html);
     const candidates = [
       'meta[property="og:image:secure_url"]', 'meta[property="og:image"]',
       'meta[name="twitter:image"]', 'meta[name="twitter:image:src"]',
     ].map((selector) => root.querySelector(selector)?.getAttribute("content"))
       .filter((value): value is string => Boolean(value));
 
+    const imageSrc = root.querySelector('link[rel="image_src"]')?.getAttribute("href");
+    if (imageSrc) candidates.push(imageSrc);
+
     for (const script of root.querySelectorAll('script[type="application/ld+json"]')) {
       try { candidates.push(...jsonLdImages(JSON.parse(script.text))); } catch { /* ignore malformed blocks */ }
     }
+    candidates.push(...contentImageCandidates(root));
     const url = candidates.map((candidate) => absoluteUrl(candidate, response.url)).find(Boolean) ?? null;
     const result = url ? { url, sourceUrl: response.url, provenance } : null;
     cache.set(key, result);
