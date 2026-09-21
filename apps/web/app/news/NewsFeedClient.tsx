@@ -6,7 +6,7 @@ import { decodeHtmlEntities } from "@/lib/radar/text";
 
 const TAG_STYLE: Record<NewsItem["kind"], { label: string; className: string }> = {
   NEWS: { label: "NEWS", className: "bg-rr-hair text-rr-muted" },
-  MARKET: { label: "MARKET", className: "bg-rr-apply-bg text-rr-apply" },
+  MARKET: { label: "ИСТОРИЯ СДЕЛКИ", className: "bg-rr-apply-bg text-rr-apply" },
   RELEASE: { label: "RELEASE", className: "bg-rr-client-bg text-rr-client" },
   SIGNAL: { label: "SIGNAL", className: "bg-rr-buy-bg text-rr-buy" },
   ALERT: { label: "ALERT", className: "bg-rr-risk-bg text-rr-risk" },
@@ -58,7 +58,7 @@ export function NewsFeedClient({ items }: { items: NewsItem[] }) {
         <Link href="/now" className="mb-4 inline-flex text-xs font-semibold text-rr-accent">← Вернуться в центр действий</Link>
         <h1 className="font-rr-display text-[22px] tracking-[-0.01em]">Новости и релизы</h1>
         <p className="mt-1 text-[13px] text-rr-text-dim">
-          NEWS / RELEASE / SIGNAL / ALERT — хронологическая лента, не смешивается с подтверждёнными сигналами покупки.
+          Релизы чередуются с историями рекордных продаж и большой маржи. Asking prices не выдаются за состоявшиеся сделки.
         </p>
       </div>
 

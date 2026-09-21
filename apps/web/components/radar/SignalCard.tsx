@@ -17,6 +17,7 @@ import {
   ImageFrame,
   Ledger,
   MarketSnapshot,
+  SaleForecast,
   MetaRow,
   StatusBadge,
   WhyBlock,
@@ -109,6 +110,7 @@ export function SignalCard({
         />
 
         <MarketSnapshot signal={signal} compact />
+        <SaleForecast signal={signal} />
 
         <MetaRow
           store={signal.store}

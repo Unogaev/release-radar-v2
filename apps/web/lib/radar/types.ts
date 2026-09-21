@@ -2,7 +2,8 @@ export type SignalStatus = "buy" | "apply" | "prepare" | "watch" | "client";
 
 export type RadarCategory =
   | "now" | "soon" | "restock" | "trend" | "clearance"
-  | "watches" | "tech" | "sneakers" | "cars";
+  | "watches" | "tech" | "sneakers" | "cars" | "lego"
+  | "vintage" | "luxury" | "fragrance" | "collectibles";
 
 export interface Signal {
   id: string;
@@ -30,6 +31,13 @@ export interface Signal {
   completedHigh: number | null;
   completedSalesCount: number;
   askFloor: number | null;
+  /** Conservative sale forecast. Ask-derived forecasts are explicitly marked low confidence. */
+  forecastLow: number | null;
+  forecastHigh: number | null;
+  forecastDaysMin: number | null;
+  forecastDaysMax: number | null;
+  forecastConfidence: "high" | "medium" | "low" | "none";
+  forecastBasis: "completed-sales" | "ask-adjusted" | "none";
   /** Estimated exit required to retain 20% net return after marketplace fee and shipping. */
   minExit20: number | null;
   marketplaceFeePct: number;

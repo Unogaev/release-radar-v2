@@ -28,6 +28,13 @@ const CATEGORY_MAP: Record<string, RadarCategory> = {
   sneakers: "sneakers",
   cars: "cars",
   automobiles: "cars",
+  lego: "lego",
+  collectibles: "collectibles",
+  vintage: "vintage",
+  luxury: "luxury",
+  jewelry: "luxury",
+  "chrome-hearts": "luxury",
+  fragrance: "fragrance",
 };
 
 const MIAMI_DADE_TAX_RATE = 0.07;
@@ -39,6 +46,31 @@ function median(values: number[]): number | null {
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function percentile(values: number[], ratio: number): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)))];
+}
+
+function saleForecast(salePrices: number[], askPrices: number[], liquidity: Signal["liquidity"]) {
+  const days = liquidity === "hot" ? [3, 10] : liquidity === "active" ? [7, 21] : liquidity === "thin" ? [21, 60] : [null, null];
+  if (salePrices.length >= 3) return {
+    low: percentile(salePrices, 0.25), high: percentile(salePrices, 0.75),
+    daysMin: days[0], daysMax: days[1], confidence: "high" as const, basis: "completed-sales" as const,
+  };
+  if (salePrices.length > 0) return {
+    low: Math.min(...salePrices), high: Math.max(...salePrices),
+    daysMin: days[0], daysMax: days[1], confidence: "medium" as const, basis: "completed-sales" as const,
+  };
+  if (askPrices.length >= 3) return {
+    // Asking prices are not sales. The discount makes this a conservative planning range,
+    // never a substitute for completed-sale evidence in BUY NOW decisions.
+    low: Math.min(...askPrices) * 0.8, high: (median(askPrices) ?? Math.min(...askPrices)) * 0.9,
+    daysMin: null, daysMax: null, confidence: "low" as const, basis: "ask-adjusted" as const,
+  };
+  return { low: null, high: null, daysMin: null, daysMax: null, confidence: "none" as const, basis: "none" as const };
 }
 
 function liquidityFor(sales: { observedAt: Date }[]): Signal["liquidity"] {
@@ -204,6 +236,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const askPrices = asks.map((ask) => ask.priceMinor / 100);
         const completedMedian = median(salePrices);
         const expectedResale = completedMedian;
+        const liquidity = liquidityFor(sales);
+        const forecast = saleForecast(salePrices, askPrices, liquidity);
         const minExit20 = cost === null
           ? null
           : (cost * 1.2 + OUTBOUND_SHIPPING_ESTIMATE) / (1 - MARKETPLACE_FEE_RATE);
@@ -255,11 +289,17 @@ export async function getRealFeed(): Promise<FeedPayload> {
           completedHigh: salePrices.length ? Math.max(...salePrices) : null,
           completedSalesCount: salePrices.length,
           askFloor: askPrices.length ? Math.min(...askPrices) : null,
+          forecastLow: forecast.low,
+          forecastHigh: forecast.high,
+          forecastDaysMin: forecast.daysMin,
+          forecastDaysMax: forecast.daysMax,
+          forecastConfidence: forecast.confidence,
+          forecastBasis: forecast.basis,
           minExit20,
           marketplaceFeePct: MARKETPLACE_FEE_RATE * 100,
           shippingEstimate: OUTBOUND_SHIPPING_ESTIMATE,
           taxRatePct: MIAMI_DADE_TAX_RATE * 100,
-          liquidity: liquidityFor(sales),
+          liquidity,
           store: check?.sellerOfRecord ?? "—",
           stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
           primaryUrl,
@@ -365,7 +405,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     Promise.all(newsSignals.map((signal) => getPageImage(signal.url))),
   ]);
 
-  const newsItems: NewsItem[] = [
+  const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v, i) => ({
       id: "release:" + v.id,
       kind: "RELEASE" as const,
@@ -415,7 +455,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     }),
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
-      kind: (/\b(auction|sold|resale|record|profit|flipped)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
+      kind: (/\b(auction|sold|sale|resale|record|profit|flipped|million|million-dollar|hammer price)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
       headline: decodeHtmlEntities(s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
       category: s.source.category,
@@ -426,6 +466,18 @@ export async function getRealFeed(): Promise<FeedPayload> {
       launchAt: null,
     })),
   ].sort((a, b) => new Date(b.observedAt).getTime() - new Date(a.observedAt).getTime());
+
+  // Keep exceptional completed-sale stories visible instead of letting a single
+  // high-volume release feed push them off the first screen.
+  const marketStories = chronologicalNews.filter((item) => item.kind === "MARKET");
+  const regularNews = chronologicalNews.filter((item) => item.kind !== "MARKET");
+  const newsItems: NewsItem[] = [];
+  let storyIndex = 0;
+  for (const item of regularNews) {
+    newsItems.push(item);
+    if (newsItems.length % 3 === 0 && marketStories[storyIndex]) newsItems.push(marketStories[storyIndex++]);
+  }
+  newsItems.push(...marketStories.slice(storyIndex));
 
   return {
     signals,

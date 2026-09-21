@@ -24,6 +24,11 @@ const FILTER_IDS = [
   { id: "tech" as const, ru: "Tech & Gaming", en: "Tech & Gaming" },
   { id: "sneakers" as const, ru: "Sneakers", en: "Sneakers" },
   { id: "cars" as const, ru: "Авто", en: "Cars" },
+  { id: "lego" as const, ru: "LEGO / Mega", en: "LEGO / Mega" },
+  { id: "vintage" as const, ru: "Vintage", en: "Vintage" },
+  { id: "luxury" as const, ru: "Luxury", en: "Luxury" },
+  { id: "fragrance" as const, ru: "Духи", en: "Fragrance" },
+  { id: "collectibles" as const, ru: "Коллекционное", en: "Collectibles" },
 ];
 
 const COPY = {

@@ -19,6 +19,7 @@ import {
   KindBadge,
   Ledger,
   MarketSnapshot,
+  SaleForecast,
   MetaRow,
   StatusBadge,
   WhyBlock,
@@ -127,6 +128,7 @@ export function SignalHero({
         />
 
         <MarketSnapshot signal={signal} />
+        <SaleForecast signal={signal} />
 
         <MetaRow
           store={signal.store}

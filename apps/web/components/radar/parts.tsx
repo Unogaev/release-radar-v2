@@ -163,6 +163,33 @@ export function MarketSnapshot({ signal, compact = false }: { signal: DerivedSig
   );
 }
 
+export function SaleForecast({ signal }: { signal: DerivedSignal }) {
+  const { lang } = useLanguage();
+  if (signal.forecastLow === null || signal.forecastHigh === null) return null;
+  const confidence = lang === "ru"
+    ? { high: "высокая", medium: "средняя", low: "низкая", none: "нет" }[signal.forecastConfidence]
+    : signal.forecastConfidence;
+  const basis = signal.forecastBasis === "completed-sales"
+    ? (lang === "ru" ? "по фактическим продажам" : "from completed sales")
+    : (lang === "ru" ? "по asks со скидкой; продажа не подтверждена" : "ask-adjusted; no sale confirmed");
+  const timing = signal.forecastDaysMin !== null && signal.forecastDaysMax !== null
+    ? (lang === "ru" ? `${signal.forecastDaysMin}–${signal.forecastDaysMax} дней` : `${signal.forecastDaysMin}–${signal.forecastDaysMax} days`)
+    : (lang === "ru" ? "срок пока не подтверждён" : "timing unverified");
+
+  return (
+    <div className="rounded-xl border border-rr-accent/20 bg-rr-accent-soft px-4 py-3">
+      <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-accent">
+        {lang === "ru" ? "Прогноз реализации" : "Sale forecast"}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-2">
+        <div className="text-base font-semibold text-rr-text">{money(signal.forecastLow)}–{money(signal.forecastHigh)}</div>
+        <div className="text-xs text-rr-text-dim">{timing}</div>
+      </div>
+      <div className="mt-1 text-[10px] text-rr-faint">{basis} · {lang === "ru" ? "уверенность" : "confidence"}: {confidence}</div>
+    </div>
+  );
+}
+
 export function WhyBlock({
   why,
   factors,
