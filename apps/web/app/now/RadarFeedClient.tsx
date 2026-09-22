@@ -19,6 +19,7 @@ export function RadarFeedClient({
   const handleAction = (id: string, action: SignalAction) => {
     switch (action) {
       case "buy":
+        router.push(`/signals/${id}`);
         break;
       case "source":
         router.push(`/signals/${id}`);

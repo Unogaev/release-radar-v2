@@ -238,11 +238,13 @@ export function WhyBlock({
 export function ImageFrame({
   hint,
   src,
+  href,
   className,
   children,
 }: {
   hint?: string;
   src?: string | null;
+  href?: string | null;
   className?: string;
   children?: ReactNode;
 }) {
@@ -267,6 +269,15 @@ export function ImageFrame({
             }
       }
     >
+      {src && href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-[1] cursor-pointer"
+          aria-label={`${hint || "Товар"} — открыть источник`}
+        />
+      )}
       {!src && (
         <div className="flex flex-col items-center gap-2 text-center px-6">
           <span className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-rr-stencil">
@@ -277,7 +288,7 @@ export function ImageFrame({
           )}
         </div>
       )}
-      {children}
+      <div className="contents [&>*]:z-[2]">{children}</div>
     </div>
   );
 }
@@ -330,8 +341,10 @@ export function ActionRow({
             : actionLabels[action].short;
         const primary = action === "buy";
         const buyNotConfirmed = status === "buy" && ctaConfirmed === false;
+        const primaryUsesInternalAction = primary && (status === "watch" || status === "client");
         const disabled =
-          disabledActions.includes(action) || (primary && (!primaryHref || buyNotConfirmed));
+          disabledActions.includes(action) ||
+          (primary && !primaryUsesInternalAction && (!primaryHref || buyNotConfirmed));
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
         const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
 
@@ -347,7 +360,7 @@ export function ActionRow({
                 : "bg-rr-well text-rr-text hover:bg-[rgba(255,255,255,0.09)]"
             }`;
 
-        if (primary && primaryHref && !disabled) {
+        if (primary && primaryHref && !primaryUsesInternalAction && !disabled) {
           return (
             <a key={action} href={primaryHref} target="_blank" rel="noopener noreferrer" className={className}>
               {label}

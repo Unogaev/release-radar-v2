@@ -46,7 +46,7 @@ export function SignalCard({
 
   return (
     <article className="flex flex-col self-start overflow-hidden rounded-[24px] border border-white/10 bg-rr-surface shadow-[0_24px_70px_rgba(0,0,0,.24)] transition hover:-translate-y-0.5 hover:border-rr-accent/25 hover:bg-rr-surface-hi">
-      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} className="h-[210px] sm:h-[290px]">
+      <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} href={signal.primaryUrl ?? signal.imageSourceUrl ?? null} className="h-[210px] sm:h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />
         </div>
