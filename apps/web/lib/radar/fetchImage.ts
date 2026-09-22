@@ -7,6 +7,7 @@ export type ResolvedImage = {
 };
 
 const cache = new Map<string, ResolvedImage | null>();
+const livePageCache = new Map<string, boolean>();
 const FETCH_TIMEOUT_MS = 7_000;
 const REJECTED_IMAGE = /(?:logo|avatar|author|icon|emoji|badge|spinner|loader|placeholder|tracking|pixel|advert|doubleclick|gravatar)/i;
 
@@ -114,9 +115,12 @@ async function imageFromPage(pageUrl: string, provenance: ResolvedImage["provena
       redirect: "follow",
     });
     if (!response.ok) {
+      livePageCache.set(pageUrl, false);
       cache.set(key, null);
       return null;
     }
+    livePageCache.set(pageUrl, true);
+    livePageCache.set(response.url, true);
     const html = await response.text();
     const contentType = response.headers.get("content-type") ?? "";
     if (contentType && !contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
@@ -142,8 +146,29 @@ async function imageFromPage(pageUrl: string, provenance: ResolvedImage["provena
     cache.set(key, result);
     return result;
   } catch {
+    livePageCache.set(pageUrl, false);
     cache.set(key, null);
     return null;
+  }
+}
+
+export async function isLiveExternalUrl(pageUrl?: string | null): Promise<boolean> {
+  if (!pageUrl || !isPublicHttpUrl(pageUrl)) return false;
+  if (livePageCache.has(pageUrl)) return livePageCache.get(pageUrl) ?? false;
+  try {
+    const response = await fetch(pageUrl, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0" },
+    });
+    const live = response.ok && response.status < 400;
+    livePageCache.set(pageUrl, live);
+    if (response.url) livePageCache.set(response.url, live);
+    return live;
+  } catch {
+    livePageCache.set(pageUrl, false);
+    return false;
   }
 }
 

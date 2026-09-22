@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
-import { getPageImage, getProductImage } from "./fetchImage";
+import { getPageImage, getProductImage, isLiveExternalUrl } from "./fetchImage";
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 
@@ -230,8 +230,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const retail = check?.priceUsd ?? null;
         const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
         const ctaConfirmed = check?.ctaState === "enabled";
-        const primaryUrl = check?.url ?? null;
-        const image = await getProductImage(brand, model, primaryUrl);
+        const requestedPrimaryUrl = check?.url ?? null;
+        const image = await getProductImage(brand, model, requestedPrimaryUrl);
+        const linkIsLive = await isLiveExternalUrl(requestedPrimaryUrl);
+        const primaryUrl = linkIsLive ? requestedPrimaryUrl : null;
         const salePrices = sales.map((sale) => sale.priceMinor / 100);
         const askPrices = asks.map((ask) => ask.priceMinor / 100);
         const completedMedian = median(salePrices);
@@ -404,6 +406,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
     ))),
     Promise.all(newsSignals.map((signal) => getPageImage(signal.url))),
   ]);
+  const [releaseVariantLinks, newsSignalLinks] = await Promise.all([
+    Promise.all(releaseVariants.map((v) => isLiveExternalUrl(v.evidence[0]?.url ?? null))),
+    Promise.all(newsSignals.map((signal) => isLiveExternalUrl(signal.url))),
+  ]);
 
   const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v, i) => ({
@@ -414,7 +420,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       model: titleCase(v.product.normalizedModel),
       source: "confirmed release",
       category: v.product.category,
-      sourceUrl: v.evidence[0]?.url ?? null,
+      sourceUrl: releaseVariantLinks[i] ? (v.evidence[0]?.url ?? null) : null,
       imageUrl: releaseVariantImages[i]?.url,
       imageSourceUrl: releaseVariantImages[i]?.sourceUrl,
       observedAt: v.createdAt.toISOString(),
@@ -459,7 +465,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       headline: decodeHtmlEntities(s.rawText ?? "New signal detected").slice(0, 140),
       source: s.source.name,
       category: s.source.category,
-      sourceUrl: s.url ?? null,
+      sourceUrl: newsSignalLinks[i] ? (s.url ?? null) : null,
       imageUrl: newsSignalImages[i]?.url,
       imageSourceUrl: newsSignalImages[i]?.sourceUrl,
       observedAt: s.observedAt.toISOString(),

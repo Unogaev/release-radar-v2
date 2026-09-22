@@ -75,7 +75,8 @@ function NewsCard({ item, lang, featured = false }: { item: NewsItem; lang: "ru"
 }
 
 function MobileNewsRail({ items, lang }: { items: NewsItem[]; lang: "ru" | "en" }) {
-  if (!items.length) return null;
+  const visualItems = items.filter((item) => item.imageUrl && item.sourceUrl).slice(0, 3);
+  if (!visualItems.length) return null;
   return (
     <section className="mt-7 border-y border-white/10 py-6 lg:hidden">
       <div className="mb-4 flex items-end justify-between gap-4">
@@ -83,10 +84,10 @@ function MobileNewsRail({ items, lang }: { items: NewsItem[]; lang: "ru" | "en" 
         <Link href="/news" className="mb-1 shrink-0 text-[11px] font-semibold text-white/60">{lang === "ru" ? "Все" : "All"} ↗</Link>
       </div>
       <div className="grid gap-2.5">
-        {items.slice(0, 3).map((item) => (
+        {visualItems.map((item) => (
           <a key={item.id} href={item.sourceUrl ?? "/news"} target={item.sourceUrl ? "_blank" : undefined} rel={item.sourceUrl ? "noreferrer" : undefined} className="grid min-w-0 grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-[16px] border border-white/10 bg-[#14171c]">
             <div className="relative min-h-[96px] bg-[#1b1f26]">
-              {item.imageUrl ? <img src={item.imageUrl} alt="" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(198,166,107,.22),transparent_46%),linear-gradient(145deg,#24221e,#111113)]" />}
+              <img src={item.imageUrl} alt={decodeHtmlEntities(item.headline)} referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
               <span className="absolute left-2 top-2 rounded-full bg-black/65 px-2 py-1 text-[8px] font-bold tracking-[.12em] text-white/75">{item.category ? `${item.kind} · ${item.category}` : item.kind}</span>
             </div>
             <div className="flex min-w-0 flex-col justify-between p-3"><h3 className="line-clamp-3 break-words text-[13px] font-semibold leading-[1.35] text-white">{decodeHtmlEntities(item.headline)}</h3><div className="mt-2 truncate text-[10px] text-white/38">{item.source}</div></div>
