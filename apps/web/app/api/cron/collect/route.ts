@@ -5,6 +5,7 @@ import { runSourcePipeline } from "../../../../collectors/pipeline";
 import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
+import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,9 +22,9 @@ export async function GET(req: NextRequest) {
 
   await ensureRadarSourceRegistry(prisma);
   const sources = await prisma.source.findMany({
-    where: { isEnabled: true, NOT: { sourceType: "MANUAL" } },
+    where: { isEnabled: true },
     orderBy: [{ lastCheckedAt: "asc" }, { trustLevel: "desc" }],
-    take: 18,
+    take: 160,
   });
   const results = [];
 
@@ -32,18 +33,19 @@ export async function GET(req: NextRequest) {
     "Xbox Wire": "Xbox",
   };
 
-  for (const source of sources) {
-    if (source.sourceType === "MANUAL") continue;
-
-    const dueForCheck =
+  const dueSources = sources.filter((source) =>
       !source.lastCheckedAt ||
-      Date.now() - source.lastCheckedAt.getTime() > (source.checkIntervalMinutes ?? 60) * 60_000;
-    if (!dueForCheck) continue;
+      Date.now() - source.lastCheckedAt.getTime() > (source.checkIntervalMinutes ?? 60) * 60_000
+  );
+
+  async function collectSource(source: (typeof sources)[number]) {
 
     let runResult;
-    if (source.sourceType === "RSS" || source.sourceType === "NEWSROOM") {
+    if (source.sourceType === "RSS" || source.sourceType === "NEWSROOM" || source.sourceType === "MANUAL") {
       try {
-        const items = await fetchRssItems(source.url, 25);
+        const items = source.sourceType === "MANUAL"
+          ? await fetchPageDiscoveries(source.url, 8)
+          : await fetchRssItems(source.url, 25);
         const existingSignals = await prisma.signal.findMany({
           where: { sourceId: source.id, url: { in: items.map((item) => item.url) } },
           select: { url: true },
@@ -54,7 +56,9 @@ export async function GET(req: NextRequest) {
           await prisma.signal.createMany({
             data: freshItems.map((item) => ({
               sourceId: source.id,
-              rawText: item.title,
+              rawText: item.imageUrl
+                ? `${item.title}\n[rr:image=${encodeURIComponent(item.imageUrl)}]`
+                : item.title,
               url: item.url,
               observedAt: item.publishedAt ? new Date(item.publishedAt) : new Date(),
             })),
@@ -88,7 +92,14 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    results.push(runResult);
+    return runResult;
+  }
+
+  // A controlled fan-out lets every due official page participate in the
+  // sweep while keeping request pressure reasonable for brands and retailers.
+  for (let index = 0; index < dueSources.length; index += 16) {
+    const batch = await Promise.all(dueSources.slice(index, index + 16).map(collectSource));
+    results.push(...batch);
   }
 
   const remindersCreated = await createDueReleaseReminders();

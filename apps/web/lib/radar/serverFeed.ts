@@ -6,6 +6,16 @@ import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { fetchRssItems } from "../../collectors/rss";
 
+function signalHeadline(rawText: string | null | undefined) {
+  return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
+}
+
+function embeddedSignalImage(rawText: string | null | undefined): string | null {
+  const encoded = rawText?.match(/\n\[rr:image=([^\]]+)\]\s*$/i)?.[1];
+  if (!encoded) return null;
+  try { return decodeURIComponent(encoded); } catch { return null; }
+}
+
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
   [DecisionStatus.CONTACT_DEALER]: { bucket: "buy", kindLabel: "now" },
@@ -361,12 +371,13 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|radeon|gpu|camera|leica|canon|nikon|fujifilm|dji|porsche|ferrari|lamborghini|electric|ev|vehicle|car|lego|brick|collectible|trading card|memorabilia|fragrance|perfume|jewelry|handbag|archive|clearance|deal|collection|capsule|new arrivals?)\b/i;
   const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
   const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
+  const COMMERCE_CATEGORIES = new Set(["sneakers", "streetwear", "watches", "cars", "lego", "collectibles", "vintage", "luxury", "fragrance", "gpu", "cameras", "clearance", "chrome-hearts", "jewelry"]);
   const seenNews = new Set<string>();
   const perSource = new Map<string, number>();
   const perCategory = new Map<string, number>();
   const newsSignals = rawNewsSignals.filter((signal) => {
-    const headline = decodeHtmlEntities(signal.rawText ?? "");
-    if (!PRODUCT_NEWS.test(headline)) return false;
+    const headline = signalHeadline(signal.rawText);
+    if (!PRODUCT_NEWS.test(headline) && !COMMERCE_CATEGORIES.has(signal.source.category)) return false;
     if (ENTERTAINMENT_ONLY.test(headline) && !COMMERCE_CONTEXT.test(headline)) return false;
     const key = signal.url?.trim().toLowerCase() || headline.trim().toLowerCase().replace(/\s+/g, " ");
     if (!key || seenNews.has(key)) return false;
@@ -427,6 +438,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
       v.evidence[0]?.url ?? null
     ))),
     Promise.all(newsSignals.map(async (signal) => {
+      const embeddedImage = embeddedSignalImage(signal.rawText);
+      if (embeddedImage && signal.url) return { url: embeddedImage, sourceUrl: signal.url, provenance: "official-page" as const };
       const rssImage = signal.url ? sourceFeedImages.get(signal.sourceId)?.get(signal.url) : null;
       return rssImage
         ? { url: rssImage, sourceUrl: signal.url!, provenance: "official-page" as const }
@@ -489,7 +502,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
       kind: (/\b(auction|sold|sale|resale|record|profit|flipped|million|million-dollar|hammer price)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
-      headline: decodeHtmlEntities(s.rawText ?? "New signal detected").slice(0, 140),
+      headline: (signalHeadline(s.rawText) || "New signal detected").slice(0, 140),
       source: s.source.name,
       category: s.source.category,
       sourceUrl: newsSignalLinks[i] ? (s.url ?? null) : null,
