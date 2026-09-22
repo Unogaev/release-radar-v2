@@ -4,6 +4,7 @@ import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } f
 import { getPageImage, getProductImage, isLiveExternalUrl } from "./fetchImage";
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
+import { fetchRssItems } from "../../collectors/rss";
 
 const STATUS_MAP: Record<string, { bucket: SignalStatus; kindLabel: string; extraCategory?: RadarCategory }> = {
   [DecisionStatus.BUY_NOW]: { bucket: "buy", kindLabel: "now" },
@@ -85,6 +86,10 @@ function liquidityFor(sales: { observedAt: Date }[]): Signal["liquidity"] {
 
 function titleCase(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function proxyImageUrl(url?: string | null): string | undefined {
+  return url ? `/api/image?url=${encodeURIComponent(url)}` : undefined;
 }
 
 /**
@@ -279,7 +284,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
           model,
           reference,
           sku,
-          imageUrl: image?.url,
+          imageUrl: proxyImageUrl(image?.url),
           imageHint: `${brand} ${model}`,
           imageSourceUrl: image?.sourceUrl,
           imageProvenance: image?.provenance,
@@ -374,6 +379,23 @@ export async function getRealFeed(): Promise<FeedPayload> {
     return true;
   }).slice(0, 36);
 
+  // Editorial sites often block page-level OG scraping while publishing the
+  // real hero image in RSS. Fetch every source feed once, then match images by
+  // canonical article URL. This keeps the visual feed photographic without
+  // inventing stock artwork or depending on fragile hotlinks.
+  const sourceFeedImages = new Map<string, Map<string, string>>();
+  const uniqueNewsSources = [...new Map(newsSignals.map((signal) => [signal.sourceId, signal.source])).values()];
+  await Promise.all(uniqueNewsSources.map(async (source) => {
+    if (!source.url || !["RSS", "NEWSROOM"].includes(source.sourceType)) return;
+    try {
+      const items = await fetchRssItems(source.url, 60);
+      sourceFeedImages.set(source.id, new Map(items.filter((item) => item.imageUrl).map((item) => [item.url, item.imageUrl!] as const)));
+    } catch {
+      // Some newsroom URLs are HTML pages rather than feeds. Page extraction
+      // remains the fallback below.
+    }
+  }));
+
   const releaseVariants = await prisma.productVariant.findMany({
     where: {
       decisions: { none: {} },
@@ -404,7 +426,12 @@ export async function getRealFeed(): Promise<FeedPayload> {
       titleCase(v.product.normalizedModel),
       v.evidence[0]?.url ?? null
     ))),
-    Promise.all(newsSignals.map((signal) => getPageImage(signal.url))),
+    Promise.all(newsSignals.map(async (signal) => {
+      const rssImage = signal.url ? sourceFeedImages.get(signal.sourceId)?.get(signal.url) : null;
+      return rssImage
+        ? { url: rssImage, sourceUrl: signal.url!, provenance: "official-page" as const }
+        : getPageImage(signal.url);
+    })),
   ]);
   const [releaseVariantLinks, newsSignalLinks] = await Promise.all([
     Promise.all(releaseVariants.map((v) => isLiveExternalUrl(v.evidence[0]?.url ?? null))),
@@ -421,7 +448,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       source: "confirmed release",
       category: v.product.category,
       sourceUrl: releaseVariantLinks[i] ? (v.evidence[0]?.url ?? null) : null,
-      imageUrl: releaseVariantImages[i]?.url,
+      imageUrl: proxyImageUrl(releaseVariantImages[i]?.url),
       imageSourceUrl: releaseVariantImages[i]?.sourceUrl,
       observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
@@ -466,7 +493,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       source: s.source.name,
       category: s.source.category,
       sourceUrl: newsSignalLinks[i] ? (s.url ?? null) : null,
-      imageUrl: newsSignalImages[i]?.url,
+      imageUrl: proxyImageUrl(newsSignalImages[i]?.url),
       imageSourceUrl: newsSignalImages[i]?.sourceUrl,
       observedAt: s.observedAt.toISOString(),
       launchAt: null,

@@ -110,7 +110,7 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
   const healthySources = payload?.sources.filter((s) => s.state === "ok").length ?? 0;
   const manualSources = payload?.sources.filter((s) => s.state === "manual").length ?? 0;
   const troubledSources = payload?.sources.filter((s) => s.state === "down" || s.state === "throttled").length ?? 0;
-  const news = payload?.newsItems.slice(0, 6) ?? [];
+  const news = payload?.newsItems.filter((item) => item.imageUrl && item.sourceUrl).slice(0, 6) ?? [];
   const [hero, ...rest] = visible;
 
   return (

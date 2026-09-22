@@ -3,4 +3,5 @@ export interface DiscoveredItem {
   title: string;
   publishedAt: string | null;
   summary: string | null;
+  imageUrl?: string | null;
 }
