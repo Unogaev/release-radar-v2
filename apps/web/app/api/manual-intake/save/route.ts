@@ -5,7 +5,11 @@ import { DecisionStatus } from "@domain/decision/types";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { brand, model, sku, category, seller, url, comment, markAsClient, confidence, attachmentNames } = body;
+    const {
+      brand, model, sku, category, seller, url, comment, markAsClient, confidence, attachmentNames,
+      retailPrice, currency, availabilityStatus, buyButtonText, sizeOrColor, purchaseLimit, storeZip,
+      athleteName, signalType, dateTimeText,
+    } = body;
 
     let manualSource = await prisma.source.findFirst({ where: { sourceType: "MANUAL" } });
     if (!manualSource) {
@@ -65,13 +69,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (url || seller) {
+    if (url || seller || retailPrice) {
       await prisma.availabilityCheck.create({
         data: {
           productVariantId: variant.id,
           sourceId: manualSource.id,
           url: url || null,
           sellerOfRecord: seller || null,
+          priceUsd: Number.isFinite(Number(retailPrice)) ? Number(retailPrice) : null,
+          currency: currency || null,
+          zip: storeZip || null,
           shippingState: "unknown",
           pickupState: "unknown",
           cartState: "unknown",
@@ -79,6 +86,43 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+    const extractedDetails = [
+      `Распознано со скриншота: ${brand} ${normalizedModel}`,
+      sku && `SKU/reference: ${sku}`,
+      seller && `Продавец: ${seller}`,
+      retailPrice && `Цена: ${retailPrice} ${currency || "USD"}`,
+      availabilityStatus && `Наличие: ${availabilityStatus}`,
+      buyButtonText && `Кнопка покупки: ${buyButtonText}`,
+      sizeOrColor && `Размер/цвет: ${sizeOrColor}`,
+      purchaseLimit && `Лимит: ${purchaseLimit}`,
+      storeZip && `ZIP: ${storeZip}`,
+      athleteName && `Athlete/celebrity: ${athleteName}`,
+      signalType && `Тип сигнала: ${signalType}`,
+      dateTimeText && `Дата/время на скриншоте: ${dateTimeText}`,
+      Array.isArray(attachmentNames) && attachmentNames.length > 0 && `Файлы: ${attachmentNames.join(", ")}`,
+      comment && `Комментарий: ${comment}`,
+    ].filter(Boolean).join("\n");
+
+    await prisma.signal.create({
+      data: {
+        productVariantId: variant.id,
+        sourceId: manualSource.id,
+        rawText: extractedDetails,
+        url: url || null,
+      },
+    });
+
+    await prisma.evidence.create({
+      data: {
+        productVariantId: variant.id,
+        sourceId: manualSource.id,
+        url: url || null,
+        level: "C_signal",
+        rawSnapshotRef: extractedDetails.slice(0, 1800),
+        parseVersion: "manual-vision-2",
+      },
+    });
 
     const status: string = markAsClient ? DecisionStatus.CLIENT_FIRST : DecisionStatus.VERIFY;
     const evidenceConfidence = Math.max(0, Math.min(100, Math.round(Number(confidence ?? 50))));
