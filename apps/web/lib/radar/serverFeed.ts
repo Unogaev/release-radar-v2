@@ -5,6 +5,7 @@ import { getPageImage, getProductImage, isLiveExternalUrl } from "./fetchImage";
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { fetchRssItems } from "../../collectors/rss";
+import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -202,6 +203,9 @@ function buildFactors(downgraded: boolean, missing: string[], confidence: number
 }
 
 export async function getRealFeed(): Promise<FeedPayload> {
+  // Keep the database registry aligned with the shipped product even before
+  // the next scheduled collector run.
+  await ensureRadarSourceRegistry(prisma);
   const statuses = Object.keys(STATUS_MAP);
 
   const decisions = await prisma.decision.findMany({
