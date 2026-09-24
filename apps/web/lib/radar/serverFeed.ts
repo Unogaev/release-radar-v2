@@ -99,7 +99,10 @@ function titleCase(s: string): string {
 }
 
 function proxyImageUrl(url?: string | null): string | undefined {
-  return url ? `/api/image?url=${encodeURIComponent(url)}` : undefined;
+  // Browsers can render the original CDN image with a no-referrer policy.
+  // Keeping the original URL avoids turning every card into a blank tile when
+  // a publisher refuses server-to-server proxy requests.
+  return url ?? undefined;
 }
 
 /**
