@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Bell, Menu, Newspaper, Plus, Radar, RefreshCw, ShieldCheck } from "lucide-react";
 import { useLanguage, type Lang } from "@/lib/i18n";
 import type { FeedPayload, NewsItem, RadarCategory } from "@/lib/radar/types";
@@ -150,12 +150,33 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
   const manualSources = payload?.sources.filter((s) => s.state === "manual").length ?? 0;
   const troubledSources = payload?.sources.filter((s) => s.state === "down" || s.state === "throttled").length ?? 0;
   const news = payload?.newsItems.filter((item) => item.imageUrl && item.sourceUrl).slice(0, 6) ?? [];
+  const filterCounts = useMemo(() => {
+    const visualNews = payload?.newsItems.filter((item) => item.imageUrl && item.sourceUrl) ?? [];
+    return Object.fromEntries(FILTER_IDS.map((item) => {
+      const signalCount = signals.filter((signal) => signal.categories.includes(item.id) && signal.imageUrl && signal.primaryUrl).length;
+      const newsCategories = NEWS_CATEGORIES[item.id];
+      const newsCount = item.id === "now"
+        ? visualNews.length
+        : newsCategories
+          ? visualNews.filter((newsItem) => newsItem.category && newsCategories.includes(newsItem.category)).length
+          : 0;
+      return [item.id, Math.max(signalCount, newsCount)];
+    })) as Record<RadarCategory, number>;
+  }, [payload?.newsItems, signals]);
+  const availableFilters = useMemo(
+    () => FILTER_IDS.filter((item) => item.id === "now" || filterCounts[item.id] > 0),
+    [filterCounts],
+  );
   const categoryNews = useMemo(() => {
     const all = payload?.newsItems.filter((item) => item.imageUrl && item.sourceUrl) ?? [];
     const categories = NEWS_CATEGORIES[filter];
     return (categories ? all.filter((item) => item.category && categories.includes(item.category)) : all).slice(0, 9);
   }, [payload?.newsItems, filter]);
   const [hero, ...rest] = visible;
+
+  useEffect(() => {
+    if (!availableFilters.some((item) => item.id === filter)) setFilter("now");
+  }, [availableFilters, filter]);
 
   return (
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#0b0b0c] font-rr-sans text-[#f3efe8]">
@@ -182,8 +203,8 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
         {isStale && payload && <StaleBanner at={clockLabel(payload.scannedAt)} onRefresh={onRetry} />}
         {error && !payload ? <FeedError reason={error} onRetry={onRetry} /> : <>
           <MobileNewsRail items={news} lang={lang} />
-          <div className="grid gap-2 py-4 sm:hidden"><div className="grid grid-cols-2 gap-2"><select aria-label="Language" value={lang} onChange={(event) => setLang(event.target.value as Lang)} className="rounded-[14px] border border-white/12 bg-[#151515] px-3 py-3 text-[12px] font-semibold text-white outline-none"><option value="en">English</option><option value="ru">Русский</option><option value="ar">العربية</option></select><select aria-label="Market" value={market} onChange={(event) => setMarket(event.target.value as typeof market)} className="rounded-[14px] border border-white/12 bg-[#151515] px-3 py-3 text-[12px] font-semibold text-white outline-none"><option value="us">USA · USD</option><option value="ae">UAE · AED</option><option value="ru">Russia · RUB</option></select></div><label htmlFor="radar-filter" className="mt-2 block text-[9px] font-semibold uppercase tracking-[.18em] text-white/35">{tr(lang, "Раздел радара", "Radar section", "قسم الرادار")}</label><select id="radar-filter" value={filter} onChange={(event) => setFilter(event.target.value as RadarCategory)} className="w-full appearance-none rounded-[14px] border border-white/12 bg-[#151515] px-4 py-3 text-[13px] font-semibold text-white outline-none">{FILTER_IDS.map((f) => <option key={f.id} value={f.id}>{f[lang]}</option>)}</select></div>
-          <nav className="hidden gap-2 overflow-x-auto py-2 sm:flex">{FILTER_IDS.map((f) => <button key={f.id} onClick={() => setFilter(f.id)} className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-semibold transition ${filter === f.id ? "bg-[#ece5d9] text-[#171513]" : "border border-white/10 bg-white/[.025] text-white/48 hover:text-white"}`}>{f[lang]}</button>)}</nav>
+          <div className="grid gap-2 py-4 sm:hidden"><div className="grid grid-cols-2 gap-2"><select aria-label="Language" value={lang} onChange={(event) => setLang(event.target.value as Lang)} className="rounded-[14px] border border-white/12 bg-[#151515] px-3 py-3 text-[12px] font-semibold text-white outline-none"><option value="en">English</option><option value="ru">Русский</option><option value="ar">العربية</option></select><select aria-label="Market" value={market} onChange={(event) => setMarket(event.target.value as typeof market)} className="rounded-[14px] border border-white/12 bg-[#151515] px-3 py-3 text-[12px] font-semibold text-white outline-none"><option value="us">USA · USD</option><option value="ae">UAE · AED</option><option value="ru">Russia · RUB</option></select></div><label htmlFor="radar-filter" className="mt-2 block text-[9px] font-semibold uppercase tracking-[.18em] text-white/35">{tr(lang, "Раздел радара", "Radar section", "قسم الرادار")}</label><select id="radar-filter" value={filter} onChange={(event) => setFilter(event.target.value as RadarCategory)} className="w-full appearance-none rounded-[14px] border border-white/12 bg-[#151515] px-4 py-3 text-[13px] font-semibold text-white outline-none">{availableFilters.map((f) => <option key={f.id} value={f.id}>{f[lang]} · {filterCounts[f.id]}</option>)}</select></div>
+          <nav className="hidden gap-2 overflow-x-auto py-2 sm:flex">{availableFilters.map((f) => <button key={f.id} onClick={() => setFilter(f.id)} className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-semibold transition ${filter === f.id ? "bg-[#ece5d9] text-[#171513]" : "border border-white/10 bg-white/[.025] text-white/48 hover:text-white"}`}>{f[lang]} <span className={`ms-1 ${filter === f.id ? "text-black/45" : "text-white/30"}`}>{filterCounts[f.id]}</span></button>)}</nav>
           <section className="mt-1 sm:mt-5">{visible.length ? <div><SignalHero signal={hero} now={now} onAction={(id, action) => onAction?.(id, action)} />{rest.length > 0 && <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{rest.map((s) => <SignalCard key={s.id} signal={s} now={now} onAction={(id, action) => onAction?.(id, action)} />)}</div>}</div> : categoryNews.length ? <div><PremiumOpportunityHero item={categoryNews[0]} lang={lang} /><div className="mb-5 mt-7 flex flex-col justify-between gap-3 rounded-[16px] border border-[#c6a66b]/20 bg-[#c6a66b]/[.055] p-4 sm:flex-row sm:items-center"><div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#c6a66b]" /><div><div className="text-sm font-semibold">{lang === "ru" ? "Радар нашёл новые позиции — идёт проверка сделки" : "Radar found new items — deal verification is in progress"}</div><div className="mt-1 text-xs leading-5 text-white/45">{lang === "ru" ? "Фото и ссылки взяты из живых источников. Эти позиции ещё не BUY NOW: цена, checkout и реальные продажи проверяются отдельно." : "Images and links come from live sources. These are not BUY NOW yet: price, checkout and completed sales are verified separately."}</div></div></div><span className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-white/55">{categoryNews.length} {lang === "ru" ? "сигналов" : "signals"}</span></div><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{categoryNews.slice(1).map((item) => <NewsCard key={item.id} item={item} lang={lang} />)}</div></div> : <div className="rounded-[18px] border border-white/10 bg-[#121212] p-5 sm:p-7"><div className="flex items-start gap-3"><ShieldCheck size={19} className="mt-0.5 shrink-0 text-[#c6a66b]" /><div><h2 className="text-base font-semibold">{c.noAction}</h2><p className="mt-1 max-w-[760px] text-[13px] leading-5 text-white/45">{c.noActionText}</p></div></div></div>}</section>
           <section className="mt-14 hidden border-t border-white/10 pt-9 lg:block"><div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c6a66b]">Intelligence → opportunity</div><h2 className="mt-2 font-rr-editorial text-4xl font-semibold tracking-[-0.025em]">{c.intel}</h2><p className="mt-2 max-w-[700px] text-sm leading-6 text-white/45">{c.intelText}</p></div><Link href="/news" className="inline-flex items-center gap-2 text-xs font-bold text-white/70">{c.allNews}<ArrowUpRight size={14} /></Link></div>{news.length ? <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{news.map((item, index) => <NewsCard key={item.id} item={item} lang={lang} featured={index === 0} />)}</div> : <div className="rounded-[22px] border border-dashed border-white/10 p-8 text-sm text-white/40">{c.emptyNews}</div>}</section>
           <section className="mt-12 flex flex-col justify-between gap-4 rounded-[20px] border border-white/10 bg-white/[.025] p-5 sm:flex-row sm:items-center"><div><div className="text-sm font-semibold">{c.sourceHealth}</div><div className="mt-1 text-xs text-white/40"><span className="text-[#8fe0aa]">{healthySources} {lang === "ru" ? "автоматически проверены" : "checked automatically"}</span><span> · {manualSources} {lang === "ru" ? "ожидают первого автоматического обхода" : "awaiting first automated sweep"}</span><span> · {payload?.sources.length ?? 0} {lang === "ru" ? "всего" : "total"}</span>{troubledSources > 0 && <span> · {troubledSources} {c.sourcesIssue}</span>}</div></div><Link href="/sources" className="inline-flex items-center gap-2 text-xs font-semibold text-white/60">{c.source}<ArrowUpRight size={13} /></Link></section>
