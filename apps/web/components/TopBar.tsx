@@ -14,7 +14,7 @@ export function TopBar() {
   const pathname = usePathname();
   const [stats, setStats] = useState<CollectorStats | null>(null);
   const [scanning, setScanning] = useState(false);
-  const { lang, setLang, t } = useLanguage();
+  const { lang, setLang, market, setMarket, marketMeta, t } = useLanguage();
 
   useEffect(() => {
     fetch("/api/stats/collectors")
@@ -67,8 +67,8 @@ export function TopBar() {
         <span className="hidden lg:inline text-[11px] text-rr-muted tabular-nums">
           {stats?.lastCheckedAt
             ? `${t("scan_at")}${new Date(stats.lastCheckedAt).toLocaleString(
-                lang === "ru" ? "ru-RU" : "en-US",
-                { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }
+                lang === "ar" ? "ar-AE" : lang === "ru" ? "ru-RU" : "en-US",
+                { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", timeZone: marketMeta.timeZone }
               )}`
             : t("scan_never")}
         </span>
@@ -83,14 +83,15 @@ export function TopBar() {
         <button className="p-2 rounded-lg border border-rr-frame text-rr-text-dim hover:text-rr-text transition-colors">
           <Bell size={15} />
         </button>
-        <button
-          onClick={() => setLang(lang === "ru" ? "en" : "ru")}
-          title={lang === "ru" ? "Switch to English" : "Переключить на русский"}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-rr-frame text-rr-text-dim text-xs font-semibold hover:border-rr-accent/40 hover:text-rr-accent transition-colors"
-        >
+        <label className="inline-flex items-center gap-1.5 rounded-lg border border-rr-frame px-2 py-1 text-xs text-rr-text-dim">
           <Languages size={13} />
-          {lang === "ru" ? "EN" : "RU"}
-        </button>
+          <select aria-label="Language" value={lang} onChange={(e) => setLang(e.target.value as typeof lang)} className="bg-transparent font-semibold outline-none">
+            <option value="en">EN</option><option value="ru">RU</option><option value="ar">العربية</option>
+          </select>
+        </label>
+        <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value as typeof market)} className="rounded-lg border border-rr-frame bg-rr-bg px-2 py-1.5 text-xs font-semibold text-rr-text-dim outline-none">
+          <option value="us">USA · USD</option><option value="ae">UAE · AED</option><option value="ru">Russia · RUB</option>
+        </select>
       </div>
     </div>
   );

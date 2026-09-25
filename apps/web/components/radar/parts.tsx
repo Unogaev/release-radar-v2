@@ -124,13 +124,16 @@ export function MetaRow({
 const LIQUIDITY_LABEL = {
   ru: { hot: "высокая", active: "активная", thin: "низкая", unverified: "нет данных" },
   en: { hot: "high", active: "active", thin: "thin", unverified: "no data" },
+  ar: { hot: "مرتفعة", active: "نشطة", thin: "منخفضة", unverified: "لا توجد بيانات" },
 };
 
 export function MarketSnapshot({ signal, compact = false }: { signal: DerivedSignal; compact?: boolean }) {
   const { lang } = useLanguage();
   const copy = lang === "ru"
     ? { completed: "Продажи", asks: "Asks от", exit: "Выход для +20%", liquidity: "Ликвидность", samples: "сделок" }
-    : { completed: "Completed", asks: "Asks from", exit: "Exit for +20%", liquidity: "Liquidity", samples: "sales" };
+    : lang === "ar"
+      ? { completed: "مبيعات مكتملة", asks: "الطلبات من", exit: "سعر خروج +20%", liquidity: "السيولة", samples: "مبيعات" }
+      : { completed: "Completed", asks: "Asks from", exit: "Exit for +20%", liquidity: "Liquidity", samples: "sales" };
   const completedRange = signal.completedSalesCount
     ? `${money(signal.completedLow)}–${money(signal.completedHigh)}`
     : "—";
@@ -145,7 +148,7 @@ export function MarketSnapshot({ signal, compact = false }: { signal: DerivedSig
       <div className="bg-rr-well px-3 py-3.5">
         <div className="font-rr-mono text-[8.5px] uppercase tracking-[0.16em] text-rr-faint">{copy.asks}</div>
         <div className="mt-1.5 text-sm font-semibold">{money(signal.askFloor)}</div>
-        <div className="mt-1 text-[10px] text-rr-faint">{lang === "ru" ? "не продажа" : "not a sale"}</div>
+        <div className="mt-1 text-[10px] text-rr-faint">{lang === "ru" ? "не продажа" : lang === "ar" ? "ليس بيعاً" : "not a sale"}</div>
       </div>
       {!compact && <>
         <div className="bg-rr-well px-3 py-3.5">

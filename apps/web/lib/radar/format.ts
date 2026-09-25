@@ -22,7 +22,7 @@ export function countdownLabel(secondsLeft: number): string {
   return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
 }
 
-export function checkedLabel(checkedAt: string, now: number, lang: "en" | "ru" = "ru"): string {
+export function checkedLabel(checkedAt: string, now: number, lang: "en" | "ru" | "ar" = "ru"): string {
   const ms = Math.max(0, now - new Date(checkedAt).getTime());
   const min = Math.round(ms / 60000);
   const hours = Math.floor(min / 60);
@@ -35,6 +35,13 @@ export function checkedLabel(checkedAt: string, now: number, lang: "en" | "ru" =
     if (hours < 24) return `checked ${hours}h ago`;
     if (days < 7) return `checked ${days}d ago`;
     return `checked ${date.toLocaleDateString("en-US", { day: "numeric", month: "short" })}`;
+  }
+  if (lang === "ar") {
+    if (min < 1) return "تم التحقق الآن";
+    if (min < 60) return `تم التحقق قبل ${min} دقيقة`;
+    if (hours < 24) return `تم التحقق قبل ${hours} ساعة`;
+    if (days < 7) return `تم التحقق قبل ${days} يوم`;
+    return `تم التحقق ${date.toLocaleDateString("ar-AE", { day: "numeric", month: "short" })}`;
   }
   if (min < 1) return "проверено только что";
   if (min < 60) return `проверено ${min} мин назад`;

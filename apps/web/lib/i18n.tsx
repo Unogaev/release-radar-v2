@@ -1,7 +1,14 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-export type Lang = "en" | "ru";
+export type Lang = "en" | "ru" | "ar";
+export type Market = "us" | "ae" | "ru";
+
+export const MARKET_META = {
+  us: { label: "USA", currency: "USD", locale: "en-US", timeZone: "America/New_York" },
+  ae: { label: "UAE", currency: "AED", locale: "en-AE", timeZone: "Asia/Dubai" },
+  ru: { label: "Russia", currency: "RUB", locale: "ru-RU", timeZone: "Europe/Moscow" },
+} as const;
 
 const dict = {
   en: {
@@ -172,6 +179,19 @@ const dict = {
     stale_desc: "Последний обход источников не завершился, цены могли измениться.",
     stale_refresh: "Обновить",
   },
+  ar: {
+    search_placeholder: "ابحث عن منتج أو SKU أو علامة أو متجر...",
+    scan_never: "لم يبدأ الفحص بعد", scan_at: "الفحص: ", run_scan: "تشغيل الفحص", sign_out: "تسجيل الخروج", add_signal: "إضافة إشارة يدوياً",
+    nav_command_center: "مركز التحكم", nav_live_signals: "الإشارات المباشرة", nav_upcoming: "القادم", nav_calendar: "التقويم", nav_news: "الأخبار", nav_market: "السوق", nav_sources: "المصادر", nav_logs: "سجل الجمع", nav_purchases: "المشتريات", nav_clients: "العملاء", nav_settings: "الإعدادات",
+    nav_menu: "القائمة ←", feed_profit: "ربح الخلاصة", active_signals_suffix: "إشارات نشطة · تحديث كل 60 ثانية", rest_of_feed: "بقية الخلاصة", signals_suffix: "إشارات",
+    filter_now: "الآن", filter_soon: "قريباً", filter_restock: "إعادة التوفر", filter_trend: "الرائج", filter_clearance: "التخفيضات", filter_watches: "الساعات", filter_tech: "التقنية", filter_sneakers: "الأحذية", filter_cars: "السيارات",
+    kind_now: "الآن", kind_soon: "قريباً", kind_verify: "تحقق", kind_client: "عميل", why_heading: "لماذا اختار الرادار هذا المنتج",
+    label_cost: "التكلفة", label_resale: "إعادة البيع", label_net_profit: "صافي الربح", label_margin: "الهامش", label_time_to_launch: "حتى الإطلاق", label_launch_datetime: "موعد الإطلاق", checked_recently: "تم التحقق مؤخراً", countdown_started: "بدأ", ref_sku_ref: "REF", ref_sku_sku: "SKU", photo_not_found: "الصورة غير متوفرة",
+    action_buy: "شراء", action_source_full: "فتح المصدر", action_source_short: "المصدر", action_calendar: "إضافة للتقويم", action_publish_full: "إنشاء منشور", action_publish_short: "نشر",
+    empty_category_prefix: "الفئة «", empty_category_suffix: "»", empty_scan_done: "اكتملت دورة الفحص", empty_title_filtered: "لا توجد إشارات في هذه الفئة الآن", empty_title_all: "لم يجد الرادار إشارات في الدورة الأخيرة", empty_desc_filtered: "لا توجد قائمة تحقق شروط الهامش والتوفر حالياً. ستظهر الإشارات بعد جولة المصادر التالية.", empty_desc_all: "تم استبعاد النتائج بسبب الهامش أو التوفر أو موثوقية المصدر.", empty_next_scan_prefix: " الفحص التالي في ", empty_reset_button: "العودة إلى «الآن»",
+    error_unavailable: "الخلاصة غير متاحة", error_title: "تعذر تحميل الإشارات", error_default_reason: "لم تستجب المصادر في الوقت المحدد.", error_desc_suffix: " ربما تغير السعر أو التوفر — تحقق من المصدر قبل الشراء.", error_retry: "إعادة المحاولة",
+    stale_data_from_prefix: "البيانات من ", stale_desc: "لم تكتمل جولة المصادر الأخيرة وقد تكون الأسعار تغيرت.", stale_refresh: "تحديث",
+  },
 } as const;
 
 type DictKey = keyof typeof dict["en"];
@@ -179,6 +199,9 @@ type DictKey = keyof typeof dict["en"];
 interface Ctx {
   lang: Lang;
   setLang: (l: Lang) => void;
+  market: Market;
+  setMarket: (market: Market) => void;
+  marketMeta: (typeof MARKET_META)[Market];
   t: (key: DictKey) => string;
 }
 
@@ -186,16 +209,20 @@ const LanguageContext = createContext<Ctx | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("ru");
+  const [market, setMarketState] = useState<Market>("us");
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("rr_lang");
-      if (saved === "en" || saved === "ru") setLangState(saved);
+      if (saved === "en" || saved === "ru" || saved === "ar") setLangState(saved);
+      const savedMarket = window.localStorage.getItem("rr_market");
+      if (savedMarket === "us" || savedMarket === "ae" || savedMarket === "ru") setMarketState(savedMarket);
     } catch {}
   }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
 
   const setLang = (l: Lang) => {
@@ -205,10 +232,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {}
   };
 
+  const setMarket = (value: Market) => {
+    setMarketState(value);
+    try { window.localStorage.setItem("rr_market", value); } catch {}
+  };
+
   const t = (key: DictKey) => dict[lang][key];
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, market, setMarket, marketMeta: MARKET_META[market], t }}>
       {children}
     </LanguageContext.Provider>
   );

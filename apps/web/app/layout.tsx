@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter, Manrope, IBM_Plex_Mono, Cormorant_Garamond } from "next/font/google";
+import { Inter, Manrope, IBM_Plex_Mono, Cormorant_Garamond, Noto_Sans_Arabic } from "next/font/google";
 import { SessionProviderWrapper } from "./SessionProviderWrapper";
 import { LanguageProvider } from "@/lib/i18n";
 
@@ -33,6 +33,13 @@ const rrEditorial = Cormorant_Garamond({
   display: "swap",
 });
 
+const rrArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-rr-arabic",
+  display: "swap",
+});
+
 export const metadata = {
   title: "Release Radar",
   description: "Personal action-first release intelligence",
@@ -53,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="ru"
-      className={`${inter.variable} ${rrSans.variable} ${rrDisplay.variable} ${rrMono.variable} ${rrEditorial.variable}`}
+      className={`${inter.variable} ${rrSans.variable} ${rrDisplay.variable} ${rrMono.variable} ${rrEditorial.variable} ${rrArabic.variable}`}
     >
       <body className="app-shell font-sans min-h-screen">
         <SessionProviderWrapper>

@@ -36,3 +36,5 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 8px; }
 ::-webkit-scrollbar-track { background: #0a0c0f; }
 ::-webkit-scrollbar-thumb { background: #282d35; border: 2px solid #0a0c0f; border-radius: 999px; }
+html[dir="rtl"] body { font-family: var(--font-rr-arabic), system-ui, sans-serif; }
+html[dir="rtl"] .font-rr-editorial { font-family: var(--font-rr-arabic), system-ui, sans-serif; letter-spacing: 0; }
