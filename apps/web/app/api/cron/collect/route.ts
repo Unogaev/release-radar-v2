@@ -6,7 +6,9 @@ import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
 import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
+import { appendEarlyDemandMetadata, classifyEarlyDemand } from "@/lib/radar/earlyDemand";
 import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
+import { syncVerifiedVintageDemand } from "@/lib/radar/verifiedVintageDemand";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,15 +16,16 @@ export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (!cronSecret) {
-    return NextResponse.json({ error: "cron_not_configured" }, { status: 503 });
-  }
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const isVercelCron = req.headers.get("user-agent") === "vercel-cron/1.0";
+  // Vercel's scheduler is still allowed to run when a legacy deployment has
+  // no CRON_SECRET configured. Ordinary browser requests remain blocked.
+  if (cronSecret ? authHeader !== `Bearer ${cronSecret}` : !isVercelCron) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   await ensureRadarSourceRegistry(prisma);
   await syncVerifiedReleases();
+  await syncVerifiedVintageDemand();
   const sources = await prisma.source.findMany({
     where: { isEnabled: true },
     orderBy: [{ lastCheckedAt: "asc" }, { trustLevel: "desc" }],
@@ -56,19 +59,30 @@ export async function GET(req: NextRequest) {
         });
         const existingUrls = new Set(existingSignals.map((signal) => signal.url).filter(Boolean));
         const freshItems = items.filter((item) => !existingUrls.has(item.url));
-        if (freshItems.length) {
+        const preparedItems = freshItems.flatMap((item) => {
+          const early = classifyEarlyDemand(item.title);
+          // Dedicated social-pulse searches are deliberately narrow. General
+          // sources keep all product news, while pulse sources only store an
+          // actionable early-demand pattern to avoid a noisy celebrity feed.
+          if (source.category === "social-pulse" && !early) return [];
+          return [{ ...item, early }];
+        });
+        if (preparedItems.length) {
           await prisma.signal.createMany({
-            data: freshItems.map((item) => ({
+            data: preparedItems.map((item) => ({
               sourceId: source.id,
-              rawText: item.imageUrl
-                ? `${item.title}\n[rr:image=${encodeURIComponent(item.imageUrl)}]`
-                : item.title,
+              rawText: (() => {
+                const base = item.imageUrl
+                  ? `${item.title}\n[rr:image=${encodeURIComponent(item.imageUrl)}]`
+                  : item.title;
+                return item.early ? appendEarlyDemandMetadata(base, item.early) : base;
+              })(),
               url: item.url,
               observedAt: item.publishedAt ? new Date(item.publishedAt) : new Date(),
             })),
           });
         }
-        const created = freshItems.length;
+        const created = preparedItems.length;
         runResult = { sourceId: source.id, discovered: items.length, decisionsCreated: 0, newItems: created, error: null };
       } catch (error) {
         runResult = { sourceId: source.id, discovered: 0, decisionsCreated: 0, newItems: 0, error: error instanceof Error ? error.message : String(error) };
