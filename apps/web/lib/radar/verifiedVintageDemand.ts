@@ -10,23 +10,34 @@ const SHOULDER_BIRKIN = {
   observedPrice: "€12,500",
 };
 
+const TOGO_MATCH = {
+  url: "https://www.lesfoliesdeugenie.fr/en/products/hermes-birkin-shoulder-1",
+  reference: "lesfoliesdeugenie-birkin-shoulder-orange-1",
+  model: "Birkin Shoulder 42 Orange Togo Palladium 2006",
+  observedPrice: "€6,990",
+};
+
 export async function syncVerifiedVintageDemand(): Promise<void> {
-  const source = await prisma.source.findFirst({ where: { name: "Collector Square Handbags" } });
-  if (!source) return;
+  for (const listing of [
+    { ...SHOULDER_BIRKIN, sourceName: "Collector Square Handbags", confidence: 70, match: "Близкая замена: Clémence вместо Togo. €12,500 — asking price; checkout не проверен." },
+    { ...TOGO_MATCH, sourceName: "Les Folies d'Eugénie Handbags", confidence: 65, match: "Точное совпадение по модели, размеру, цвету, Togo и PHW. Состояние B; €6,990 — asking price; checkout не проверен." },
+  ]) {
+  const source = await prisma.source.findFirst({ where: { name: listing.sourceName } });
+  if (!source) continue;
 
   let variant = await prisma.productVariant.findFirst({
-    where: { identifiers: { some: { kind: "collector-square-reference", value: SHOULDER_BIRKIN.reference } } },
+    where: { identifiers: { some: { kind: "vintage-listing-reference", value: listing.reference } } },
   });
   if (!variant) {
     let product = await prisma.product.findFirst({
-      where: { brand: "Hermès", normalizedModel: SHOULDER_BIRKIN.model.toLowerCase(), category: "vintage" },
+      where: { brand: "Hermès", normalizedModel: listing.model.toLowerCase(), category: "vintage" },
     });
     if (!product) product = await prisma.product.create({ data: {
-      brand: "Hermès", normalizedModel: SHOULDER_BIRKIN.model.toLowerCase(), category: "vintage",
+      brand: "Hermès", normalizedModel: listing.model.toLowerCase(), category: "vintage",
     } });
     variant = await prisma.productVariant.create({ data: {
-      productId: product.id, variantLabel: SHOULDER_BIRKIN.reference,
-      identifiers: { create: { kind: "collector-square-reference", value: SHOULDER_BIRKIN.reference } },
+      productId: product.id, variantLabel: listing.reference,
+      identifiers: { create: { kind: "vintage-listing-reference", value: listing.reference } },
     } });
   }
 
@@ -34,17 +45,17 @@ export async function syncVerifiedVintageDemand(): Promise<void> {
     where: { productVariantId: variant.id, parseVersion: "vintage-buyer-lead-1" },
   });
   if (!evidence) await prisma.evidence.create({ data: {
-    productVariantId: variant.id, sourceId: source.id, url: SHOULDER_BIRKIN.url,
+    productVariantId: variant.id, sourceId: source.id, url: listing.url,
     level: "E1_RETAILER", parseVersion: "vintage-buyer-lead-1",
-    rawSnapshotRef: `Collector Square ref ${SHOULDER_BIRKIN.reference}: ${SHOULDER_BIRKIN.observedPrice}, very good condition, 2004, 42 cm, orange Clémence, palladium. Buyer WTB from user screenshot; buyer budget and commitment unconfirmed.`,
+    rawSnapshotRef: `${listing.sourceName} ref ${listing.reference}: ${listing.observedPrice}. ${listing.match} Buyer WTB from screenshot; buyer budget and commitment unconfirmed.`,
   } });
 
   const check = await prisma.availabilityCheck.findFirst({
-    where: { productVariantId: variant.id, url: SHOULDER_BIRKIN.url },
+    where: { productVariantId: variant.id, url: listing.url },
   });
   if (!check) await prisma.availabilityCheck.create({ data: {
-    productVariantId: variant.id, sourceId: source.id, url: SHOULDER_BIRKIN.url,
-    sellerOfRecord: "Collector Square (Paris)", visibleUiStatus: "€12,500 asking price · checkout not verified",
+    productVariantId: variant.id, sourceId: source.id, url: listing.url,
+    sellerOfRecord: listing.sourceName, visibleUiStatus: `${listing.observedPrice} asking price · checkout not verified`,
     ctaState: "unverified", variantAvailable: null, currency: "EUR",
     shippingState: "unknown", pickupState: "unknown", cartState: "unknown", checkoutState: "unknown",
     sessionRegion: "FR", zip: null,
@@ -55,8 +66,9 @@ export async function syncVerifiedVintageDemand(): Promise<void> {
   });
   if (!existing) await prisma.decision.create({ data: {
     productVariantId: variant.id, status: "CLIENT_FIRST", ruleVersion: "vintage-buyer-lead-1",
-    rationale: "Есть запрос на Shoulder Birkin 42 Orange Togo/Palladium. Найдена близкая, но не идентичная Clémence 2004 года: €12,500 — asking price. Подтвердить допуск Clémence вместо Togo, состояние, бюджет клиента, аутентичность и landed cost перед выкупом.",
-    blockedReasons: ["material_mismatch_togo_vs_clemence", "buyer_budget_unconfirmed", "checkout_unverified", "completed_sales_unverified"],
-    evidenceConfidence: 70,
+    rationale: `Есть запрос на Shoulder Birkin 42 Orange Togo/Palladium. ${listing.match} Проверить состояние, бюджет клиента, независимую аутентификацию и landed cost до выкупа.`,
+    blockedReasons: ["buyer_budget_unconfirmed", "checkout_unverified", "completed_sales_unverified"],
+    evidenceConfidence: listing.confidence,
   } });
+  }
 }
