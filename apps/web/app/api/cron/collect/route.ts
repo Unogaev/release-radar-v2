@@ -7,6 +7,7 @@ import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
 import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
 import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
+import { syncVerifiedVintageDemand } from "@/lib/radar/verifiedVintageDemand";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
 
   await ensureRadarSourceRegistry(prisma);
   await syncVerifiedReleases();
+  await syncVerifiedVintageDemand();
   const sources = await prisma.source.findMany({
     where: { isEnabled: true },
     orderBy: [{ lastCheckedAt: "asc" }, { trustLevel: "desc" }],

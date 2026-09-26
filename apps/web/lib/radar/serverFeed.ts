@@ -7,6 +7,7 @@ import { decodeHtmlEntities } from "./text";
 import { fetchRssItems } from "../../collectors/rss";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { syncVerifiedReleases } from "./verifiedReleases";
+import { syncVerifiedVintageDemand } from "./verifiedVintageDemand";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -208,6 +209,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // the next scheduled collector run.
   await ensureRadarSourceRegistry(prisma);
   await syncVerifiedReleases();
+  await syncVerifiedVintageDemand();
   const statuses = Object.keys(STATUS_MAP);
 
   const decisions = await prisma.decision.findMany({
