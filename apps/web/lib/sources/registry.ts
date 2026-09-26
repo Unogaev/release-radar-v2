@@ -19,10 +19,10 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "PlayStation Blog", sourceClass: "A_truth", url: "https://blog.playstation.com/feed/", category: "gaming", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "Xbox Wire", sourceClass: "A_truth", url: "https://news.xbox.com/en-us/feed/", category: "gaming", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "Nintendo Official News", sourceClass: "A_truth", url: "https://www.nintendo.com/us/whatsnew/", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
-  { name: "Best Buy Xbox X25", sourceClass: "A_truth", url: "https://www.bestbuy.com/site/searchpage.jsp?st=xbox+x25", category: "gaming", sourceType: "MANUAL", trustLevel: 5, checkIntervalMinutes: 15 },
+  { name: "Best Buy Xbox X25", sourceClass: "A_truth", url: "https://www.bestbuy.com/site/searchpage.jsp?st=xbox+x25", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Rockstar Games Newswire", sourceClass: "A_truth", url: "https://www.rockstargames.com/newswire", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
   { name: "PlayStation Direct", sourceClass: "A_truth", url: "https://direct.playstation.com/en-us", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
-  { name: "Microsoft Store Xbox", sourceClass: "A_truth", url: "https://www.microsoft.com/en-us/store/b/xbox", category: "gaming", sourceType: "MANUAL", trustLevel: 5, checkIntervalMinutes: 15 },
+  { name: "Microsoft Store Xbox", sourceClass: "A_truth", url: "https://www.microsoft.com/en-us/store/b/xbox", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
   { name: "GameStop Consoles", sourceClass: "A_truth", url: "https://www.gamestop.com/consoles-hardware", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Target Xbox", sourceClass: "A_truth", url: "https://www.target.com/c/xbox-series-x-s-consoles-video-games/-/N-fd2hh", category: "gaming", sourceType: "MANUAL", trustLevel: 5 },
 
@@ -51,32 +51,12 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Leica Camera News", sourceClass: "A_truth", url: "https://leica-camera.com/en-US/press-centre", category: "cameras", sourceType: "MANUAL", trustLevel: 5 },
 
   // Sneakers / streetwear
-  { name: "Nike SNKRS", sourceClass: "A_truth", url: "https://www.nike.com/launch", category: "sneakers", sourceType: "MANUAL", trustLevel: 5, checkIntervalMinutes: 15 },
+  { name: "Nike SNKRS", sourceClass: "A_truth", url: "https://www.nike.com/launch", category: "sneakers", sourceType: "MANUAL", trustLevel: 5 },
   { name: "adidas Confirmed", sourceClass: "A_truth", url: "https://www.adidas.com/us/confirmed", category: "sneakers", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Sneaker News", sourceClass: "C_signal", url: "https://sneakernews.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
   { name: "Nice Kicks", sourceClass: "C_signal", url: "https://www.nicekicks.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
   { name: "Hypebeast", sourceClass: "C_signal", url: "https://hypebeast.com/feed", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
   { name: "Highsnobiety", sourceClass: "C_signal", url: "https://www.highsnobiety.com/feed/", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
-
-  // Public/indexed early-demand layer. These searches catch coverage of
-  // athlete/celebrity debuts, buyer requests, pop-ups and surprise drops.
-  // They are discovery-only and always enter the product as VERIFY; an
-  // official retailer and market evidence must independently confirm action.
-  { name: "Early Pulse — Surprise Drops", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22surprise+drop%22+OR+%22pop-up%22+OR+%22unannounced+release%22&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Early Pulse — Athlete Debuts", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22on-court+debut%22+OR+%22player+exclusive%22+OR+%22signature+shoe%22&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Early Pulse — Celebrity Wears", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22spotted+in%22+OR+%22seen+wearing%22+OR+%22celebrity+wore%22+sneakers+fashion+watch&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Early Pulse — Sellouts & Restocks", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22sold+out%22+OR+restock+OR+%22back+in+stock%22+limited+edition&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-
-  // Social watch desk. Instagram and X posts are discovery evidence only:
-  // these indexed searches watch established release reporters, collectors,
-  // athletes and buyer-facing dealers without pretending a social post is
-  // proof of stock, price or a completed sale.
-  { name: "Social Watch — Sneaker Insiders", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22DropsByJay%22+OR+%22KicksFinder%22+OR+%22Sole+Retriever%22+OR+%22Supreme+Leaks+News%22+OR+%22zsneakerheadz%22+drop+OR+restock&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Social Watch — Athletes & Celebrity Debuts", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22on+feet%22+OR+%22courtside%22+OR+%22player+exclusive%22+OR+%22first+wore%22+%28sneaker+OR+watch+OR+fashion%29&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Social Watch — Watch Collectors & Dealers", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22Luxury+Bazaar%22+OR+%22Wrist+Aficionado%22+OR+%22A+Collected+Man%22+OR+%22Phillips+Watches%22+limited+OR+auction+OR+sold&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Social Watch — Chrome Hearts & Archive Buyers", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22Chrome+Hearts%22+%28restock+OR+%22new+arrival%22+OR+%22sold+out%22+OR+WTB+OR+buyer%29&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Social Watch — Tech Launch Insiders", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%22Mark+Gurman%22+OR+%22Ming-Chi+Kuo%22+OR+%22Ross+Young%22+%28launch+OR+preorder+OR+limited+supply%29&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
-  { name: "Social Watch — South Florida Buyer Pulse", sourceClass: "C_signal", url: "https://news.google.com/rss/search?q=%28Miami+OR+Aventura+OR+Fort+Lauderdale%29+%28pop-up+OR+restock+OR+raffle+OR+clearance+OR+exclusive%29&hl=en-US&gl=US&ceid=US:en", category: "social-pulse", sourceType: "RSS", trustLevel: 2, checkIntervalMinutes: 15 },
 
   // Independent and collectible watches
   { name: "Hodinkee", sourceClass: "C_signal", url: "https://www.hodinkee.com/articles/rss.xml", category: "watches", sourceType: "RSS", trustLevel: 4 },
