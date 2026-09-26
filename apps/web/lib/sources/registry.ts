@@ -143,6 +143,7 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "The RealReal New Arrivals", sourceClass: "B_market", url: "https://www.therealreal.com/new-arrivals", category: "vintage", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Fashionphile New Arrivals", sourceClass: "B_market", url: "https://www.fashionphile.com/shop/new-arrivals", category: "vintage", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Collector Square Handbags", sourceClass: "B_market", url: "https://www.collectorsquare.com/en/bags/", category: "vintage", sourceType: "MANUAL", trustLevel: 4, checkIntervalMinutes: 60 },
+  { name: "Les Folies d'Eugénie Handbags", sourceClass: "B_market", url: "https://www.lesfoliesdeugenie.fr/en/collections/hermes", category: "vintage", sourceType: "MANUAL", trustLevel: 3, checkIntervalMinutes: 60 },
   { name: "Grailed Designers", sourceClass: "B_market", url: "https://www.grailed.com/designers", category: "vintage", sourceType: "MANUAL", trustLevel: 3 },
   { name: "Sotheby's Handbags", sourceClass: "B_market", url: "https://www.sothebys.com/en/buy/handbags", category: "luxury", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Christie's Handbags", sourceClass: "B_market", url: "https://www.christies.com/en/departments/handbags-and-accessories", category: "luxury", sourceType: "MANUAL", trustLevel: 4 },
