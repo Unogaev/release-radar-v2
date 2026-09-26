@@ -6,6 +6,7 @@ import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { fetchRssItems } from "../../collectors/rss";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
+import { syncVerifiedReleases } from "./verifiedReleases";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -206,6 +207,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // Keep the database registry aligned with the shipped product even before
   // the next scheduled collector run.
   await ensureRadarSourceRegistry(prisma);
+  await syncVerifiedReleases();
   const statuses = Object.keys(STATUS_MAP);
 
   const decisions = await prisma.decision.findMany({
@@ -226,9 +228,15 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
+  const seenVariants = new Set<string>();
   const signals: Signal[] = await Promise.all(
     decisions
       .filter((d) => STATUS_MAP[d.status])
+      .filter((d) => {
+        if (seenVariants.has(d.productVariantId)) return false;
+        seenVariants.add(d.productVariantId);
+        return true;
+      })
       .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
       .map(async (d) => {
         const map = STATUS_MAP[d.status];

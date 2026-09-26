@@ -1,6 +1,7 @@
 // apps/web/lib/data.ts
 import { prisma } from "./prisma";
 import { DecisionStatus } from "@domain/decision/types";
+import { syncVerifiedReleases } from "./radar/verifiedReleases";
 
 // СЕЙЧАС — only decisions that are actionable right now (spec §4.1).
 const NOW_STATUSES: string[] = [
@@ -25,6 +26,7 @@ export async function getNowFeed(userId: string) {
 }
 
 export async function getSoonEvents(userId: string) {
+  await syncVerifiedReleases();
   const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   return prisma.releaseEvent.findMany({
     where: {
@@ -43,6 +45,7 @@ export async function getSoonEvents(userId: string) {
 }
 
 export async function getCalendarEvents(userId: string) {
+  await syncVerifiedReleases();
   const rangeStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
   const rangeEnd = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
   return prisma.releaseEvent.findMany({

@@ -14,7 +14,7 @@ const STAGE_HEADLINE: Record<NotificationStage, string> = {
   t_minus_24h: "До старта около 24 часов",
   t_minus_3h: "До старта около 3 часов",
   t_minus_1h: "До старта около 1 часа",
-  opening_hour: "Продажи открываются сейчас",
+  opening_hour: "Время старта — проверьте кнопку покупки",
   unexpected_restock: "Неожиданный ресток",
   price_status_change: "Изменилась цена или доступность",
 };
