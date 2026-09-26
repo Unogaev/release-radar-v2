@@ -6,14 +6,16 @@ import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { fetchRssItems } from "../../collectors/rss";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
+import { readEarlyDemandMetadata, stripRadarMetadata } from "./earlyDemand";
 import { syncVerifiedReleases } from "./verifiedReleases";
+import { syncVerifiedVintageDemand } from "./verifiedVintageDemand";
 
 function signalHeadline(rawText: string | null | undefined) {
-  return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
+  return decodeHtmlEntities(stripRadarMetadata(rawText ?? ""));
 }
 
 function embeddedSignalImage(rawText: string | null | undefined): string | null {
-  const encoded = rawText?.match(/\n\[rr:image=([^\]]+)\]\s*$/i)?.[1];
+  const encoded = rawText?.match(/\n\[rr:image=([^\]]+)\]/i)?.[1];
   if (!encoded) return null;
   try { return decodeURIComponent(encoded); } catch { return null; }
 }
@@ -145,6 +147,8 @@ const MISSING_LABEL: Record<string, { ru: string; en: string }> = {
   photo: { ru: "фото", en: "photo" },
   link: { ru: "ссылка на магазин", en: "store link" },
   cta: { ru: "подтверждённая кнопка покупки", en: "confirmed buy button" },
+  completedSales: { ru: "подтверждённые вторичные продажи", en: "completed resale evidence" },
+  netMargin: { ru: "чистая маржа не менее 20%", en: "at least 20% net margin" },
 };
 
 function buildWhy(
@@ -208,6 +212,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // the next scheduled collector run.
   await ensureRadarSourceRegistry(prisma);
   await syncVerifiedReleases();
+  await syncVerifiedVintageDemand();
   const statuses = Object.keys(STATUS_MAP);
 
   const decisions = await prisma.decision.findMany({
@@ -228,7 +233,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
+  // Each review creates a new decision. Only the latest one may speak for a
+  // product; otherwise an expired PREPARE or BUY NOW can remain on the feed.
   const seenVariants = new Set<string>();
+
   const signals: Signal[] = await Promise.all(
     decisions
       .filter((d) => STATUS_MAP[d.status])
@@ -270,6 +278,12 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const expectedResale = completedMedian;
         const liquidity = liquidityFor(sales);
         const forecast = saleForecast(salePrices, askPrices, liquidity);
+        const completedNetProfit = cost !== null && completedMedian !== null
+          ? completedMedian * (1 - MARKETPLACE_FEE_RATE) - OUTBOUND_SHIPPING_ESTIMATE - cost
+          : null;
+        const completedNetMarginPct = completedNetProfit !== null && cost
+          ? (completedNetProfit / cost) * 100
+          : null;
         const minExit20 = cost === null
           ? null
           : (cost * 1.2 + OUTBOUND_SHIPPING_ESTIMATE) / (1 - MARKETPLACE_FEE_RATE);
@@ -285,11 +299,22 @@ export async function getRealFeed(): Promise<FeedPayload> {
         let bucket = map.bucket;
         let kindLabel = map.kindLabel;
         const missing: string[] = [];
+        const identity = `${brand} ${model} ${sku}`.toLowerCase();
+        const priorityInventoryBypass = identity.includes("x25") && retail !== null && retail <= 1050 && ctaConfirmed;
+        const forcedClientFirst = bucket === "buy" && retail !== null && retail > 10_000 && ["watches", "cars", "luxury", "jewelry"].includes(product.category);
+        if (forcedClientFirst) {
+          bucket = "client";
+          kindLabel = "client";
+        }
         if (bucket === "buy" || bucket === "apply") {
           if (retail === null) missing.push("price");
           if (!image) missing.push("photo");
           if (!primaryUrl) missing.push("link");
           if (bucket === "buy" && !ctaConfirmed) missing.push("cta");
+          if (bucket === "buy" && !priorityInventoryBypass) {
+            if (completedMedian === null) missing.push("completedSales");
+            else if (completedNetMarginPct === null || completedNetMarginPct < 20) missing.push("netMargin");
+          }
         }
         const downgraded = missing.length > 0;
         if (downgraded) {
@@ -386,7 +411,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|radeon|gpu|camera|leica|canon|nikon|fujifilm|dji|porsche|ferrari|lamborghini|electric|ev|vehicle|car|lego|brick|collectible|trading card|memorabilia|fragrance|perfume|jewelry|handbag|archive|clearance|deal|collection|capsule|new arrivals?)\b/i;
   const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
   const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
-  const COMMERCE_CATEGORIES = new Set(["sneakers", "streetwear", "watches", "cars", "lego", "collectibles", "vintage", "luxury", "fragrance", "gpu", "cameras", "clearance", "chrome-hearts", "jewelry"]);
+  const COMMERCE_CATEGORIES = new Set(["sneakers", "streetwear", "watches", "cars", "lego", "collectibles", "vintage", "luxury", "fragrance", "gpu", "cameras", "clearance", "chrome-hearts", "jewelry", "social-pulse"]);
   const seenNews = new Set<string>();
   const perSource = new Map<string, number>();
   const perCategory = new Map<string, number>();
@@ -516,7 +541,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     }),
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
-      kind: (/\b(auction|sold|sale|resale|record|profit|flipped|million|million-dollar|hammer price)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
+      kind: (readEarlyDemandMetadata(s.rawText) ? "EARLY" : /\b(auction|sold|sale|resale|record|profit|flipped|million|million-dollar|hammer price)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
       headline: (signalHeadline(s.rawText) || "New signal detected").slice(0, 140),
       source: s.source.name,
       category: s.source.category,
