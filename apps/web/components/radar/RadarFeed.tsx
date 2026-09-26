@@ -47,8 +47,8 @@ const NEWS_CATEGORIES: Partial<Record<RadarCategory, string[]>> = {
 const COPY = {
   ru: {
     eyebrow: "Opportunity intelligence · Miami / Moscow / Dubai",
-    title: "Где сегодня есть деньги",
-    subtitle: "Не каталог релизов: проверенная цена входа, фактические продажи, чистый спред, ликвидность и конкретное действие.",
+    title: "Найди дефицит. Реши, как его получить.",
+    subtitle: "Radar показывает, что появилось, где это есть, стоит ли действовать и кто может забрать товар за тебя. Хочешь — покупай. Хочешь — зарабатывай, помогая другим.",
     active: "Активных действий", upcoming: "Ближайших событий", verified: "Проверка BUY NOW", verifiedValue: "Строгая", scan: "Последний сбор",
     noAction: "Сейчас нет сделки, прошедшей все проверки",
     noActionText: "Это не пустая лента: капитал остаётся свободным, пока нет одновременно доступности, цены входа, доказанных продаж и чистой маржи.",
@@ -57,8 +57,8 @@ const COPY = {
     allNews: "Все новости", submit: "Прислать", source: "Открыть источники", sourceHealth: "Состояние источников", sourcesOk: "работают", sourcesIssue: "требуют внимания", refresh: "Обновить", alerts: "Алерты", emptyNews: "Свежих подтверждённых публикаций пока нет.",
   },
   en: {
-    eyebrow: "Opportunity intelligence · Miami / Moscow / Dubai", title: "Where the money is today",
-    subtitle: "Not a release catalog: verified entry cost, completed sales, net spread, liquidity and one clear action.",
+    eyebrow: "Opportunity intelligence · Miami / Moscow / Dubai", title: "Find scarcity. Choose how to get it.",
+    subtitle: "Radar shows what appeared, where it is, whether it is worth acting on, and who can get it for you. Buy it yourself — or earn by helping someone else.",
     active: "Active actions", upcoming: "Upcoming events", verified: "BUY NOW gate", verifiedValue: "Strict", scan: "Last sweep",
     noAction: "No deal passes every gate right now",
     noActionText: "This is not an empty feed: capital stays free until availability, entry price, completed sales and net margin are confirmed together.",
