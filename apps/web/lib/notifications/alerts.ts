@@ -7,6 +7,7 @@ interface CreateAlertInput {
   productVariantId: string;
   brand: string;
   model: string;
+  sku?: string | null;
   status: string;
   priceUsd: number | null;
   store: string | null;
@@ -38,6 +39,7 @@ async function createSignalAlert(input: CreateAlertInput, stage: NotificationSta
     stage,
     brand: input.brand,
     model: input.model,
+    sku: input.sku,
     status: input.status,
     priceUsd: input.priceUsd,
     store: input.store,

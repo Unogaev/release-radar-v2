@@ -6,6 +6,7 @@ import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
 import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
+import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   await ensureRadarSourceRegistry(prisma);
+  await syncVerifiedReleases();
   const sources = await prisma.source.findMany({
     where: { isEnabled: true },
     orderBy: [{ lastCheckedAt: "asc" }, { trustLevel: "desc" }],
