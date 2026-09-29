@@ -9,6 +9,7 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Cache on globalThis in every environment. Without this, each serverless
+// instance creates its own client and the database connection pool is
+// exhausted under concurrent load (intermittent 500s in production).
+globalForPrisma.prisma = prisma;
