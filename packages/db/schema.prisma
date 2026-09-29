@@ -97,6 +97,7 @@ model ProductVariant {
   marketAsks         MarketAsk[]
   buyerRequests      BuyerRequest[]
   purchases          Purchase[]
+  feedCard           FeedCard?
 
   @@index([productId, variantLabel])
 }
@@ -385,4 +386,26 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+
+// Materialized per-variant card assets. Resolving a product image and checking
+// link liveness requires live network calls (page fetch + HEAD, up to 7s
+// each) — far too expensive and flaky to run inside the page render path.
+// The collector cron builds these rows in the background; /now only reads
+// them. Until a row exists, cards degrade gracefully to WATCH via the
+// existing honesty gate instead of showing unverified actions.
+model FeedCard {
+  id               String         @id @default(cuid())
+  productVariantId String         @unique
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  imageUrl         String?
+  imageSourceUrl   String?
+  imageProvenance  String?
+  primaryUrl       String?
+  linkLive         Boolean        @default(false)
+  checkedAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([updatedAt])
 }
