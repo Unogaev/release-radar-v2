@@ -406,20 +406,14 @@ export async function getRealFeed(): Promise<FeedPayload> {
     return true;
   }).slice(0, 36);
 
-  // Editorial sites often block page-level OG scraping while publishing the
-  // real hero image in RSS. Fetch every source feed once, then match images by
-  // canonical article URL. This keeps the visual feed photographic without
-  // inventing stock artwork or depending on fragile hotlinks.
-  const sourceFeedImages = new Map<string, Map<string, string>>();
-  const uniqueNewsSources = [...new Map(newsSignals.map((signal) => [signal.sourceId, signal.source])).values()];
-  await Promise.all(uniqueNewsSources.map(async (source) => {
-    if (!source.url || !["RSS", "NEWSROOM"].includes(source.sourceType)) return;
-    try {
-      const items = await fetchRssItems(source.url, 60);
-      sourceFeedImages.set(source.id, new Map(items.filter((item) => item.imageUrl).map((item) => [item.url, item.imageUrl!] as const)));
-    } catch {
-      // Some newsroom URLs are HTML pages rather than feeds. Page extraction
-      // remains the fallback below.
+    // News images were already extracted from each RSS item at ingest time by
+  // the collector cron and embedded in rawText as [rr:image=...]. Re-fetching
+  // every source feed live on each render was pure waste; page-level image
+  // extraction below remains only as a fallback for signals without one.
+
+
+
+
     }
   }));
 
@@ -460,18 +454,20 @@ export async function getRealFeed(): Promise<FeedPayload> {
   }));
 
   const chronologicalNews: NewsItem[] = [
-    ...releaseVariants.map((v, i) => ({
-      id: "release:" + v.id,
-      kind: "RELEASE" as const,
-      headline: v.product.brand + " " + titleCase(v.product.normalizedModel),
-      brand: v.product.brand,
-      model: titleCase(v.product.normalizedModel),
-      source: "confirmed release",
-      category: v.product.category,
-      sourceUrl: releaseVariantLinks[i] ? (v.evidence[0]?.url ?? null) : null,
-      imageUrl: proxyImageUrl(releaseVariantImages[i]?.url),
-      imageSourceUrl: releaseVariantImages[i]?.sourceUrl,
-      observedAt: v.createdAt.toISOString(),
+    ...releaseVariants.map((v) => {
+      const card = releaseCards.get(v.id);
+      return {
+        id: "release:" + v.id,
+        kind: "RELEASE" as const,
+        headline: v.product.brand + " " + titleCase(v.product.normalizedModel),
+        brand: v.product.brand,
+        model: titleCase(v.product.normalizedModel),
+        source: "confirmed release",
+        category: v.product.category,
+        sourceUrl: card?.linkLive ? card.primaryUrl : null,
+        imageUrl: proxyImageUrl(card?.imageUrl),
+        imageSourceUrl: card?.imageSourceUrl ?? undefined,
+          observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
     })),
     ...signalNewsSource.map((s) => ({
