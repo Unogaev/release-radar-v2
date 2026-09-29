@@ -5,7 +5,17 @@ export type RadarSourceDefinition = {
   sourceClass: "A_truth" | "B_market" | "C_signal";
   url: string;
   category: string;
-  sourceType: "RSS" | "NEWSROOM" | "MANUAL";
+  sourceType:
+    | "RSS"
+    | "NEWSROOM"
+    | "MANUAL"
+    | "PRODUCT_LISTING"
+    | "API"
+    | "SITEMAP"
+    | "RELEASE_CALENDAR"
+    | "BROWSER_VERIFICATION"
+    | "SOCIAL_DISCOVERY"
+    | "MARKET_SALES";
   trustLevel: number;
   checkIntervalMinutes?: number;
 };
