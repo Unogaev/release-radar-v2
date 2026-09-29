@@ -7,6 +7,7 @@ import {
   createFirstDetectionAlert,
   createUnexpectedRestockAlert,
 } from "@/lib/notifications/alerts";
+import { ensureFeedCardTable } from "@/lib/radar/feedCards";
 
 /**
  * POST /api/intake/observation
@@ -72,6 +73,12 @@ export async function POST(req: NextRequest) {
     const depth = String(body.verificationDepth ?? "listing");
     // Optional: verifier actually saw a stated quantity limit on the page.
     const quantityLimitKnown = body.quantityLimitKnown === true;
+    // Optional: verifier copied the product image URL from the live page.
+    // Observed, never invented — seeds the card so a verified BUY_NOW stays
+    // visible even when the retailer's bot protection blocks server-side
+    // image extraction.
+    const rawImageUrl = String(body.imageUrl ?? "").trim();
+    const imageUrl = /^https:\/\/[^\s]+$/i.test(rawImageUrl) ? rawImageUrl : null;
 
     if (!brand || !model) {
       return NextResponse.json(
@@ -224,6 +231,42 @@ export async function POST(req: NextRequest) {
         economicsJson: (built.economicsJson ?? undefined) as never,
       },
     });
+
+    // ---- Seed the card with what the observation actually proved ----
+    // A browser-verified observation IS a live page load: the verifier saw
+    // the page, the price and the enabled CTA in a real browser. That is
+    // stronger evidence of link liveness than the collector's server-side
+    // HEAD request (which bot protection often answers with 403). Seed it
+    // honestly so a verified action isn't hidden as a "dead link".
+    try {
+      await ensureFeedCardTable();
+      await prisma.feedCard.upsert({
+        where: { productVariantId: variant.id },
+        create: {
+          productVariantId: variant.id,
+          primaryUrl: url || null,
+          linkLive: Boolean(url),
+          imageUrl,
+          imageSourceUrl: imageUrl ? url || null : null,
+          imageProvenance: imageUrl ? "product-page" : null,
+          checkedAt: new Date(),
+        },
+        update: {
+          primaryUrl: url || null,
+          linkLive: Boolean(url),
+          ...(imageUrl
+            ? {
+                imageUrl,
+                imageSourceUrl: url || null,
+                imageProvenance: "product-page",
+              }
+            : {}),
+          checkedAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error("intake feedCard seed failed:", e);
+    }
 
     // Notify only on genuinely actionable outcomes.
     if (
