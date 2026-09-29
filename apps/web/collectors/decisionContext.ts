@@ -65,6 +65,8 @@ export interface DecisionBuildInput {
   rawUrl: string | null;
   zip: string;
   fallbackHint?: FallbackHint;
+  /** Browser verifier actually saw a stated quantity limit (e.g. "Limit 2 per customer"). */
+  quantityLimitKnown?: boolean;
 }
 
 export interface DecisionBuildOutput {
@@ -157,8 +159,10 @@ export async function buildDecision(
   const fullCostKnown = landed !== null;
   const maxBuyPriceSet = checkoutPriceKnown;
   // A direct product listing is a single-unit purchase — the quantity limit
-  // is inherently 1. For signal-type sources we still don't know it.
-  const quantityLimitSet = input.sourceType === "PRODUCT_LISTING";
+  // is inherently 1. A browser verifier may also observe a stated limit.
+  // Both are honest "known"; for signal-type sources we still don't know it.
+  const quantityLimitSet =
+    input.sourceType === "PRODUCT_LISTING" || input.quantityLimitKnown === true;
 
   // ---- Seller allow-list: owner's list wins; otherwise the observed seller ----
   const sellerOfRecord = input.availability.sellerOfRecord;
