@@ -1,0 +1,36 @@
+name: radar-collect (hourly, free tier)
+
+# Vercel Hobby allows only daily crons, so the hourly sweep runs here instead —
+# GitHub Actions is free for public repos and generous for private ones.
+#
+# REQUIRED: a repository secret named CRON_SECRET with the same value as the
+# CRON_SECRET environment variable on Vercel (repo → Settings → Secrets and
+# variables → Actions → New repository secret).
+
+on:
+  schedule:
+    - cron: "7 * * * *" # hourly at :07 UTC
+  workflow_dispatch: {} # manual runs from the Actions tab
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger /api/cron/collect
+        run: |
+          code=$(curl -s -o /tmp/collect.json -w "%{http_code}" --max-time 100 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://release-radar-v2.vercel.app/api/cron/collect)
+          echo "collect HTTP $code"
+          head -c 1500 /tmp/collect.json; echo
+          test "$code" = "200"
+
+      - name: Trigger /api/cron/mowalola
+        run: |
+          code=$(curl -s -o /tmp/mowalola.json -w "%{http_code}" --max-time 100 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://release-radar-v2.vercel.app/api/cron/mowalola)
+          echo "mowalola HTTP $code"
+          head -c 1500 /tmp/mowalola.json; echo
+          test "$code" = "200"
