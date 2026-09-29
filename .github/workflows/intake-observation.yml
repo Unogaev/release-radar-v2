@@ -1,0 +1,91 @@
+# Manual intake for browser-verified observations.
+#
+# The owner verifies a real product page in a browser (price, stock, CTA —
+# only what is actually visible), then runs this workflow and pastes the
+# observation in. The workflow POSTs it to /api/intake/observation using the
+# owner's CRON_SECRET, so the secret is never exposed and the honest decision
+# engine (rule 2.1.0) produces a real decision with auditable economics.
+#
+# Never invent a price, stock state, or limit: use inStock=false /
+# quantityLimitKnown=false when the page did not show it.
+
+name: intake-observation (verified, manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      brand:
+        description: "Brand exactly as shown on the page"
+        required: true
+        type: string
+      model:
+        description: "Product name exactly as shown on the page"
+        required: true
+        type: string
+      variant:
+        description: "Variant label"
+        default: "default"
+        type: string
+      category:
+        description: "Category: toys, tech, watches, sneakers, ..."
+        default: "other"
+        type: string
+      url:
+        description: "Product page URL"
+        required: true
+        type: string
+      seller:
+        description: "Seller of record as shown on the page"
+        required: true
+        type: string
+      priceUsd:
+        description: "Observed price in USD (number only, no tax/shipping)"
+        required: true
+        type: string
+      inStock:
+        description: "Buy/Add-to-Bag button was enabled on the page"
+        type: choice
+        options: ["true", "false"]
+        default: "true"
+      verificationDepth:
+        description: "How deep the verification went"
+        type: choice
+        options: ["listing", "cart", "checkout"]
+        default: "listing"
+      evidenceNote:
+        description: "One sentence: what was actually seen on the page"
+        required: true
+        type: string
+      quantityLimitKnown:
+        description: "The page stated a quantity/purchase limit"
+        type: choice
+        options: ["true", "false"]
+        default: "false"
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit verified observation to the honest engine
+        run: |
+          BODY=$(jq -n \
+            --arg brand "${{ inputs.brand }}" \
+            --arg model "${{ inputs.model }}" \
+            --arg variant "${{ inputs.variant }}" \
+            --arg category "${{ inputs.category }}" \
+            --arg url "${{ inputs.url }}" \
+            --arg seller "${{ inputs.seller }}" \
+            --argjson priceUsd "${{ inputs.priceUsd }}" \
+            --argjson inStock "${{ inputs.inStock }}" \
+            --arg depth "${{ inputs.verificationDepth }}" \
+            --arg note "${{ inputs.evidenceNote }}" \
+            --argjson qtyKnown "${{ inputs.quantityLimitKnown }}" \
+            '{brand:$brand, model:$model, variant:$variant, category:$category, url:$url, seller:$seller, priceUsd:$priceUsd, inStock:$inStock, verificationDepth:$depth, evidenceNote:$note, quantityLimitKnown:$qtyKnown}')
+          echo "Submitting observation:"
+          echo "$BODY" | jq '{brand, model, priceUsd, inStock, verificationDepth, quantityLimitKnown}'
+          echo "--- engine response:"
+          curl -s -X POST "https://release-radar-v2.vercel.app/api/intake/observation" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" | head -c 4000
+          echo ""
