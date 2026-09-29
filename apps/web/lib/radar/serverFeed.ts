@@ -1,13 +1,33 @@
 import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
-import { getPageImage } from "./fetchImage";
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { readFeedCards } from "./feedCards";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
+}
+
+/**
+ * Some page-discovery signals carry no title — only the source URL. A raw
+ * URL is not a headline, so derive one from the URL path instead of showing
+ * it (e.g. "…/limited-sale-event" → "Limited Sale Event — Mattel Creations").
+ */
+function readableHeadline(rawText: string | null | undefined, url: string | null | undefined, sourceName: string) {
+  const base = (signalHeadline(rawText) || "").slice(0, 140);
+  const looksLikeUrl = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(base);
+  if (base && !looksLikeUrl) return base;
+  const candidate = url || (/^https?:\/\//i.test(base) ? base : "");
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`);
+    const slug = parsed.pathname.split("/").filter(Boolean).pop() ?? "";
+    const words = slug.replace(/[-_]+/g, " ").replace(/\.[a-z0-9]+$/i, "").trim();
+    if (words) return `${titleCase(words)} — ${sourceName}`.slice(0, 140);
+  } catch {
+    /* fall through to the honest fallback below */
+  }
+  return (base || sourceName || "New signal detected").slice(0, 140);
 }
 
 function embeddedSignalImage(rawText: string | null | undefined): string | null {
@@ -408,10 +428,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
     // News images were already extracted from each RSS item at ingest time by
   // the collector cron and embedded in rawText as [rr:image=...]. Re-fetching
-  // every source feed live on each render was pure waste; page-level image
-  // extraction below remains only as a fallback for signals without one.
+  // every source feed live on each render was pure waste; the render path is
+  // a pure database read and never fires per-card page fetches.
 
-  const releaseVariants = await prisma.productVariant.findMany({
+  const releaseVariantRows = await prisma.productVariant.findMany({
     where: {
       decisions: { none: {} },
       evidence: { some: { level: { in: ["E2_OFFICIAL", "E3_ACTIONABLE", "E4_CART_VERIFIED"] } } },
@@ -423,6 +443,17 @@ export async function getRealFeed(): Promise<FeedPayload> {
       releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
       evidence: { orderBy: { observedAt: "desc" }, take: 1 },
     },
+  });
+
+  // Guard against duplicate product rows (same brand + model ingested twice):
+  // the feed shows one card per product, newest first. The pipeline dedupe is
+  // the real fix; this keeps the render honest meanwhile.
+  const seenProducts = new Set<string>();
+  const releaseVariants = releaseVariantRows.filter((v) => {
+    const key = `${v.product.brand}::${v.product.normalizedModel}`.toLowerCase();
+    if (seenProducts.has(key)) return false;
+    seenProducts.add(key);
+    return true;
   });
 
   const BUCKET_LABEL: Record<string, string> = { buy: "BUY NOW", apply: "APPLY NOW" };
@@ -441,11 +472,13 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // these are editorial links, not money links, and were ingested minutes ago.
   const releaseCards = await readFeedCards(releaseVariants.map((v) => v.id));
 
-  const newsSignalImages = await Promise.all(newsSignals.map(async (signal) => {
+  // Pure database read: a news signal renders its ingest-time embedded image
+  // or no photo at all — never a live page fetch per card on every render.
+  const newsSignalImages = newsSignals.map((signal) => {
     const embeddedImage = embeddedSignalImage(signal.rawText);
     if (embeddedImage && signal.url) return { url: embeddedImage, sourceUrl: signal.url, provenance: "official-page" as const };
-    return getPageImage(signal.url);
-  }));
+    return null;
+  });
 
   const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v) => {
@@ -501,7 +534,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     ...newsSignals.map((s, i) => ({
       id: "news:" + s.id,
       kind: (/\b(auction|sold|sale|resale|record|profit|flipped|million|million-dollar|hammer price)\b/i.test(s.rawText ?? "") ? "MARKET" : "NEWS") as NewsItem["kind"],
-      headline: (signalHeadline(s.rawText) || "New signal detected").slice(0, 140),
+      headline: readableHeadline(s.rawText, s.url, s.source.name),
       source: s.source.name,
       category: s.source.category,
       sourceUrl: s.url ?? null,
