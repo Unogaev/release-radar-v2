@@ -172,8 +172,15 @@ export function checkClientFirstGate(input: ClientFirstGateInput): GateCheckResu
     reasons.push("Нет ни buyer request, ни неприемлемого инвентарного риска по цене.");
   }
   if (!input.variantDetailsSaved) reasons.push("Размер/цвет/конфигурация не сохранены.");
-  if (!input.deadlineSaved) reasons.push("Deadline не сохранён.");
-  if (!input.customerCeilingSaved) reasons.push("Customer ceiling не сохранён.");
+  // Pure price override without a buyer yet (spec §3.6): deadline and
+  // customer ceiling are the OBJECTIVE of the CLIENT_FIRST action — go find
+  // the client and capture them — not prerequisites for issuing it. They
+  // bind only when a buyer request already exists.
+  const isPurePriceOverride = input.priceTooHighForInventoryRisk && !input.hasBuyerRequest;
+  if (!isPurePriceOverride) {    
+      if (!input.deadlineSaved) reasons.push("Deadline не сохранён.");
+    if (!input.customerCeilingSaved) reasons.push("Customer ceiling не сохранён.");
+    }
   if (input.sourceCostBelowMaxSourcePrice === false) {
     reasons.push("Source cost выше вычисленного max_source_price.");
   }
