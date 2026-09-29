@@ -44,7 +44,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "unauthorized" }, { status: 401 });
       }
     }
-    const body = await req.json();
+    // Parse defensively: a machine client sending malformed JSON gets a
+    // diagnosable 400 (with a short body preview) instead of an opaque 500.
+    const rawBody = await req.text();
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawBody) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "invalid_json", preview: rawBody.slice(0, 160) },
+        { status: 400 }
+      );
+    }
 
     const brand = String(body.brand ?? "").trim();
     const model = String(body.model ?? "").trim();
