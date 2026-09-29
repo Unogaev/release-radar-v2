@@ -8,6 +8,7 @@ import { fetchRssItems } from "../../../../collectors/rss";
 import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
 import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
 import { syncVerifiedVintageDemand } from "@/lib/radar/verifiedVintageDemand";
+import { refreshFeedCards } from "@/lib/radar/feedCards";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -109,5 +110,13 @@ export async function GET(req: NextRequest) {
   }
 
   const remindersCreated = await createDueReleaseReminders();
-  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, remindersCreated, results });
+  // Materialize card images and verified store links in the background so the
+  // /now render path stays a pure database read. Bounded per run to protect
+  // the cron's execution budget; failures never break the collection report.
+  const feedCards = await refreshFeedCards().catch((error) => ({
+    refreshed: 0,
+    failed: 0,
+    error: error instanceof Error ? error.message : String(error),
+  }));
+  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, remindersCreated, feedCards, results });
 }
