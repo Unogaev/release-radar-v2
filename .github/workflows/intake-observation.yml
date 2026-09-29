@@ -61,6 +61,11 @@ on:
         type: choice
         options: ["true", "false"]
         default: "false"
+      imageUrl:
+        description: "Optional: product image URL copied from the verified page (https only)"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   submit:
@@ -79,6 +84,7 @@ jobs:
       IN_DEPTH: ${{ inputs.verificationDepth }}
       IN_NOTE: ${{ inputs.evidenceNote }}
       IN_QTY: ${{ inputs.quantityLimitKnown }}
+      IN_IMAGE: ${{ inputs.imageUrl }}
     steps:
       - name: Submit verified observation to the honest engine
         run: |
@@ -94,7 +100,8 @@ jobs:
             --arg depth "$IN_DEPTH" \
             --arg note "$IN_NOTE" \
             --argjson qtyKnown "$IN_QTY" \
-            '{brand:$brand, model:$model, variant:$variant, category:$category, url:$url, seller:$seller, priceUsd:$priceUsd, inStock:$inStock, verificationDepth:$depth, evidenceNote:$note, quantityLimitKnown:$qtyKnown}')
+            --arg imageUrl "$IN_IMAGE" \
+            '{brand:$brand, model:$model, variant:$variant, category:$category, url:$url, seller:$seller, priceUsd:$priceUsd, inStock:$inStock, verificationDepth:$depth, evidenceNote:$note, quantityLimitKnown:$qtyKnown, imageUrl:$imageUrl}')
           echo "Submitting observation:"
           echo "$BODY" | jq '{brand, model, priceUsd, inStock, verificationDepth, quantityLimitKnown}'
           echo "--- engine response:"
