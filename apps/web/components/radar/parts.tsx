@@ -254,7 +254,7 @@ export function ImageFrame({
   const { t } = useLanguage();
   return (
     <div
-      className={`relative flex overflow-hidden bg-rr-frame p-[18px] self-start ${
+      className={`relative flex w-full overflow-hidden bg-rr-frame p-[18px] self-start ${
         src ? "items-end" : "items-center justify-center"
       } ${className ?? ""}`}
       role={src ? "img" : undefined}
@@ -350,9 +350,12 @@ export function ActionRow({
           (primary && !primaryUsesInternalAction && (!primaryHref || buyNotConfirmed));
         const sizing = hero ? "px-[26px] py-[13px] text-[13px]" : "px-[22px] py-[11px] text-[12.5px]";
         const secondarySizing = hero ? "px-5 py-[13px] text-[13px]" : "px-[15px] py-[11px] text-[12.5px]";
+        // Primary action spans full width on mobile for a confident tap target;
+        // secondary actions stay inline.
+        const primarySizing = `${sizing} ${primary ? "w-full sm:w-auto text-center" : ""}`;
 
         const className = primary
-      ? `font-semibold transition-colors ${sizing} ${
+      ? `font-semibold transition-colors ${primarySizing} ${
           disabled
             ? "opacity-40 cursor-not-allowed bg-transparent border border-rr-accent text-rr-accent"
             : "border border-rr-accent bg-rr-accent text-[#07130d] shadow-[0_0_34px_rgba(54,217,138,.14)] hover:bg-rr-accent-hi"
