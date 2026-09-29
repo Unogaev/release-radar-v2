@@ -98,8 +98,14 @@ jobs:
           echo "Submitting observation:"
           echo "$BODY" | jq '{brand, model, priceUsd, inStock, verificationDepth, quantityLimitKnown}'
           echo "--- engine response:"
+          # The stored CRON_SECRET may carry a stray trailing newline (pasted
+          # blank line). A raw newline inside the header value ends the HTTP
+          # headers prematurely, pushing the real headers into the request
+          # body on POSTs (GETs are unaffected, which is why the collector
+          # kept working). Strip whitespace defensively before sending.
+          CLEAN_SECRET="$(printf '%s' "${{ secrets.CRON_SECRET }}" | tr -d '[:space:]')"
           curl -s -w '\nHTTP_STATUS:%{http_code}\n' -X POST "https://release-radar-v2.vercel.app/api/intake/observation" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Authorization: Bearer ${CLEAN_SECRET}" \
             -H "Content-Type: application/json" \
             -d "$BODY" | head -c 4000
           echo ""
