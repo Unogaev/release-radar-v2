@@ -10,6 +10,7 @@
 
 import { AvailabilityEvidence, EvidenceLevel, evidenceAtLeast } from "../evidence/types";
 import { findBuyNowBlockReasons } from "../evidence/ladder";
+import { formatMoneyMinor } from "../economics/costModel";
 
 export interface GateCheckResult {
   passed: boolean;
@@ -36,6 +37,11 @@ export interface BuyNowGateInput {
   fullCostKnown: boolean; // (4)
   maxBuyPriceSet: boolean; // (5)
   quantityLimitSet: boolean; // (5)
+  // Wave 2 — honest economics (spec §11): the full landed cost in minor units
+  // and the owner's budget cap. When budgetMinor is null the owner set no
+  // budget and this gate does not bind (recorded, not invented).
+  landedCostMinor: number | null;
+  budgetMinor: number | null;
   isResaleScenario: boolean;
   hasCompletedSalesOrConfirmedClient: boolean; // (6)
   projectedEconomicsPasses: boolean; // (6)
@@ -68,6 +74,19 @@ export function checkBuyNowGate(input: BuyNowGateInput): GateCheckResult {
   }
   if (!input.maxBuyPriceSet || !input.quantityLimitSet) {
     reasons.push("Max buy price или quantity limit не заданы.");
+  }
+
+  // Wave 2, gate (8): the full landed cost must fit the owner's budget.
+  // No budget set (null) = no cap — this is recorded in the rationale,
+  // never silently treated as "unlimited approval".
+  if (
+    input.budgetMinor !== null &&
+    input.landedCostMinor !== null &&
+    input.landedCostMinor > input.budgetMinor
+  ) {
+    reasons.push(
+      `Полная стоимость ${formatMoneyMinor(input.landedCostMinor)} превышает бюджет ${formatMoneyMinor(input.budgetMinor)}.`
+    );
   }
 
   if (input.isResaleScenario) {
