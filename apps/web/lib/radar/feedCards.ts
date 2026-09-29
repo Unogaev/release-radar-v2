@@ -92,10 +92,15 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
     // Images barely change: only re-resolve when missing. Link liveness is
     // re-checked every run so dead store links stop being offered as actions.
     const needImage = !existing?.imageUrl;
-    const [image, linkLive] = await Promise.all([
+    const [image, linkState] = await Promise.all([
       needImage ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
-      isLiveExternalUrl(c.url).catch(() => false),
+      isLiveExternalUrl(c.url).catch(() => null),
     ]);
+    // linkState null = ambiguous (bot-protection 403): keep the previously
+    // verified liveness. A browser-verified intake observation seeds
+    // linkLive=true, which survives here until a definitive check says
+    // otherwise.
+    const linkLive = linkState ?? existing?.linkLive ?? false;
     const data = {
       imageUrl: needImage ? image?.url ?? null : existing?.imageUrl ?? null,
       imageSourceUrl: needImage ? image?.sourceUrl ?? null : existing?.imageSourceUrl ?? null,

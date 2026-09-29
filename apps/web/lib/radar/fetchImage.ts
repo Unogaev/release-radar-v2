@@ -152,9 +152,9 @@ async function imageFromPage(pageUrl: string, provenance: ResolvedImage["provena
   }
 }
 
-export async function isLiveExternalUrl(pageUrl?: string | null): Promise<boolean> {
+export async function isLiveExternalUrl(pageUrl?: string | null): Promise<boolean | null> {
   if (!pageUrl || !isPublicHttpUrl(pageUrl)) return false;
-  if (livePageCache.has(pageUrl)) return livePageCache.get(pageUrl) ?? false;
+  if (livePageCache.has(pageUrl)) return livePageCache.get(pageUrl) ?? null;
   try {
     const response = await fetch(pageUrl, {
       method: "HEAD",
@@ -162,6 +162,11 @@ export async function isLiveExternalUrl(pageUrl?: string | null): Promise<boolea
       redirect: "follow",
       headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0" },
     });
+    // A 403 from bot protection (Akamai and friends) is ambiguous, not a
+    // dead link: the page can be perfectly live for real browsers while
+    // refusing server-side HEAD requests. Return null so callers preserve
+    // the previously verified state instead of declaring the link dead.
+    if (response.status === 403) return null;
     const live = response.ok && response.status < 400;
     livePageCache.set(pageUrl, live);
     if (response.url) livePageCache.set(response.url, live);
