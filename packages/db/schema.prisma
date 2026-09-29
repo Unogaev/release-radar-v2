@@ -248,6 +248,9 @@ model Decision {
   blockedReasons     String[]
   evidenceConfidence Int
   createdAt          DateTime       @default(now())
+  // Wave 2: auditable money trail — line items labeled observed / estimated /
+  // user_set, budget basis, resale inputs. Nullable: older rows predate it.
+  economicsJson      Json?
 
   alerts Alert[]
 

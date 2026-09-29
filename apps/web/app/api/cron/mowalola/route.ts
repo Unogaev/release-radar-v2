@@ -4,6 +4,7 @@ import { MowalolaAdapter, parseAnnouncedDate } from "@adapters/mowalola";
 import { classifyEvidenceLevel } from "@domain/evidence/ladder";
 import { decide, DecisionContext, requiresClientFirstOverride } from "@domain/decision/decisionEngine";
 import { ScoreComponents } from "@domain/scoring/score";
+import { buildDirectPurchaseModel } from "@domain/economics/costModel";
 
 const DEDUPE_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h: do not spam-create decisions on every cron tick
 
@@ -177,6 +178,9 @@ export async function GET(req: NextRequest) {
     // still actually present in its live HTML right now ----
     const enrichmentEvidence: unknown[] = [];
     let confirmedSku: string | null = null;
+    // The enrichment pricePattern only matches a literal "$255" in the live
+    // page text — so 255 is only claimed when actually observed, never assumed.
+    let enrichedPriceUsd: number | null = null;
     for (const es of ENRICHMENT_SOURCES) {
       try {
         const r = await fetch(es.url, { headers: { "User-Agent": "Mozilla/5.0 (ReleaseRadarBot/1.0)" } });
@@ -216,6 +220,7 @@ export async function GET(req: NextRequest) {
           enrichmentEvidence.push({ field: "sku", value: skuMatch[0], source: es.name, evidenceId: ev.id });
         }
         if (priceMatch) {
+          enrichedPriceUsd = 255; // the literal value the pattern matched
           const ev = await prisma.evidence.create({
             data: {
               productVariantId: variant.id,
@@ -262,8 +267,20 @@ export async function GET(req: NextRequest) {
     log.releaseDate = releaseDate;
 
     // ---- 8. Real DecisionContext -> real decide() ----
+    // Wave 2: no hardcoded price — the override and the budget gate run on
+    // the actually observed enrichment price (or null when not observed).
+    const enrichedPriceMinor =
+      enrichedPriceUsd !== null ? Math.round(enrichedPriceUsd * 100) : null;
+    const landed =
+      enrichedPriceMinor !== null
+        ? buildDirectPurchaseModel({ priceMinor: enrichedPriceMinor, currency: "USD", taxRate: null })
+        : null;
+    const ownerPrefs = await prisma.userPreferences.findFirst({
+      orderBy: { userId: "asc" },
+    });
+    const budgetMinor = ownerPrefs?.budgetMinor ?? null;
     const expensiveOverrideApplies = requiresClientFirstOverride({
-      priceUsd: 255,
+      priceUsd: enrichedPriceUsd ?? 0,
       category: "other",
       provenScarcity: false,
       crossBorderComplexity: false,
@@ -278,10 +295,12 @@ export async function GET(req: NextRequest) {
         evidenceLevel,
         isProblematicRetailer: false,
         availability,
-        checkoutPriceKnown: false,
-        fullCostKnown: false,
+        checkoutPriceKnown: enrichedPriceUsd !== null,
+        fullCostKnown: landed !== null,
         maxBuyPriceSet: false,
         quantityLimitSet: false,
+        landedCostMinor: landed?.totalMinor ?? null,
+        budgetMinor,
         isResaleScenario: false,
         hasCompletedSalesOrConfirmedClient: false,
         projectedEconomicsPasses: false,
@@ -302,6 +321,18 @@ export async function GET(req: NextRequest) {
       evidenceLevel,
       sourceCount: 1 + enrichmentEvidence.filter((e: any) => !e.error).length,
       hasConflictingEvidence: false,
+      economicsSummary:
+        landed !== null
+          ? [
+              `Full cost ≈$${(landed.totalMinor / 100).toFixed(2)} (contains estimates):`,
+              `  • Observed price $${(enrichedPriceMinor! / 100).toFixed(2)} (live page text)`,
+              `  • ≈ Estimated sales tax (7% Miami-Dade placeholder)`,
+              `  • ≈ Estimated inbound shipping $20 (placeholder)`,
+              budgetMinor !== null
+                ? `Budget: $${(budgetMinor / 100).toFixed(2)} (your setting)`
+                : "Budget: not set — no cap applied (set it in Settings).",
+            ].join("\n")
+          : "Full cost: unknown — no observed price.",
     };
 
     const result = decide(ctx);

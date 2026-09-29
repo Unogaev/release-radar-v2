@@ -2,9 +2,8 @@ import { PrismaClient } from "../generated/prisma";
 import { SourceAdapter } from "@adapters/SourceAdapter";
 import { classifyEvidenceLevel } from "@domain/evidence/ladder";
 import { AvailabilityEvidence } from "@domain/evidence/types";
-import { decide, DecisionContext, requiresClientFirstOverride } from "@domain/decision/decisionEngine";
+import { buildDecision, DEFAULT_SCORE } from "./decisionContext";
 import { createFirstDetectionAlert, createPriceStatusChangeAlert, createUnexpectedRestockAlert } from "../lib/notifications/alerts";
-import { ScoreComponents } from "@domain/scoring/score";
 
 export interface RunResult {
   sourceId: string;
@@ -13,27 +12,9 @@ export interface RunResult {
   error: string | null;
 }
 
-// NOTE (MVP fix): a flat 50 across every component always yields a
-// weighted score of 50, which is BELOW the 65 "skip" threshold in
-// score.ts — meaning every auto-collected item was silently discarded
-// as SKIP, regardless of real evidence. We have no real demand/scarcity
-// model yet, so this is an honest placeholder, not a fabricated signal:
-// it deliberately lands just above the skip threshold so a genuinely
-// detected, evidence-backed item defaults to WATCH (visible, non-
-// actionable) instead of vanishing. Replace with real per-category
-// scoring once a demand/scarcity data source exists.
-const DEFAULT_SCORE: ScoreComponents = {
-  demand: 70,
-  scarcity: 60,
-  margin: 60,
-  access: 70,
-  logistics: 70,
-  userFit: 60,
-};
-
 export async function runSourcePipeline(
   prisma: PrismaClient,
-  sourceRow: { id: string; category: string },
+  sourceRow: { id: string; category: string; sourceType: string },
   adapter: SourceAdapter,
   zip: string
 ): Promise<RunResult> {
@@ -92,6 +73,7 @@ export async function runSourcePipeline(
       );
 
       const evidenceLevel = classifyEvidenceLevel(availability);
+      const priceUsd = (availability as unknown as { priceUsd: number | null }).priceUsd ?? null;
 
       await prisma.availabilityCheck.create({
         data: {
@@ -109,8 +91,8 @@ export async function runSourcePipeline(
           zip: availability.zip,
           sessionRegion: availability.sessionRegion,
           evidenceBlobRef: availability.evidenceBlobRef,
-      priceUsd: (availability as unknown as { priceUsd: number | null }).priceUsd ?? null,
-      currency: "USD",
+          priceUsd,
+          currency: "USD",
         },
       });
 
@@ -120,71 +102,31 @@ export async function runSourcePipeline(
           sourceId: sourceRow.id,
           level: evidenceLevel,
           rawSnapshotRef: `auto:${sourceRow.id}:${Date.now()}`,
-          parseVersion: "collector-v1",
+          parseVersion: "collector-v2",
         },
       });
 
-      const expensiveOverrideApplies = requiresClientFirstOverride({
-        priceUsd: 0,
-        category: "other",
-        provenScarcity: false,
-        crossBorderComplexity: false,
-      });
-
-      const FLORIDA_MIAMI_DADE_TAX_RATE = 0.07; // 6% FL state + 1% Miami-Dade surtax
-      const priceUsd = (availability as unknown as { priceUsd: number | null }).priceUsd ?? null;
-      const checkoutPriceKnown = priceUsd !== null;
-      const fullCostKnown = checkoutPriceKnown;
-      // Honest default for a direct (non-resale) purchase: no negotiation, so the
-      // confirmed checkout price IS the max buy price. No resale-market price source
-      // exists in this project, so we never fabricate a resale-based ceiling.
-      const maxBuyPriceSet = checkoutPriceKnown;
-      // Per-account purchase limits are not yet scraped from retailer pages, so this
-      // stays false rather than fabricated, until that scraping is implemented.
-      const quantityLimitSet = false;
-      // No resale-market data source (StockX/GOAT/etc.) exists yet, so we never claim
-      // a resale scenario or a passing profit projection.
-      const isResaleScenario = false;
-      const ctx: DecisionContext = {
-        expensiveItemOverride: { applies: expensiveOverrideApplies },
-        buyNow: {
-          productIdentified: true,
-          sellerOfRecord: availability.sellerOfRecord,
-          allowedSellers: availability.sellerOfRecord ? [availability.sellerOfRecord] : [],
-          evidenceLevel,
-          isProblematicRetailer: false,
-          availability,
-          checkoutPriceKnown,
-          fullCostKnown,
-          maxBuyPriceSet,
-          quantityLimitSet,
-          isResaleScenario,
-          hasCompletedSalesOrConfirmedClient: false,
-          projectedEconomicsPasses: false,
-          hasBlockingLegalOrLogisticsRisk: false,
-        },
-        applyNow: null,
-        prepare: {
-          confirmedBySourceE2: evidenceLevel !== "E0_RUMOR" && evidenceLevel !== "E1_SIGNAL",
-          dateAndTimeOfficial: false,
-          timePrecision: "tba",
-          isFirstGenerationTechAnnouncement: false,
-          launchUrlKnown: Boolean(raw.url),
-          preparationActionsFormed: false,
-        },
-        clientFirst: null,
-        fallbackHint: "low_interest",
-        score: DEFAULT_SCORE,
+      // Wave 2: one honest context builder for every path — real owner
+      // thresholds, real override price, real market/buyer data, labeled
+      // observed/estimated economics. See decisionContext.ts.
+      const built = await buildDecision(prisma, {
+        productId: product.id,
+        variantId: variant.id,
+        brand: product.brand,
+        model: product.normalizedModel,
+        sourceId: sourceRow.id,
+        sourceType: sourceRow.sourceType,
+        sourceCategory: sourceRow.category,
+        availability,
         evidenceLevel,
-        sourceCount: 1,
-        hasConflictingEvidence: false,
-      };
+        priceUsd,
+        rawUrl: raw.url ?? null,
+        zip,
+      });
+      const decisionResult = built.result;
 
-      const decisionResult = decide(ctx);
-
-      // MVP fix: persist every decision, including SKIP, so the audit
-      // trail and /soon "why we skipped this" view have real data instead
-      // of these items vanishing silently before ever reaching the DB.
+      // Persist every decision, including SKIP, so the audit trail and
+      // /soon "why we skipped this" view have real data.
       const decisionRow = await prisma.decision.create({
         data: {
           productVariantId: variant.id,
@@ -193,6 +135,9 @@ export async function runSourcePipeline(
           rationale: decisionResult.rationale,
           blockedReasons: decisionResult.blockedReasons,
           evidenceConfidence: decisionResult.evidenceConfidence,
+          // Added to the Prisma schema in Wave 2; the column is ensured
+          // idempotently by buildDecision before this write.
+          economicsJson: (built.economicsJson ?? undefined) as never,
         },
       });
       result.decisionsCreated += 1;
@@ -233,3 +178,6 @@ export async function runSourcePipeline(
 
   return result;
 }
+
+// Re-exported for tests/consumers that referenced the old location.
+export { DEFAULT_SCORE };

@@ -12,6 +12,11 @@ import {
   requiresClientFirstOverride,
 } from "@domain/decision/decisionEngine";
 import { ScoreComponents } from "@domain/scoring/score";
+import {
+  buildDirectPurchaseModel,
+  formatMoneyMinor,
+  summarizeCostModel,
+} from "@domain/economics/costModel";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -130,6 +135,27 @@ export async function createSignal(formData: FormData) {
 
   // ---- 5. Economics / expensive-item override ----
   const priceUsd = num(formData, "retailPrice", 0);
+  const priceMinor = Math.round(priceUsd * 100);
+  // Wave 2: the manual price is user-observed; tax/shipping are labeled
+  // estimates, not hidden. Budget comes from the owner's real settings.
+  const landed =
+    priceUsd > 0
+      ? buildDirectPurchaseModel({ priceMinor, currency: "USD", taxRate: null })
+      : null;
+  const ownerPrefs = await prisma.userPreferences.findUnique({
+    where: { userId },
+  });
+  const budgetMinor = ownerPrefs?.budgetMinor ?? null;
+  const econLines: string[] =
+    landed !== null
+      ? [
+          `Full cost ≈${formatMoneyMinor(landed.totalMinor, "USD")} (contains estimates):`,
+          ...summarizeCostModel(landed).map((l) => `  • ${l}`),
+          budgetMinor !== null
+            ? `Budget: ${formatMoneyMinor(budgetMinor, "USD")} (your setting)`
+            : "Budget: not set — no cap applied (set it in Settings).",
+        ]
+      : ["Full cost: unknown — no price entered."];
   const isProblematicRetailer = bool(formData, "isProblematicRetailer");
   const isResaleScenario = bool(formData, "isResaleScenario");
   const expensiveOverrideApplies = requiresClientFirstOverride({
@@ -166,6 +192,8 @@ export async function createSignal(formData: FormData) {
       fullCostKnown: priceUsd > 0,
       maxBuyPriceSet: num(formData, "maxBuyPrice", 0) > 0,
       quantityLimitSet: num(formData, "quantityLimit", 0) > 0,
+      landedCostMinor: landed?.totalMinor ?? null,
+      budgetMinor,
       isResaleScenario,
       hasCompletedSalesOrConfirmedClient: bool(formData, "hasCompletedSalesOrClient"),
       projectedEconomicsPasses: bool(formData, "economicsPasses"),
@@ -214,6 +242,7 @@ export async function createSignal(formData: FormData) {
     evidenceLevel,
     sourceCount: 1,
     hasConflictingEvidence: false,
+    economicsSummary: econLines.join("\n"),
   };
 
   const result = decide(ctx);

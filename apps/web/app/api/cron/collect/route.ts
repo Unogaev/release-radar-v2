@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
             category: source.category,
             defaultBrand: DEFAULT_BRAND_BY_SOURCE[source.name],
           });
-      runResult = await runSourcePipeline(prisma, { id: source.id, category: source.category }, adapter, "33160");
+      runResult = await runSourcePipeline(prisma, { id: source.id, category: source.category, sourceType: source.sourceType }, adapter, "33160");
     }
 
     await prisma.source.update({
