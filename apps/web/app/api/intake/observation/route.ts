@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
     const inStock = body.inStock === true;
     const note = String(body.evidenceNote ?? "").trim();
     const depth = String(body.verificationDepth ?? "listing");
+    // Optional: verifier actually saw a stated quantity limit on the page.
+    const quantityLimitKnown = body.quantityLimitKnown === true;
 
     if (!brand || !model) {
       return NextResponse.json(
@@ -170,6 +172,7 @@ export async function POST(req: NextRequest) {
       rawUrl: url || null,
       zip: "33160",
       fallbackHint: inStock ? "restock_candidate" : "low_interest",
+      quantityLimitKnown,
     });
 
     const decision = await prisma.decision.create({
