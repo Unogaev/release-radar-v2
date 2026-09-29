@@ -411,12 +411,6 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // every source feed live on each render was pure waste; page-level image
   // extraction below remains only as a fallback for signals without one.
 
-
-
-
-    }
-  }));
-
   const releaseVariants = await prisma.productVariant.findMany({
     where: {
       decisions: { none: {} },
@@ -469,7 +463,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
         imageSourceUrl: card?.imageSourceUrl ?? undefined,
           observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
-    })),
+      };
+    }),
     ...signalNewsSource.map((s) => ({
       id: "signal:" + s.id,
       kind: "SIGNAL" as const,
