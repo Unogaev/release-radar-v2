@@ -126,12 +126,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ---- Availability observation, exactly what the human saw ----
+    // Fulfillment inference mirrors the collector's documented rule
+    // (genericAdapter.ts): the seller's own page reports the item as
+    // purchasable ("Add to Bag"/"Buy Now" enabled) => shippable. A human
+    // looking at the live UI is stronger evidence than schema.org JSON-LD,
+    // so the intake must not be stricter than the automated path.
+    // pickupState stays "unknown" — never guessed, same as the collector.
+    
     const availability: AvailabilityEvidence = {
       metadataStatus: null, // human eyes, not parsed JSON-LD
       visibleUiStatus: inStock ? "in_stock" : "out_of_stock",
       ctaState: inStock ? "enabled" : "absent",
       variantAvailable: inStock,
-      shippingState: "unknown",
+      shippingState: inStock ? "available" : "unavailable",
       pickupState: "unknown",
       cartState:
         depth === "cart" || depth === "checkout"
@@ -198,7 +205,11 @@ export async function POST(req: NextRequest) {
       priceUsd,
       rawUrl: url || null,
       zip: "33160",
-      fallbackHint: inStock ? "restock_candidate" : "low_interest",
+      // Fallback hint: an in-stock observation that fails the hard gates is
+      // "low_interest" (WATCH — interesting, action not confirmed), never a
+      // restock candidate. Only an out-of-stock observation can honestly be
+      // "restock_candidate" (was actionable, now isn't — wait for restock).
+      fallbackHint: inStock ? "low_interest" : "restock_candidate",
       quantityLimitKnown,
     });
 
