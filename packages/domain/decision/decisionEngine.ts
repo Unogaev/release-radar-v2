@@ -23,7 +23,7 @@ import {
 import { calculateEvidenceConfidence, calculateScore, ScoreComponents } from "../scoring/score";
 import { DecisionResult, DecisionStatus } from "./types";
 
-export const RULE_VERSION = "2.0.0"; // matches spec version 2.0 Final
+export const RULE_VERSION = "2.1.0"; // Wave 2: honest economics + budget gate (was 2.0.0)
 
 /**
  * Fallback hint: which "soft" non-actionable status applies when no hard
@@ -51,6 +51,12 @@ export interface DecisionContext {
   evidenceLevel: EvidenceLevel;
   sourceCount: number;
   hasConflictingEvidence: boolean;
+  /**
+   * Wave 2: factual economics context (line items with observed/estimated
+   * labels) built by the caller. The engine appends it to every rationale
+   * verbatim — it never alters the decision, it only explains the money.
+   */
+  economicsSummary?: string;
 }
 
 export function decide(ctx: DecisionContext): DecisionResult {
@@ -62,6 +68,11 @@ export function decide(ctx: DecisionContext): DecisionResult {
 
   const blockedReasons: string[] = [];
 
+  // Wave 2: factual money context rides along with every rationale so the
+  // UI can show WHY in dollars, not just in gate names.
+  const withEcon = (rationale: string): string =>
+    ctx.economicsSummary ? `${rationale}\n\n${ctx.economicsSummary}` : rationale;
+
   // Expensive-item override (spec §3.6 / AT-09) short-circuits BUY_NOW
   // entirely, before the gate is even attempted.
   if (!ctx.expensiveItemOverride.applies) {
@@ -70,7 +81,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.BUY_NOW,
         ruleVersion: RULE_VERSION,
-        rationale: "Все hard gates BUY_NOW пройдены.",
+        rationale: withEcon("Все hard gates BUY_NOW пройдены."),
         blockedReasons: [],
         evidenceConfidence,
       };
@@ -88,7 +99,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.APPLY_NOW,
         ruleVersion: RULE_VERSION,
-        rationale: "Application/raffle открыт, все условия раскрыты пользователю.",
+        rationale: withEcon("Application/raffle открыт, все условия раскрыты пользователю."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -102,7 +113,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.PREPARE,
         ruleVersion: RULE_VERSION,
-        rationale: "Событие подтверждено официально, время известно.",
+        rationale: withEcon("Событие подтверждено официально, время известно."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -119,7 +130,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status,
         ruleVersion: RULE_VERSION,
-        rationale: "Buyer request или инвентарный риск подтверждён, параметры сохранены.",
+        rationale: withEcon("Buyer request или инвентарный риск подтверждён, параметры сохранены."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -138,7 +149,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.WATCH_RESTOCK,
         ruleVersion: RULE_VERSION,
-        rationale: "Товар был actionable, сейчас недоступен — ждём restock.",
+        rationale: withEcon("Товар был actionable, сейчас недоступен — ждём restock."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -146,7 +157,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.VERIFY_IN_STORE,
         ruleVersion: RULE_VERSION,
-        rationale: "Единичный отчёт без подтверждённого store-level checkout.",
+        rationale: withEcon("Единичный отчёт без подтверждённого store-level checkout."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -154,7 +165,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: DecisionStatus.VERIFY,
         ruleVersion: RULE_VERSION,
-        rationale: "Недостаточно доказательств продавца, цены, подлинности или наличия.",
+        rationale: withEcon("Недостаточно доказательств продавца, цены, подлинности или наличия."),
         blockedReasons,
         evidenceConfidence,
       };
@@ -162,10 +173,11 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status: scoreResult.band === "skip" ? DecisionStatus.SKIP : DecisionStatus.WATCH,
         ruleVersion: RULE_VERSION,
-        rationale:
+        rationale: withEcon(
           scoreResult.band === "skip"
             ? `Score ${scoreResult.weightedScore.toFixed(1)} ниже порога, buyer request отсутствует.`
-            : "Интересно, но действие ещё не подтверждено.",
+            : "Интересно, но действие ещё не подтверждено."
+        ),
         blockedReasons,
         evidenceConfidence,
       };
