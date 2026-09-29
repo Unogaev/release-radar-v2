@@ -51,6 +51,8 @@ export const AT05: AcceptanceTest = {
         fullCostKnown: false,
         maxBuyPriceSet: false,
         quantityLimitSet: false,
+        landedCostMinor: null,
+        budgetMinor: null,
         isResaleScenario: false,
         hasCompletedSalesOrConfirmedClient: false,
         projectedEconomicsPasses: false,
