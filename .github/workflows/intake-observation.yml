@@ -65,26 +65,40 @@ on:
 jobs:
   submit:
     runs-on: ubuntu-latest
+    # Inputs go through env so bash never re-expands $ or other special
+    # characters inside free-text fields (e.g. "price $39.99" in evidenceNote).
+    env:
+      IN_BRAND: ${{ inputs.brand }}
+      IN_MODEL: ${{ inputs.model }}
+      IN_VARIANT: ${{ inputs.variant }}
+      IN_CATEGORY: ${{ inputs.category }}
+      IN_URL: ${{ inputs.url }}
+      IN_SELLER: ${{ inputs.seller }}
+      IN_PRICE: ${{ inputs.priceUsd }}
+      IN_STOCK: ${{ inputs.inStock }}
+      IN_DEPTH: ${{ inputs.verificationDepth }}
+      IN_NOTE: ${{ inputs.evidenceNote }}
+      IN_QTY: ${{ inputs.quantityLimitKnown }}
     steps:
       - name: Submit verified observation to the honest engine
         run: |
           BODY=$(jq -n \
-            --arg brand "${{ inputs.brand }}" \
-            --arg model "${{ inputs.model }}" \
-            --arg variant "${{ inputs.variant }}" \
-            --arg category "${{ inputs.category }}" \
-            --arg url "${{ inputs.url }}" \
-            --arg seller "${{ inputs.seller }}" \
-            --argjson priceUsd "${{ inputs.priceUsd }}" \
-            --argjson inStock "${{ inputs.inStock }}" \
-            --arg depth "${{ inputs.verificationDepth }}" \
-            --arg note "${{ inputs.evidenceNote }}" \
-            --argjson qtyKnown "${{ inputs.quantityLimitKnown }}" \
+            --arg brand "$IN_BRAND" \
+            --arg model "$IN_MODEL" \
+            --arg variant "$IN_VARIANT" \
+            --arg category "$IN_CATEGORY" \
+            --arg url "$IN_URL" \
+            --arg seller "$IN_SELLER" \
+            --argjson priceUsd "$IN_PRICE" \
+            --argjson inStock "$IN_STOCK" \
+            --arg depth "$IN_DEPTH" \
+            --arg note "$IN_NOTE" \
+            --argjson qtyKnown "$IN_QTY" \
             '{brand:$brand, model:$model, variant:$variant, category:$category, url:$url, seller:$seller, priceUsd:$priceUsd, inStock:$inStock, verificationDepth:$depth, evidenceNote:$note, quantityLimitKnown:$qtyKnown}')
           echo "Submitting observation:"
           echo "$BODY" | jq '{brand, model, priceUsd, inStock, verificationDepth, quantityLimitKnown}'
           echo "--- engine response:"
-          curl -s -X POST "https://release-radar-v2.vercel.app/api/intake/observation" \
+          curl -s -w '\nHTTP_STATUS:%{http_code}\n' -X POST "https://release-radar-v2.vercel.app/api/intake/observation" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
             -d "$BODY" | head -c 4000
