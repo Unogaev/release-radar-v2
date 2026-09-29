@@ -22,12 +22,28 @@ import {
  *   "cart"     -> E4_CART_VERIFIED (item added to cart)
  *   "checkout" -> E4_CART_VERIFIED (reached checkout; strongest we claim)
  *
- * Auth: owner session (NextAuth). This is a write path for real money
- * decisions — never anonymous, never a shared secret in a URL.
+ * Auth: owner session (NextAuth) OR the owner's automation secret
+ * (Authorization: Bearer <CRON_SECRET>, same as the collector cron).
+ * This is a write path for real money decisions — never anonymous:
+ * either a logged-in owner or a holder of the owner's secret.
  */
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireUserId();
+    // Owner session first; fall back to the owner's automation secret
+    // (machine-to-machine, e.g. verified browser observations).
+    let userId: string | null = null;
+    try {
+      userId = await requireUserId();
+    } catch {
+      userId = null;
+    }
+    if (!userId) {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers.get("authorization");
+      if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      }
+    }
     const body = await req.json();
 
     const brand = String(body.brand ?? "").trim();
