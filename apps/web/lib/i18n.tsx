@@ -92,7 +92,7 @@ const dict = {
     error_retry: "Retry",
 
     stale_data_from_prefix: "Data from ",
-    stale_desc: "The last source sweep didn't finish, prices may have changed.",
+    stale_desc: "Prices and availability may have changed since this snapshot.",
     stale_refresh: "Refresh",
   },
   ru: {
@@ -176,7 +176,7 @@ const dict = {
     error_retry: "Повторить",
 
     stale_data_from_prefix: "Данные от ",
-    stale_desc: "Последний обход источников не завершился, цены могли измениться.",
+    stale_desc: "Цены и наличие могли измениться с момента снимка.",
     stale_refresh: "Обновить",
   },
   ar: {
@@ -190,7 +190,7 @@ const dict = {
     action_buy: "شراء", action_source_full: "فتح المصدر", action_source_short: "المصدر", action_calendar: "إضافة للتقويم", action_publish_full: "إنشاء منشور", action_publish_short: "نشر",
     empty_category_prefix: "الفئة «", empty_category_suffix: "»", empty_scan_done: "اكتملت دورة الفحص", empty_title_filtered: "لا توجد إشارات في هذه الفئة الآن", empty_title_all: "لم يجد الرادار إشارات في الدورة الأخيرة", empty_desc_filtered: "لا توجد قائمة تحقق شروط الهامش والتوفر حالياً. ستظهر الإشارات بعد جولة المصادر التالية.", empty_desc_all: "تم استبعاد النتائج بسبب الهامش أو التوفر أو موثوقية المصدر.", empty_next_scan_prefix: " الفحص التالي في ", empty_reset_button: "العودة إلى «الآن»",
     error_unavailable: "الخلاصة غير متاحة", error_title: "تعذر تحميل الإشارات", error_default_reason: "لم تستجب المصادر في الوقت المحدد.", error_desc_suffix: " ربما تغير السعر أو التوفر — تحقق من المصدر قبل الشراء.", error_retry: "إعادة المحاولة",
-    stale_data_from_prefix: "البيانات من ", stale_desc: "لم تكتمل جولة المصادر الأخيرة وقد تكون الأسعار تغيرت.", stale_refresh: "تحديث",
+    stale_data_from_prefix: "البيانات من ", stale_desc: "قد تكون الأسعار والتوفر تغيرت منذ هذه اللقطة.", stale_refresh: "تحديث",
   },
 } as const;
 
