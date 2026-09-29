@@ -321,7 +321,20 @@ export async function buildDecision(
       launchUrlKnown: Boolean(input.rawUrl),
       preparationActionsFormed: false,
     },
-    clientFirst: null,
+    // CLIENT_FIRST / SOURCE_NOW context: the engine evaluates this gate so
+    // the expensive-item override (spec §3.6) can honestly resolve to
+    // CLIENT_FIRST instead of falling through to a soft status. All fields
+    // are real: buyerRequest comes from the DB, the variant was identified
+    // and persisted above. deadline/customerCeiling are only "saved" when a
+    // buyer request actually carries them — never invented.
+    clientFirst: {
+      hasBuyerRequest: buyerRequest !== null,
+      priceTooHighForInventoryRisk: expensiveOverrideApplies,
+      variantDetailsSaved: true,
+      deadlineSaved: buyerRequest?.deadline != null,
+      customerCeilingSaved: buyerRequest != null, // ceiling is required on BuyerRequest
+      sourceCostBelowMaxSourcePrice: null, // not computed at intake/collection time
+  },
     fallbackHint: input.fallbackHint ?? "low_interest",
     score: DEFAULT_SCORE,
     evidenceLevel: input.evidenceLevel,
