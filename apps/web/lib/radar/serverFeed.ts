@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { DecisionStatus } from "@domain/decision/types";
 import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } from "./types";
-import { getPageImage, getProductImage, isLiveExternalUrl } from "./fetchImage";
+import { getPageImage } from "./fetchImage";
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
-import { fetchRssItems } from "../../collectors/rss";
+import { readFeedCards } from "./feedCards";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -226,8 +226,11 @@ export async function getRealFeed(): Promise<FeedPayload> {
   });
 
   const seenVariants = new Set<string>();
-  const signals: Signal[] = await Promise.all(
-    decisions
+  // Card assets (images, verified store links) are materialized by the
+  // collector cron into FeedCard rows — the render path only reads them.
+  // Variants without a row yet degrade gracefully via the honesty gate.
+  const cardByVariantId = await readFeedCards([...new Set(decisions.map((d) => d.productVariantId))]);
+  const signals: Signal[] = decisions
       .filter((d) => STATUS_MAP[d.status])
       .filter((d) => {
         if (seenVariants.has(d.productVariantId)) return false;
@@ -235,7 +238,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         return true;
       })
       .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
-      .map(async (d) => {
+      .map((d) => {
         const map = STATUS_MAP[d.status];
         const pv = d.productVariant;
         const product = pv.product;
@@ -257,10 +260,12 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const retail = check?.priceUsd ?? null;
         const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
         const ctaConfirmed = check?.ctaState === "enabled";
-        const requestedPrimaryUrl = check?.url ?? null;
-        const image = await getProductImage(brand, model, requestedPrimaryUrl);
-        const linkIsLive = await isLiveExternalUrl(requestedPrimaryUrl);
-        const primaryUrl = linkIsLive ? requestedPrimaryUrl : null;
+                // The collector cron resolves the product image and verifies the
+        // store link in the background (lib/radar/feedCards.ts). No live
+        // network calls happen here; until a row exists the honesty gate
+        // below degrades the card to WATCH instead of an unverified action.
+        const card = cardByVariantId.get(d.productVariantId) ?? null;
+        const primaryUrl = card?.linkLive ? card.primaryUrl : null;
         const salePrices = sales.map((sale) => sale.priceMinor / 100);
         const askPrices = asks.map((ask) => ask.priceMinor / 100);
         const completedMedian = median(salePrices);
@@ -284,7 +289,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const missing: string[] = [];
         if (bucket === "buy" || bucket === "apply") {
           if (retail === null) missing.push("price");
-          if (!image) missing.push("photo");
+          if (!card?.imageUrl) missing.push("photo");
           if (!primaryUrl) missing.push("link");
           if (bucket === "buy" && !ctaConfirmed) missing.push("cta");
         }
@@ -306,10 +311,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
           model,
           reference,
           sku,
-          imageUrl: proxyImageUrl(image?.url),
+          imageUrl: proxyImageUrl(card?.imageUrl),
           imageHint: `${brand} ${model}`,
-          imageSourceUrl: image?.sourceUrl,
-          imageProvenance: image?.provenance,
+          imageSourceUrl: card?.imageSourceUrl ?? undefined,
+          imageProvenance: (card?.imageProvenance as Signal["imageProvenance"]) ?? undefined,
           retail,
           cost,
           expectedResale,
@@ -332,7 +337,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
           store: check?.sellerOfRecord ?? "—",
           stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
           primaryUrl,
-          checkedAt: (check?.checkedAt ?? d.createdAt).toISOString(),
+          checkedAt: (card?.checkedAt ?? check?.checkedAt ?? d.createdAt).toISOString(),
           launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
           ctaConfirmed,
           why: why.ru,
@@ -340,8 +345,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
           factors: factors.ru,
           factorsEn: factors.en,
         } satisfies Signal;
-      })
-  );
+      });
 
   const sourceRows = await prisma.source.findMany({
     orderBy: { lastCheckedAt: "desc" },
@@ -443,25 +447,17 @@ export async function getRealFeed(): Promise<FeedPayload> {
     take: 10,
   });
 
-  const [releaseVariantImages, newsSignalImages] = await Promise.all([
-    Promise.all(releaseVariants.map((v) => getProductImage(
-      v.product.brand,
-      titleCase(v.product.normalizedModel),
-      v.evidence[0]?.url ?? null
-    ))),
-    Promise.all(newsSignals.map(async (signal) => {
-      const embeddedImage = embeddedSignalImage(signal.rawText);
-      if (embeddedImage && signal.url) return { url: embeddedImage, sourceUrl: signal.url, provenance: "official-page" as const };
-      const rssImage = signal.url ? sourceFeedImages.get(signal.sourceId)?.get(signal.url) : null;
-      return rssImage
-        ? { url: rssImage, sourceUrl: signal.url!, provenance: "official-page" as const }
-        : getPageImage(signal.url);
-    })),
-  ]);
-  const [releaseVariantLinks, newsSignalLinks] = await Promise.all([
-    Promise.all(releaseVariants.map((v) => isLiveExternalUrl(v.evidence[0]?.url ?? null))),
-    Promise.all(newsSignals.map((signal) => isLiveExternalUrl(signal.url))),
-  ]);
+    // Release-variant and news images come from the materialized FeedCard rows
+  // (built by the collector cron); news signals additionally carry their
+  // RSS-embedded image. No live feed re-fetching, no per-signal HEAD checks:
+  // these are editorial links, not money links, and were ingested minutes ago.
+  const releaseCards = await readFeedCards(releaseVariants.map((v) => v.id));
+
+  const newsSignalImages = await Promise.all(newsSignals.map(async (signal) => {
+    const embeddedImage = embeddedSignalImage(signal.rawText);
+    if (embeddedImage && signal.url) return { url: embeddedImage, sourceUrl: signal.url, provenance: "official-page" as const };
+    return getPageImage(signal.url);
+  }));
 
   const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v, i) => ({
@@ -517,7 +513,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       headline: (signalHeadline(s.rawText) || "New signal detected").slice(0, 140),
       source: s.source.name,
       category: s.source.category,
-      sourceUrl: newsSignalLinks[i] ? (s.url ?? null) : null,
+      sourceUrl: s.url ?? null,
       imageUrl: proxyImageUrl(newsSignalImages[i]?.url),
       imageSourceUrl: newsSignalImages[i]?.sourceUrl,
       observedAt: s.observedAt.toISOString(),
