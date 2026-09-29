@@ -130,7 +130,7 @@ export function decide(ctx: DecisionContext): DecisionResult {
       return {
         status,
         ruleVersion: RULE_VERSION,
-        rationale: withEcon("Buyer request или инвентарный риск подтверждён, параметры сохранены."),
+        rationale: withEcon(ctx.expensiveItemOverride.applies && !ctx.clientFirst.hasBuyerRequest ? "Дорогая позиция без подтверждённого клиента — сначала подтверждаем клиента, не рискуем инвентарём (spec §3.6)." : "Buyer request или инвентарный риск подтверждён, параметры сохранены."),
         blockedReasons,
         evidenceConfidence,
       };
