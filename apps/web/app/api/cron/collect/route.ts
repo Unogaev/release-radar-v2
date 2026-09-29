@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // The cron runs on a hard execution budget (60s on the current plan), so
+  // the clock starts here — every step below, including the upfront syncs,
+  // spends from the same budget.
+  const startedAt = Date.now();
+
   await ensureRadarSourceRegistry(prisma);
   await syncVerifiedReleases();
   await syncVerifiedVintageDemand();
@@ -104,10 +109,18 @@ export async function GET(req: NextRequest) {
 
   // A controlled fan-out lets every due official page participate in the
   // sweep while keeping request pressure reasonable for brands and retailers.
+  // Stop launching new batches once the execution budget is nearly spent so
+  // the run always finishes honestly: card materialization and the report
+  // still happen, and skipped sources are reported instead of silently
+  // dropped. They are picked up first on the next run (oldest lastCheckedAt
+  // first), so nothing starves.
+  const SOURCE_BUDGET_MS = 38_000;
   for (let index = 0; index < dueSources.length; index += 16) {
+    if (Date.now() - startedAt > SOURCE_BUDGET_MS) break;
     const batch = await Promise.all(dueSources.slice(index, index + 16).map(collectSource));
     results.push(...batch);
   }
+  const skippedSources = dueSources.length - results.length;
 
   const remindersCreated = await createDueReleaseReminders();
   // Materialize card images and verified store links in the background so the
@@ -118,5 +131,5 @@ export async function GET(req: NextRequest) {
     failed: 0,
     error: error instanceof Error ? error.message : String(error),
   }));
-  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, remindersCreated, feedCards, results });
+  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, skippedSources, remindersCreated, feedCards, results });
 }
