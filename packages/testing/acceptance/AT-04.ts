@@ -43,6 +43,8 @@ export const AT04: AcceptanceTest = {
         fullCostKnown: false,
         maxBuyPriceSet: false,
         quantityLimitSet: false,
+        landedCostMinor: null,
+        budgetMinor: null,
         isResaleScenario: true,
         hasCompletedSalesOrConfirmedClient: true, // completed sales above retail exist
         projectedEconomicsPasses: false, // can't buy retail — it's sold out
@@ -92,6 +94,8 @@ export const AT04: AcceptanceTest = {
         fullCostKnown: true,
         maxBuyPriceSet: true,
         quantityLimitSet: true,
+        landedCostMinor: null,
+        budgetMinor: null,
         projectedEconomicsPasses: true, // now economics pass at restock retail price
       },
       evidenceLevel: restockLevel,
