@@ -119,6 +119,9 @@ console.log("=== FIXTURE E2E TEST — domain decision engine (TEST DATA, no DB, 
 
 for (const s of scenarios) {
   const evidenceLevel = classifyEvidenceLevel(s.evidence);
+  // Wave 2: landedCostMinor/budgetMinor are required (number|null) — the
+  // fixture's Partial<> overrides may leave them undefined, so normalize.
+  const { landedCostMinor, budgetMinor, ...restOverrides } = s.buyNowOverrides;
   const ctx: DecisionContext = {
     expensiveItemOverride: { applies: false },
     buyNow: {
@@ -129,9 +132,11 @@ for (const s of scenarios) {
       isProblematicRetailer: false,
       availability: s.evidence,
       checkoutPriceKnown: false, fullCostKnown: false, maxBuyPriceSet: false, quantityLimitSet: false,
+      landedCostMinor: landedCostMinor ?? null,
+      budgetMinor: budgetMinor ?? null,
       isResaleScenario: false, hasCompletedSalesOrConfirmedClient: false, projectedEconomicsPasses: false,
       hasBlockingLegalOrLogisticsRisk: false,
-      ...s.buyNowOverrides,
+      ...restOverrides,
     },
     applyNow: null,
     prepare: null,
