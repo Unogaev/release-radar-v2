@@ -47,6 +47,8 @@ export const AT02: AcceptanceTest = {
         fullCostKnown: true,
         maxBuyPriceSet: true,
         quantityLimitSet: true,
+        landedCostMinor: null,
+        budgetMinor: null,
         isResaleScenario: false,
         hasCompletedSalesOrConfirmedClient: false,
         projectedEconomicsPasses: false,
