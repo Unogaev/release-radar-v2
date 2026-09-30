@@ -23,7 +23,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://release-radar-v2.vercel.app/api/cron/collect)
           echo "collect HTTP $code"
-          head -c 1500 /tmp/collect.json; echo
+          cat /tmp/collect.json; echo
           test "$code" = "200"
 
       - name: Trigger /api/cron/mowalola
