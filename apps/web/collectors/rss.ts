@@ -44,7 +44,7 @@ function itemImage(item: any, feedUrl: string): string | null {
 }
 
 export async function fetchRssItems(feedUrl: string, limit = 20): Promise<DiscoveredItem[]> {
-  const res = await fetch(feedUrl, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } });
+  let res = await fetch(feedUrl, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } }); if (res.status === 403 || res.status === 429) { await new Promise((resolve) => setTimeout(resolve, 2_000)); res = await fetch(feedUrl, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } }); } // One retry on 403/429: CDN bot-protection (e.g. Cloudflare) sometimes rejects the first request transiently, as seen with Hypebeast.
   if (!res.ok) throw new Error(`RSS fetch failed: ${res.status} ${feedUrl}`);
   const xml = await res.text();
   const parsed = parser.parse(xml);
