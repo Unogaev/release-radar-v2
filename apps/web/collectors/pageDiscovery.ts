@@ -2,8 +2,10 @@ import { parse } from "node-html-parser";
 import type { DiscoveredItem } from "./types";
 import { decodeHtmlEntities } from "@/lib/radar/text";
 
+
 const INTERESTING = /\b(new|launch|release|drop|limited|exclusive|edition|collab|pre-?order|restock|collection|arrivals?|available|anniversary|auction|sold)\b/i;
 const REJECT = /\b(login|sign in|privacy|terms|cookie|customer service|contact|newsletter|store locator|accessibility)\b/i;
+
 
 function publicUrl(value: string | undefined, base: string): string | null {
   if (!value) return null;
@@ -12,6 +14,7 @@ function publicUrl(value: string | undefined, base: string): string | null {
     return /^https?:$/.test(url.protocol) ? url.toString() : null;
   } catch { return null; }
 }
+
 
 function jsonLdProducts(value: unknown, baseUrl: string): DiscoveredItem[] {
   if (!value || typeof value !== "object") return [];
@@ -28,13 +31,14 @@ function jsonLdProducts(value: unknown, baseUrl: string): DiscoveredItem[] {
   return title.length >= 8 ? [{ url, title, publishedAt: node.datePublished ?? null, summary: null, imageUrl: publicUrl(rawImage, baseUrl) }] : nested;
 }
 
+
 export async function fetchPageDiscoveries(pageUrl: string, limit = 8): Promise<DiscoveredItem[]> {
   const response = await fetch(pageUrl, {
     signal: AbortSignal.timeout(5_000), redirect: "follow",
     headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/126 Safari/537.36", Accept: "text/html,application/xhtml+xml", "Accept-Language": "en-US,en;q=0.9" },
   });
   if (!response.ok) throw new Error(`Page fetch failed: ${response.status} ${pageUrl}`);
-  const root = parse(await response.text());
+  let root: ReturnType<typeof parse> | null = null; try { root = parse(await response.text()); } catch { root = null; } if (!root) return [];
   const found: DiscoveredItem[] = [];
   for (const script of root.querySelectorAll('script[type="application/ld+json"]')) {
     try { found.push(...jsonLdProducts(JSON.parse(script.text), response.url)); } catch { /* malformed JSON-LD */ }
