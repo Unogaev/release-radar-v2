@@ -40,7 +40,7 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Apple Newsroom", sourceClass: "A_truth", url: "https://www.apple.com/newsroom/rss-feed.rss", category: "technology", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "Google Blog", sourceClass: "A_truth", url: "https://blog.google/rss/", category: "technology", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "Microsoft Blog", sourceClass: "A_truth", url: "https://blogs.microsoft.com/feed/", category: "technology", sourceType: "NEWSROOM", trustLevel: 5 },
-  { name: "NVIDIA Blog", sourceClass: "A_truth", url: "https://blogs.nvidia.com/blog/feed/", category: "gpu", sourceType: "NEWSROOM", trustLevel: 5 },
+  { name: "NVIDIA Blog", sourceClass: "A_truth", url: "https://blogs.nvidia.com/feed/", category: "gpu", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "Samsung Global Newsroom", sourceClass: "A_truth", url: "https://news.samsung.com/global/feed", category: "technology", sourceType: "NEWSROOM", trustLevel: 5 },
   { name: "The Verge", sourceClass: "C_signal", url: "https://www.theverge.com/rss/index.xml", category: "technology", sourceType: "RSS", trustLevel: 4 },
   { name: "Engadget", sourceClass: "C_signal", url: "https://www.engadget.com/rss.xml", category: "technology", sourceType: "RSS", trustLevel: 4 },
