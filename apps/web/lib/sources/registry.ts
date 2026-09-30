@@ -65,12 +65,19 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "adidas Confirmed", sourceClass: "A_truth", url: "https://www.adidas.com/us/confirmed", category: "sneakers", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Sneaker News", sourceClass: "C_signal", url: "https://sneakernews.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
   { name: "Nice Kicks", sourceClass: "C_signal", url: "https://www.nicekicks.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "StockX", sourceClass: "B_market", url: "https://stockx.com/", category: "sneakers", sourceType: "MANUAL", trustLevel: 4 },
+  { name: "GOAT", sourceClass: "B_market", url: "https://www.goat.com/", category: "sneakers", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Hypebeast", sourceClass: "C_signal", url: "https://hypebeast.com/feed", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
   { name: "Highsnobiety", sourceClass: "C_signal", url: "https://www.highsnobiety.com/feed/", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
   { name: "Stone Island Official", sourceClass: "A_truth", url: "https://www.stoneisland.com/us/stone-island/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Supreme New York", sourceClass: "A_truth", url: "https://www.supremenewyork.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Palace Skateboards", sourceClass: "A_truth", url: "https://www.palaceskateboards.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Kith", sourceClass: "A_truth", url: "https://kith.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Dover Street Market", sourceClass: "A_truth", url: "https://shop.doverstreetmarket.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
   { name: "SSENSE New Arrivals", sourceClass: "A_truth", url: "https://www.ssense.com/men/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
   { name: "END. Clothing New In", sourceClass: "A_truth", url: "https://www.endclothing.com/us/new-products/new-in", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Rhode by Hailey Bieber", sourceClass: "A_truth", url: "https://www.rhodeskin.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Skims", sourceClass: "A_truth", url: "https://skims.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
 
   // Independent and collectible watches
   { name: "Hodinkee", sourceClass: "C_signal", url: "https://www.hodinkee.com/articles/rss.xml", category: "watches", sourceType: "RSS", trustLevel: 4 },
@@ -108,6 +115,7 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Watches and Wonders", sourceClass: "A_truth", url: "https://www.watchesandwonders.com/", category: "watches", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Geneva Watch Days", sourceClass: "A_truth", url: "https://www.gva-watch-days.com/", category: "watches", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Only Watch", sourceClass: "A_truth", url: "https://www.onlywatch.com/", category: "watches", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Chrono24", sourceClass: "B_market", url: "https://www.chrono24.com/", category: "watches", sourceType: "MANUAL", trustLevel: 4 },
 
   // Cars / EV / rare allocations
   { name: "Electrek", sourceClass: "C_signal", url: "https://electrek.co/feed/", category: "cars", sourceType: "RSS", trustLevel: 4 },
