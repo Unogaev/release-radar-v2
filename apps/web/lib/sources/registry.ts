@@ -67,6 +67,10 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Nice Kicks", sourceClass: "C_signal", url: "https://www.nicekicks.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
   { name: "Hypebeast", sourceClass: "C_signal", url: "https://hypebeast.com/feed", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
   { name: "Highsnobiety", sourceClass: "C_signal", url: "https://www.highsnobiety.com/feed/", category: "streetwear", sourceType: "RSS", trustLevel: 3 },
+  { name: "Stone Island Official", sourceClass: "A_truth", url: "https://www.stoneisland.com/us/stone-island/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "SSENSE New Arrivals", sourceClass: "A_truth", url: "https://www.ssense.com/men/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
+  { name: "END. Clothing New In", sourceClass: "A_truth", url: "https://www.endclothing.com/us/new-products/new-in", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
+  { name: "Rhode by Hailey Bieber", sourceClass: "A_truth", url: "https://www.rhodeskin.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
 
   // Independent and collectible watches
   { name: "Hodinkee", sourceClass: "C_signal", url: "https://www.hodinkee.com/articles/rss.xml", category: "watches", sourceType: "RSS", trustLevel: 4 },
@@ -153,6 +157,7 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "The RealReal New Arrivals", sourceClass: "B_market", url: "https://www.therealreal.com/new-arrivals", category: "vintage", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Fashionphile New Arrivals", sourceClass: "B_market", url: "https://www.fashionphile.com/shop/new-arrivals", category: "vintage", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Collector Square Handbags", sourceClass: "B_market", url: "https://www.collectorsquare.com/en/bags/", category: "vintage", sourceType: "MANUAL", trustLevel: 4, checkIntervalMinutes: 60 },
+  { name: "Vestiaire Collective", sourceClass: "B_market", url: "https://www.vestiairecollective.com/", category: "vintage", sourceType: "MANUAL", trustLevel: 4, checkIntervalMinutes: 60 },
   { name: "Les Folies d'Eugénie Handbags", sourceClass: "B_market", url: "https://www.lesfoliesdeugenie.fr/en/collections/hermes", category: "vintage", sourceType: "MANUAL", trustLevel: 3, checkIntervalMinutes: 60 },
   { name: "Grailed Designers", sourceClass: "B_market", url: "https://www.grailed.com/designers", category: "vintage", sourceType: "MANUAL", trustLevel: 3 },
   { name: "Sotheby's Handbags", sourceClass: "B_market", url: "https://www.sothebys.com/en/buy/handbags", category: "luxury", sourceType: "MANUAL", trustLevel: 4 },
