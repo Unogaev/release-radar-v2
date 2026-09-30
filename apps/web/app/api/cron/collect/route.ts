@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   await syncVerifiedVintageDemand();
   const sources = await prisma.source.findMany({
     where: { isEnabled: true },
-    orderBy: [{ lastCheckedAt: "asc" }, { trustLevel: "desc" }],
+        orderBy: [{ lastCheckedAt: { sort: "asc", nulls: "first" } }, { trustLevel: "desc" }],
     // Rotate through the registry on every hourly run without risking the
     // platform timeout. Oldest sources are always selected first.
     take: 80,
