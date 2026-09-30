@@ -246,6 +246,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
   });
 
   const seenVariants = new Set<string>();
+  // Guard against duplicate product rows (same brand + model ingested as two
+  // variants): the feed shows one card per product, newest first. The pipeline
+  // dedupe is the real fix; this keeps the render honest meanwhile.
+  const seenSignalProducts = new Set<string>();
   // Card assets (images, verified store links) are materialized by the
   // collector cron into FeedCard rows — the render path only reads them.
   // Variants without a row yet degrade gracefully via the honesty gate.
@@ -255,6 +259,12 @@ export async function getRealFeed(): Promise<FeedPayload> {
       .filter((d) => {
         if (seenVariants.has(d.productVariantId)) return false;
         seenVariants.add(d.productVariantId);
+        return true;
+      })
+      .filter((d) => {
+        const key = `${d.productVariant.product.brand}::${d.productVariant.product.normalizedModel}`.toLowerCase();
+        if (seenSignalProducts.has(key)) return false;
+        seenSignalProducts.add(key);
         return true;
       })
       .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
