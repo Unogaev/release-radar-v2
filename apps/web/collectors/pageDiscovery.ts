@@ -2,10 +2,8 @@ import { parse } from "node-html-parser";
 import type { DiscoveredItem } from "./types";
 import { decodeHtmlEntities } from "@/lib/radar/text";
 
-
 const INTERESTING = /\b(new|launch|release|drop|limited|exclusive|edition|collab|pre-?order|restock|collection|arrivals?|available|anniversary|auction|sold)\b/i;
 const REJECT = /\b(login|sign in|privacy|terms|cookie|customer service|contact|newsletter|store locator|accessibility)\b/i;
-
 
 function publicUrl(value: string | undefined, base: string): string | null {
   if (!value) return null;
@@ -14,7 +12,6 @@ function publicUrl(value: string | undefined, base: string): string | null {
     return /^https?:$/.test(url.protocol) ? url.toString() : null;
   } catch { return null; }
 }
-
 
 function jsonLdProducts(value: unknown, baseUrl: string): DiscoveredItem[] {
   if (!value || typeof value !== "object") return [];
@@ -30,7 +27,6 @@ function jsonLdProducts(value: unknown, baseUrl: string): DiscoveredItem[] {
     : node.image?.url;
   return title.length >= 8 ? [{ url, title, publishedAt: node.datePublished ?? null, summary: null, imageUrl: publicUrl(rawImage, baseUrl) }] : nested;
 }
-
 
 export async function fetchPageDiscoveries(pageUrl: string, limit = 8): Promise<DiscoveredItem[]> {
   const response = await fetch(pageUrl, {
