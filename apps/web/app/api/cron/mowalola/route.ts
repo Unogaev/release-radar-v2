@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     await prisma.source.update({
       where: { id: source.id },
-      data: { lastCheckedAt: new Date(), lastSuccessAt: new Date() },
+      data: { lastCheckedAt: new Date(), lastSuccessAt: new Date(), lastError: null, adapterStatus: "active" },
     });
 
     if (rawSignals.length === 0) {
