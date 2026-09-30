@@ -5,7 +5,7 @@ import { runSourcePipeline } from "../../../../collectors/pipeline";
 import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
-import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
+import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";import { createShopifyAdapter } from "../../../../collectors/shopifyAdapter";
 import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
 import { syncVerifiedVintageDemand } from "@/lib/radar/verifiedVintageDemand";
 import { refreshFeedCards } from "@/lib/radar/feedCards";
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       }
     } else {
       const adapter = source.sourceType === "PRODUCT_LISTING"
-        ? createStructuredDataAdapter({ sourceId: source.id, productUrl: source.url })
+        ? createStructuredDataAdapter({ sourceId: source.id, productUrl: source.url }) : source.sourceType === "SHOPIFY" ? createShopifyAdapter({ sourceId: source.id, storeUrl: source.url })
         : createGenericRssAdapter({
             sourceId: source.id,
             feedUrl: source.url,
