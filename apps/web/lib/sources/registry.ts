@@ -8,7 +8,7 @@ export type RadarSourceDefinition = {
   sourceType:
     | "RSS"
     | "NEWSROOM"
-    | "MANUAL"
+    | "MANUAL" | "SHOPIFY"
     | "PRODUCT_LISTING"
     | "API"
     | "SITEMAP"
@@ -72,11 +72,11 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Stone Island Official", sourceClass: "A_truth", url: "https://www.stoneisland.com/us/stone-island/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Supreme New York", sourceClass: "A_truth", url: "https://www.supremenewyork.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Palace Skateboards", sourceClass: "A_truth", url: "https://www.palaceskateboards.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
-  { name: "Kith", sourceClass: "A_truth", url: "https://kith.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
-  { name: "Dover Street Market", sourceClass: "A_truth", url: "https://shop.doverstreetmarket.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
+  { name: "Kith", sourceClass: "A_truth", url: "https://kith.com", category: "streetwear", sourceType: "SHOPIFY", trustLevel: 5 },
+  { name: "Dover Street Market", sourceClass: "A_truth", url: "https://shop.doverstreetmarket.com", category: "streetwear", sourceType: "SHOPIFY", trustLevel: 4 },
   { name: "SSENSE New Arrivals", sourceClass: "A_truth", url: "https://www.ssense.com/men/new-arrivals", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
   { name: "END. Clothing New In", sourceClass: "A_truth", url: "https://www.endclothing.com/us/new-products/new-in", category: "streetwear", sourceType: "MANUAL", trustLevel: 4 },
-  { name: "Rhode by Hailey Bieber", sourceClass: "A_truth", url: "https://www.rhodeskin.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
+  { name: "Rhode by Hailey Bieber", sourceClass: "A_truth", url: "https://rhodeskin.com", category: "streetwear", sourceType: "SHOPIFY", trustLevel: 5 },
   { name: "Skims", sourceClass: "A_truth", url: "https://skims.com/", category: "streetwear", sourceType: "MANUAL", trustLevel: 5 },
 
   // Independent and collectible watches
