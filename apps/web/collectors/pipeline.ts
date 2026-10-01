@@ -8,7 +8,7 @@ import { createFirstDetectionAlert, createPriceStatusChangeAlert, createUnexpect
 export interface RunResult {
   sourceId: string;
   discovered: number;
-  decisionsCreated: number;
+  decisionsCreated: number; decisionsSkipped: number;
   error: string | null;
 }
 
@@ -18,7 +18,7 @@ export async function runSourcePipeline(
   adapter: SourceAdapter,
   zip: string
 ): Promise<RunResult> {
-  const result: RunResult = { sourceId: sourceRow.id, discovered: 0, decisionsCreated: 0, error: null };
+  const result: RunResult = { sourceId: sourceRow.id, discovered: 0, decisionsCreated: 0, decisionsSkipped: 0, error: null };
 
   try {
     const rawSignals = await adapter.discover();
@@ -125,7 +125,7 @@ export async function runSourcePipeline(
       });
       const decisionResult = built.result;
 
-      // Persist every decision, including SKIP, so the audit trail and
+      const wasUnavailable = previousAvailability !== null && previousAvailability.ctaState !== "enabled" && previousAvailability.checkoutState !== "reached_checkout"; const wasAvailable = previousAvailability !== null && !wasUnavailable; const isAvailable = availability.ctaState === "enabled" || availability.checkoutState === "reached_checkout"; const previousPrice = previousAvailability?.priceUsd ?? null; const priceChanged = previousPrice !== null && priceUsd !== null && Math.abs(previousPrice - priceUsd) >= 0.01; const statusChanged = previousDecision !== null && previousDecision.status !== decisionResult.status; const availabilityChanged = previousAvailability !== null && ((wasAvailable && !isAvailable) || (wasUnavailable && isAvailable)); const materialChange = priceChanged || statusChanged || availabilityChanged; const DECISION_DEDUPE_WINDOW_MS = 12 * 60 * 60 * 1000; const previousFresh = previousDecision !== null && Date.now() - new Date(previousDecision.createdAt).getTime() < DECISION_DEDUPE_WINDOW_MS; if (previousDecision !== null && previousDecision.status === decisionResult.status && previousFresh && !materialChange) { result.decisionsSkipped += 1; continue; } // Persist the decision (SKIP included) so the audit trail and
       // /soon "why we skipped this" view have real data.
       const decisionRow = await prisma.decision.create({
         data: {
@@ -156,12 +156,12 @@ export async function runSourcePipeline(
             store: availability.sellerOfRecord ?? null,
             primaryUrl: (availability as unknown as { url?: string | null }).url ?? null,
           };
-          const wasUnavailable = previousAvailability &&
-            previousAvailability.ctaState !== "enabled" &&
-            previousAvailability.checkoutState !== "reached_checkout";
-          const isAvailable = availability.ctaState === "enabled" || availability.checkoutState === "reached_checkout";
-          const previousPrice = previousAvailability?.priceUsd ?? null;
-          const priceChanged = previousPrice !== null && priceUsd !== null && Math.abs(previousPrice - priceUsd) >= 0.01;
+
+
+
+
+
+
           const statusChanged = previousDecision && previousDecision.status !== decisionResult.status;
 
           if (wasUnavailable && isAvailable) await createUnexpectedRestockAlert(alertInput);
