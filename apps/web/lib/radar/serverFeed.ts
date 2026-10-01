@@ -230,7 +230,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const decisions = await prisma.decision.findMany({
     where: { status: { in: statuses } },
     orderBy: { createdAt: "desc" },
-    take: 40,
+    take: 120,
     include: {
       productVariant: {
         include: {
@@ -333,7 +333,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         const factors = buildFactors(downgraded, missing, d.evidenceConfidence);
 
         return {
-          id: d.id,
+          id: d.id, evidenceConfidence: d.evidenceConfidence,
           status: bucket,
           kindLabel,
           categories,
