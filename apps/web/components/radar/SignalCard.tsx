@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "@/lib/i18n";
+import Link from "next/link";\nimport { useLanguage } from "@/lib/i18n";
 import type { DerivedSignal } from "@/lib/radar/types";
 import {
   checkedLabel,
@@ -126,6 +126,21 @@ export function SignalCard({
           status={signal.status}
           ctaConfirmed={signal.ctaConfirmed}
         />
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link
+            href={`/local?signal=${encodeURIComponent(signal.id)}`}
+            className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[.035] px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/[.06]"
+          >
+            {lang === "ru" ? "Забрать самому" : lang === "ar" ? "احصل عليه بنفسك" : "Get it myself"}
+          </Link>
+          <Link
+            href={`/local?signal=${encodeURIComponent(signal.id)}&mode=runner`}
+            className="flex items-center justify-center rounded-xl border border-rr-accent/30 bg-rr-accent-soft px-4 py-3 text-sm font-semibold text-rr-accent transition hover:border-rr-accent/50"
+          >
+            {lang === "ru" ? "Найти исполнителя" : lang === "ar" ? "ابحث عن منفذ" : "Find a runner"}
+          </Link>
+        </div>
       </div>
     </article>
   );
