@@ -31,7 +31,7 @@ async function createSignalAlert(input: CreateAlertInput, stage: NotificationSta
   const dedupeKey = input.productVariantId + ":" + stage + (dedupeSuffix ? ":" + dedupeSuffix : "");
 
   const existing = await prisma.alert.findFirst({
-    where: { decisionId: input.decisionId, channel: "browser", dedupeKey },
+    where: { userId, channel: "browser", dedupeKey },
   });
   if (existing) return;
 
