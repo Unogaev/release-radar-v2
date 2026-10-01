@@ -1,6 +1,6 @@
 import type { DerivedSignal, Signal, SignalStatus } from "./types";
 
-const PRIORITY: Record<SignalStatus, number> = { buy: 0, apply: 1, prepare: 2, watch: 3, client: 4 };
+const PRIORITY: Record<SignalStatus, number> = { buy: 0, apply: 1, prepare: 2, client: 3, watch: 4 };
 
 export function derive(signal: Signal): DerivedSignal {
   const hasNumbers = signal.cost !== null && signal.expectedResale !== null;
@@ -19,7 +19,7 @@ export function sortSignals(signals: DerivedSignal[]): DerivedSignal[] {
   return [...signals].sort(
     (a, b) =>
       PRIORITY[a.status] - PRIORITY[b.status] ||
-      new Date(a.launchAt).getTime() - new Date(b.launchAt).getTime()
+      b.evidenceConfidence - a.evidenceConfidence || new Date(b.checkedAt).getTime() - new Date(a.checkedAt).getTime()
   );
 }
 
