@@ -52,7 +52,7 @@ export interface Signal {
   launchAt: string;
 
   /** true only when the store's own buy button is confirmed active (ctaState "enabled"). */
-  ctaConfirmed: boolean;
+  ctaConfirmed: boolean; evidenceConfidence: number;
 
   /** Russian explanation (default UI language). */
   why: string;
