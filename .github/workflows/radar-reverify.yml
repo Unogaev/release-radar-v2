@@ -1,0 +1,28 @@
+name: radar-reverify (hourly, free tier)
+
+# Keeps availability evidence fresh for open deals: re-verifies the product
+# pages of variants with actionable decisions whose last check is older than
+# 36h, so the 48h honesty gate in serverFeed.ts keeps showing verified deals
+# instead of demoting everything to WATCH.
+#
+# REQUIRED: the same CRON_SECRET repository secret as radar-collect.yml
+# (repo → Settings → Secrets and variables → Actions).
+
+on:
+  schedule:
+    - cron: "37 * * * *" # hourly at :37 UTC, offset from the :07 collect run
+  workflow_dispatch: {} # manual runs from the Actions tab
+
+jobs:
+  reverify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger /api/cron/reverify
+        run: |
+          code=$(curl -s -o /tmp/reverify.json -w "%{http_code}" --max-time 100 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://release-radar-v2.vercel.app/api/cron/reverify)
+          echo "reverify HTTP $code"
+          cat /tmp/reverify.json; echo
+          test "$code" = "200"
