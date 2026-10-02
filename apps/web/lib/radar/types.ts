@@ -49,7 +49,7 @@ export interface Signal {
   stock: string;
   primaryUrl?: string | null;
   checkedAt: string;
-  launchAt: string;
+  launchAt: string | null;
 
   /** true only when the store's own buy button is confirmed active (ctaState "enabled"). */
   ctaConfirmed: boolean; evidenceConfidence: number;
