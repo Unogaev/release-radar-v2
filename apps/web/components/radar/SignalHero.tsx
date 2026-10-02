@@ -108,7 +108,7 @@ export function SignalHero({
               {marginLabel(signal.marginPct)}
             </div>
           </Figure>
-          {signal.launchAt && (<div className="ml-auto pb-2 text-right">
+          {signal.launchAt && <div className="ml-auto pb-2 text-right">
             <Figure label={t("label_time_to_launch")} align="right">
               <Countdown size="lg" secondsLeft={left} label={countdown} />
             </Figure>
@@ -118,7 +118,7 @@ export function SignalHero({
           </div>
         </div>
 
-        )}<Ledger
+        }<Ledger
           size="lg"
           items={[
             { label: "Retail", value: money(signal.retail) },
