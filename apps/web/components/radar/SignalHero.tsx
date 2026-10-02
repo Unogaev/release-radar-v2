@@ -108,17 +108,17 @@ export function SignalHero({
               {marginLabel(signal.marginPct)}
             </div>
           </Figure>
-          {signal.launchAt && <div className="ml-auto pb-2 text-right">
+          <div className="ml-auto pb-2 text-right">
             <Figure label={t("label_time_to_launch")} align="right">
-              <Countdown size="lg" secondsLeft={left} label={countdown} />
+              {left !== null && <Countdown size="lg" secondsLeft={left} label={countdown} />}
             </Figure>
             <div className="mt-1 font-rr-mono text-[10px] text-rr-faint whitespace-nowrap">
-              {formatDateEt(signal.launchAt)}
+              {signal.launchAt ? formatDateEt(signal.launchAt) : null}
             </div>
           </div>
         </div>
 
-        }<Ledger
+        <Ledger
           size="lg"
           items={[
             { label: "Retail", value: money(signal.retail) },
