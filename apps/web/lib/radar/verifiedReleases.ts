@@ -20,7 +20,7 @@ export const VERIFIED_RELEASES = [
     sourceNote: "Nike SNKRS official product page: $210, available September 26 at 2:00 PM, SKU IQ5340-001.",
   },
 
-  {    brand: "Sony",    model: "DualSense Wireless Controller LISA Limited Edition",    sku: null,    category: "gaming",    retailer: "PlayStation",    url: "https://blog.playstation.com/2026/09/21/lisa-x-playstation-arrives-this-october-first-look-at-the-dualsense-wireless-controller-lisa-limited-edition-and-all-new-merchandise/",    retailUsd: 84.99,    startsAtUtc: "2026-10-02T14:00:00.000Z", // 10:00 AM ET — preorder start    sourceTimezone: "America/New_York",    sourceNote: "PlayStation Blog (official): $84.99, highly limited quantities, pre-orders begin October 2 at 10am ET, launches October 30.",  },] as const;
+  {    brand: "Sony",    model: "DualSense Wireless Controller LISA Limited Edition",    sku: null,    category: "gaming",    retailer: "PlayStation",    url: "https://blog.playstation.com/2026/09/21/lisa-x-playstation-arrives-this-october-first-look-at-the-dualsense-wireless-controller-lisa-limited-edition-and-all-new-merchandise/",    retailUsd: 84.99,    startsAtUtc: "2026-10-02T14:00:00.000Z", /* 10:00 AM ET — preorder start */    sourceTimezone: "America/New_York",    sourceNote: "PlayStation Blog (official): $84.99, highly limited quantities, pre-orders begin October 2 at 10am ET, launches October 30.",  },] as const;
 
 export async function syncVerifiedReleases(now = new Date()): Promise<void> {
   for (const release of VERIFIED_RELEASES) {
