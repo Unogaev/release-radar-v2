@@ -162,7 +162,7 @@ const MISSING_LABEL: Record<string, { ru: string; en: string }> = {
   price: { ru: "цена", en: "price" },
   photo: { ru: "фото", en: "photo" },
   link: { ru: "ссылка на магазин", en: "store link" },
-  cta: { ru: "подтверждённая кнопка покупки", en: "confirmed buy button" },
+  cta: { ru: "подтверждённая кнопка покупки", en: "confirmed buy button" }, fresh_check: { ru: "свежая проверка наличия", en: "fresh availability check" },
 };
 
 function buildWhy(
@@ -321,7 +321,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
           if (retail === null) missing.push("price");
           if (!card?.imageUrl) missing.push("photo");
           if (!primaryUrl) missing.push("link");
-          if (bucket === "buy" && !ctaConfirmed) missing.push("cta");
+          if (bucket === "buy" && !ctaConfirmed) missing.push("cta"); /* A buy/apply action is only as good as its last verification: a weeks-old stock check is not a live deal. Without a fresh check the card honestly drops to watch instead of posing as a current BUY NOW. */ const checkAgeMs = check?.checkedAt ? Date.now() - new Date(check.checkedAt).getTime() : Number.POSITIVE_INFINITY; if (checkAgeMs > 48 * 3600 * 1000) missing.push("fresh_check");
+          
         }
         const downgraded = missing.length > 0;
         if (downgraded) {
@@ -334,8 +335,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
         return {
           id: d.id, evidenceConfidence: d.evidenceConfidence,
-          status: bucket,
-          kindLabel,
+          status: bucket, kindLabel,
           categories,
           brand,
           model,
@@ -368,7 +368,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
           stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
           primaryUrl,
           checkedAt: (card?.checkedAt ?? check?.checkedAt ?? d.createdAt).toISOString(),
-          launchAt: (release?.startAtUtc ?? d.createdAt).toISOString(),
+          launchAt: release?.startAtUtc?.toISOString() ?? null,
           ctaConfirmed,
           why: why.ru,
           whyEn: why.en,
