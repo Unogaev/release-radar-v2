@@ -1,4 +1,5 @@
 
+
 export interface StructuredProductData {
   name: string | null;
   brand: string | null;
@@ -8,10 +9,22 @@ export interface StructuredProductData {
   url: string;
 }
 
+
 export async function fetchStructuredProductData(url: string): Promise<StructuredProductData | null> {
-  const res = await fetch(url, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } });
+  let res = await fetch(url, { headers: { "User-Agent": "ReleaseRadarBot/1.0" } });
+  // One-time fallback: bot protection on some stores blocks the default bot UA
+  // with 403/429 — retry once with a real browser User-Agent.
+  if (res.status === 403 || res.status === 429) {
+    res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+      },
+    });
+  }
   if (!res.ok) throw new Error(`Page fetch failed: ${res.status} ${url}`);
   const html = await res.text();
+
 
   // MVP fix: full-DOM parsing of an entire storefront homepage (heavy,
   // deeply-nested client-rendered markup) was tripping node-html-parser's
@@ -60,3 +73,4 @@ export async function fetchStructuredProductData(url: string): Promise<Structure
   }
   return null;
 }
+
