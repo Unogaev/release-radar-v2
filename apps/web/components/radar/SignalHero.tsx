@@ -43,7 +43,7 @@ export function SignalHero({
   onAction: (id: string, action: SignalAction) => void;
 }) {
   const { t, lang } = useLanguage();
-  const left = now === null ? null : secondsUntil(signal.launchAt, now);
+  const left = now === null || !signal.launchAt ? null : secondsUntil(signal.launchAt, now);
   const kindKey = KIND_LABEL_KEYS[signal.kindLabel] ?? "kind_now";
   const hasRefOrSku = signal.reference !== "—" || signal.sku !== "—";
   const isLiveConfirmed = signal.status === "buy" && signal.ctaConfirmed;
@@ -108,7 +108,7 @@ export function SignalHero({
               {marginLabel(signal.marginPct)}
             </div>
           </Figure>
-          <div className="ml-auto pb-2 text-right">
+          {signal.launchAt && (<div className="ml-auto pb-2 text-right">
             <Figure label={t("label_time_to_launch")} align="right">
               <Countdown size="lg" secondsLeft={left} label={countdown} />
             </Figure>
@@ -118,7 +118,7 @@ export function SignalHero({
           </div>
         </div>
 
-        <Ledger
+        )}<Ledger
           size="lg"
           items={[
             { label: "Retail", value: money(signal.retail) },
