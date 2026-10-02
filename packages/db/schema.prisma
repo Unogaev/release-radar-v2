@@ -412,3 +412,69 @@ model FeedCard {
 
   @@index([updatedAt])
 }
+
+// ============================== Access marketplace (pre-launch) ==============================
+// "Radar finds the window, Access walks through it."
+//
+// The Access marketplace (Uber for scarce goods) is NOT launched yet. It stays
+// gated until 4+ weeks of stable radar core and 100+ signals (decision
+// 2026-09-29). These two models are laid in advance so the radar side can
+// reference them later (e.g. a decision seeding a client request) without
+// building the marketplace itself.
+//
+// NOTE: after this schema change lands, run `prisma db push`
+// (from apps/web: `npm run prisma:push`) against the production database to
+// create the tables. No application code touches these models yet, so the app
+// is unaffected until then.
+
+model ClientRequest {
+  id          String   @id @default(cuid())
+  // What the client wants acquired.
+  title       String
+  brand       String?
+  model       String?
+  identifier  String? // SKU / style code / reference — the strong dedupe key
+  maxPriceUsd Float?
+  quantity    Int      @default(1)
+  // Fulfilment constraints.
+  region      String? // e.g. "US-FL"
+  zip         String?
+  deadlineAt  DateTime?
+  notes       String?
+  // Who posted it (freeform — the client supplies their own contact).
+  clientName    String?
+  clientContact String?
+  // Lifecycle: open -> matched -> in_progress -> fulfilled | cancelled
+  status String @default("open")
+  // Loose references back to the radar side (informational until launch).
+  decisionId       String?
+  productVariantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks RunnerTask[]
+
+  @@index([status, createdAt])
+}
+
+model RunnerTask {
+  id              String        @id @default(cuid())
+  clientRequest   ClientRequest @relation(fields: [clientRequestId], references: [id], onDelete: Cascade)
+  clientRequestId String
+  // Who runs it (freeform — the runner supplies their own contact).
+  runnerName    String?
+  runnerContact String?
+  // Execution: offered -> accepted -> sourcing -> purchased -> delivered | failed | cancelled
+  status String @default("offered")
+  // Economics snapshotted at acceptance — later price moves don't rewrite history.
+  agreedFeeUsd      Float?
+  agreedMaxPriceUsd Float?
+  receiptUrl        String?
+  receiptAmountUsd  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientRequestId, status])
+}
