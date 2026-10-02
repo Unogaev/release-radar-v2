@@ -36,7 +36,7 @@ export function SignalCard({
   onAction: (id: string, action: SignalAction) => void;
 }) {
   const { t, lang } = useLanguage();
-  const left = now === null ? null : secondsUntil(signal.launchAt, now);
+  const left = now === null || !signal.launchAt ? null : secondsUntil(signal.launchAt, now);
   const hasRefOrSku = signal.reference !== "—" || signal.sku !== "—";
   const isLiveConfirmed = signal.status === "buy" && signal.ctaConfirmed;
   const rawCountdown = left === null ? "—" : countdownLabel(left);
