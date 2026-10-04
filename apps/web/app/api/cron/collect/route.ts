@@ -51,8 +51,8 @@ export async function GET(req: NextRequest) {
   );
 
   async function collectSource(source: (typeof sources)[number]) {
-        /* BROWSER_VERIFICATION is a human-verification channel, not a fetchable feed — skip gracefully instead of erroring on its empty URL. */
-    if (source.sourceType === "BROWSER_VERIFICATION") {
+    /* Pseudo-sources (manual entry, browser verification) have no feed URL — skip gracefully instead of erroring. */
+    if (!source.url) {
       await prisma.source.update({
         where: { id: source.id },
         data: { lastCheckedAt: new Date(), lastError: null, adapterStatus: "manual" },
