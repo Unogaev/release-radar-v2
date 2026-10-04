@@ -379,7 +379,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const sourceRows = await prisma.source.findMany({
     orderBy: { lastCheckedAt: "desc" },
-    take: 60,
+    take: 500,
   });
 
   const sources: SourceHealth[] = sourceRows.map((s) => {
