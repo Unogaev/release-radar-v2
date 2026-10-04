@@ -145,7 +145,7 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Toyark", sourceClass: "C_signal", url: "https://www.toyark.com/feed", category: "collectibles", sourceType: "RSS", trustLevel: 3 },
   { name: "Beckett Collectibles", sourceClass: "C_signal", url: "https://www.beckett.com/news/feed/", category: "collectibles", sourceType: "RSS", trustLevel: 3 },
   { name: "Sports Collectors Daily", sourceClass: "B_market", url: "https://www.sportscollectorsdaily.com/feed/", category: "collectibles", sourceType: "RSS", trustLevel: 4 },
-  { name: "Antique Trader", sourceClass: "B_market", url: "https://www.antiquetrader.com/.rss/full/", category: "vintage", sourceType: "RSS", trustLevel: 4 },
+  { name: "Antique Trader", sourceClass: "B_market", url: "https://feeds.feedburner.com/AntiqueTrader", category: "vintage", sourceType: "RSS", trustLevel: 4 },
   { name: "Heritage Auctions Sports", sourceClass: "B_market", url: "https://sports.ha.com/", category: "collectibles", sourceType: "MANUAL", trustLevel: 4 },
   { name: "Goldin Auctions", sourceClass: "B_market", url: "https://goldin.co/", category: "collectibles", sourceType: "MANUAL", trustLevel: 4 },
   { name: "PSA Auction Prices", sourceClass: "B_market", url: "https://www.psacard.com/auctionprices", category: "collectibles", sourceType: "MANUAL", trustLevel: 4 },
