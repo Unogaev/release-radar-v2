@@ -51,6 +51,14 @@ export async function GET(req: NextRequest) {
   );
 
   async function collectSource(source: (typeof sources)[number]) {
+        /* BROWSER_VERIFICATION is a human-verification channel, not a fetchable feed — skip gracefully instead of erroring on its empty URL. */
+    if (source.sourceType === "BROWSER_VERIFICATION") {
+      await prisma.source.update({
+        where: { id: source.id },
+        data: { lastCheckedAt: new Date(), lastError: null, adapterStatus: "manual" },
+      });
+      return { sourceId: source.id, discovered: 0, decisionsCreated: 0, newItems: 0, error: null, skipped: true };
+    }
 
     let runResult;
     if (source.sourceType === "RSS" || source.sourceType === "NEWSROOM" || source.sourceType === "MANUAL") {
