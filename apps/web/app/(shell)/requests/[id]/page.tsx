@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "next/link"; import { useRouter } from "next/navigation";
 import { useLanguage, type DictKey } from "@/lib/i18n";
 
 type Task = {
@@ -62,7 +62,7 @@ const inputCls =
 const labelCls = "text-xs uppercase tracking-wider text-rr-muted";
 
 export default function RequestDetailPage({ params }: { params: { id: string } }) {
-  const { t } = useLanguage();
+  const { t } = useLanguage(); const router = useRouter();
   const [req, setReq] = useState<ClientRequest | null>(null);
   const [runnerName, setRunnerName] = useState("");
   const [runnerContact, setRunnerContact] = useState("");
@@ -70,7 +70,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   const [accepting, setAccepting] = useState(false);
   const [proofUrl, setProofUrl] = useState("");
   const [proofAmount, setProofAmount] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false); const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/requests/${params.id}`);
@@ -121,14 +121,14 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
     }
   }
 
-  if (!req) return <div className="text-sm text-rr-muted">…</div>;
+  async function deleteRequest() { if (!req) return; if (!window.confirm("Delete this request?")) return; setDeleting(true); try { const res = await fetch(`/api/requests/${req.id}`, { method: "DELETE" }); if (res.ok) router.push("/earn"); } finally { setDeleting(false); } } if (!req) return <div className="text-sm text-rr-muted">…</div>;
 
   const activeTask = req.tasks.find((x) => ["accepted", "sourcing", "purchased"].includes(x.status));
   const next = activeTask ? NEXT_STATUS[activeTask.status] : null;
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <Link href="/earn" className="text-sm text-rr-accent">{t("req_back")}</Link>
+      <Link href="/earn" className="text-sm text-rr-accent">{t("req_back")}</Link><button onClick={deleteRequest} disabled={deleting} className="text-xs text-red-400/80 hover:text-red-400 disabled:opacity-50 mt-2">{deleting ? "…" : "Delete request"}</button>
 
       <header>
         <h1 className="font-display text-2xl text-rr-text">{req.title}</h1>
