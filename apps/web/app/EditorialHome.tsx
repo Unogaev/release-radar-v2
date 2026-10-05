@@ -57,11 +57,12 @@ export function EditorialHome({
     return `/requests/new?${params.toString()}`;
   };
 
+  const dedupeName = (s: DerivedSignal) => { const brand = s.brand && s.brand !== "—" ? s.brand : ""; const model = s.model && s.model !== "—" ? s.model : ""; if (brand && model.toLowerCase().startsWith(brand.toLowerCase())) return model; return [brand, model].filter(Boolean).join(" "); };
   const tickerItems = tickerSignals
     .map((s) => {
-      const name = [s.brand, s.model].filter((x) => x && x !== "—").join(" ");
+      
       const price = s.retail != null ? ` · $${s.retail}` : "";
-      return `${name}${price}`.trim();
+      return `${dedupeName(s)}${price}`.trim();
     })
     .filter(Boolean);
 
@@ -93,7 +94,7 @@ export function EditorialHome({
             </nav>
             <div className="flex items-center gap-2 font-rr-mono text-[11px] uppercase tracking-[0.18em]">
               <span className="inline-block w-2 h-2 rounded-full bg-[#2e5b3e] animate-pulse" />
-              {t("ed_desk_market_v").split(" / ")[0]} {t("ed_tab_local") === "Local" ? "Market" : ""}
+              {t("ed_masthead_market")}
             </div>
           </div>
           <div className="sm:hidden flex items-center gap-6 pb-4 font-rr-mono text-[11px] uppercase tracking-[0.2em]">
@@ -239,7 +240,7 @@ export function EditorialHome({
             <p className="py-10 text-sm text-[#6f6656]">{t("ed_moving_empty")}</p>
           ) : (
             signals.map((s, i) => {
-              const name = [s.brand, s.model].filter((x) => x && x !== "—").join(" ");
+              const name = dedupeName(s);
               return (
                 <article key={s.id} className="grid grid-cols-[auto_1fr] md:grid-cols-[56px_120px_1fr_auto] gap-4 md:gap-6 py-6 border-b border-[#d8cfb9] items-start">
                   <div className="font-rr-mono text-[11px] text-[#a89d88] pt-1">
