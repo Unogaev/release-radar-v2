@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, type DictKey } from "@/lib/i18n";
 
 type Task = {
   id: string;
@@ -33,7 +33,7 @@ type ClientRequest = {
   tasks: Task[];
 };
 
-const STATUS_KEY: Record<string, string> = {
+const STATUS_KEY: Record<string, DictKey> = {
   open: "st_open",
   matched: "st_matched",
   in_progress: "st_in_progress",
@@ -41,7 +41,7 @@ const STATUS_KEY: Record<string, string> = {
   cancelled: "st_cancelled",
 };
 
-const TASK_STATUS_KEY: Record<string, string> = {
+const TASK_STATUS_KEY: Record<string, DictKey> = {
   offered: "ts_offered",
   accepted: "ts_accepted",
   sourcing: "ts_sourcing",
@@ -133,12 +133,12 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
       <header>
         <h1 className="font-display text-2xl text-rr-text">{req.title}</h1>
         <div className="mt-2 inline-block text-xs font-medium border border-rr-frame rounded-full px-3 py-1 text-rr-text-dim">
-          {t(STATUS_KEY[req.status] ?? req.status)}
+          {t(STATUS_KEY[req.status] ?? "st_open")}
         </div>
       </header>
 
       <div className="border border-rr-frame rounded-2xl bg-rr-surface p-6 space-y-2 text-sm">
-        <div className="text-xs uppercase tracking-wider text-rr-muted">{t("req_status")}: {t(STATUS_KEY[req.status] ?? req.status)}</div>
+        <div className="text-xs uppercase tracking-wider text-rr-muted">{t("req_status")}: {t(STATUS_KEY[req.status] ?? "st_open")}</div>
         {(req.brand || req.model) && (
           <div className="text-rr-text">{[req.brand, req.model].filter(Boolean).join(" · ")}</div>
         )}
@@ -184,7 +184,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
             <div key={task.id} className="border border-rr-frame rounded-2xl bg-rr-surface p-5 space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-rr-text font-medium">{task.runnerName ?? "—"}</span>
-                <span className="text-xs text-rr-text-dim">{t(TASK_STATUS_KEY[task.status] ?? task.status)}</span>
+                <span className="text-xs text-rr-text-dim">{t(TASK_STATUS_KEY[task.status] ?? "ts_offered")}</span>
               </div>
               {task.agreedFeeUsd != null && (
                 <div className="text-rr-text-dim">{t("req_runner_fee")}: ${task.agreedFeeUsd}</div>
