@@ -296,7 +296,7 @@ export function ImageFrame({
   );
 }
 
-export type SignalAction = "buy" | "source" | "calendar" | "publish";
+export type SignalAction = "buy" | "source" | "calendar" | "publish" | "runner";
 
 export function ActionRow({
   onAction,
@@ -305,6 +305,8 @@ export function ActionRow({
   disabledActions = [],
   status,
   ctaConfirmed,
+        
+    
 }: {
   onAction: (action: SignalAction) => void;
   variant?: "card" | "hero";
@@ -321,11 +323,12 @@ export function ActionRow({
     source: { full: t("action_source_full"), short: t("action_source_short") },
     calendar: { full: t("action_calendar"), short: t("action_calendar") },
     publish: { full: t("action_publish_full"), short: t("action_publish_short") },
+    runner: { full: t("req_new_title"), short: t("req_new_title") },
   };
   const hero = variant === "hero";
   // Publishing is intentionally hidden until a real destination and delivery
   // confirmation exist. Never render a control that only looks functional.
-  const order: SignalAction[] = ["buy", "source", "calendar"];
+  const order: SignalAction[] = ["buy", "runner", "source", "calendar"];
   return (
     <div className="mt-auto flex flex-wrap gap-2 pt-1">
       {order.map((action) => {
