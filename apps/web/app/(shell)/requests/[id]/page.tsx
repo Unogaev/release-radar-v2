@@ -51,7 +51,7 @@ const TASK_STATUS_KEY: Record<string, DictKey> = {
   cancelled: "ts_cancelled",
 };
 
-const NEXT_STATUS: Record<string, { to: string; labelKey: string }> = {
+const NEXT_STATUS: Record<string, { to: string; labelKey: DictKey }> = {
   accepted: { to: "sourcing", labelKey: "req_advance_sourcing" },
   sourcing: { to: "purchased", labelKey: "req_advance_purchased" },
   purchased: { to: "delivered", labelKey: "req_advance_delivered" },
