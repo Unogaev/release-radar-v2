@@ -14,11 +14,15 @@ import {
   Plus,
   LogOut,
   Newspaper,
+  MapPin,
+  BadgeDollarSign,
 } from "lucide-react";
 
 const SECTIONS = [
   { href: "/now", key: "nav_command_center", icon: LayoutDashboard },
   { href: "/radar", key: "nav_live_signals", icon: Radio },
+  { href: "/local", key: "nav_local", icon: MapPin },
+  { href: "/earn", key: "nav_earn", icon: BadgeDollarSign },
   { href: "/soon", key: "nav_upcoming", icon: Clock },
   { href: "/news", key: "nav_news", icon: Newspaper },
   { href: "/calendar", key: "nav_calendar", icon: Calendar },
