@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"; import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 type Extracted = {
@@ -23,10 +23,10 @@ type Extracted = {
   confidence?: number | null;
 };
 
-export default function AddSignalPage() {
+function AddSignalPageInner() {
   const [files, setFiles] = useState<File[]>([]);
   const [url, setUrl] = useState("");
-  const [comment, setComment] = useState("");
+  const searchParams = useSearchParams(); const [comment, setComment] = useState(() => searchParams.get("q") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -229,4 +229,4 @@ export default function AddSignalPage() {
       </div>
     </div>
   );
-}
+} export default function AddSignalPage() { return ( <Suspense> <AddSignalPageInner /> </Suspense> ); }
