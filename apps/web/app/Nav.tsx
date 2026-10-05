@@ -11,6 +11,7 @@ import {
   Calendar,
   RadioTower,
   ShoppingBag,
+  Briefcase,
   Plus,
   LogOut,
   Newspaper,
@@ -24,6 +25,7 @@ const SECTIONS = [
   { href: "/calendar", key: "nav_calendar", icon: Calendar },
   { href: "/sources", key: "nav_sources", icon: RadioTower },
   { href: "/purchases", key: "nav_purchases", icon: ShoppingBag },
+  { href: "/earn", key: "nav_earn", icon: Briefcase },
 ] as const;
 
 export function Nav() {
