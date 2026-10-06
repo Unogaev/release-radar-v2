@@ -54,7 +54,7 @@ export function SignalHero({
 
   return (
     <div
-      className="grid overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_82%_8%,rgba(54,217,138,.11),transparent_34%),linear-gradient(115deg,#151918_0%,#101312_55%,#090b0a_100%)] shadow-[0_30px_100px_rgba(0,0,0,.32)]"
+      className="grid overflow-hidden rounded-[28px] border border-rr-frame bg-[radial-gradient(circle_at_82%_8%,rgba(46,91,62,.12),transparent_34%),linear-gradient(115deg,#ece5d3_0%,#e2d9c2_55%,#d8cfb9_100%)] shadow-[0_30px_100px_rgba(0,0,0,.32)]"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 470px), 1fr))" }}
     >
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} href={signal.primaryUrl ?? signal.imageSourceUrl ?? null} className="min-h-[280px] sm:min-h-[420px] p-6">
@@ -90,7 +90,7 @@ export function SignalHero({
               </span>
             )}
             {signal.completedSalesCount > 0 && (
-              <span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 font-rr-mono text-[9px] uppercase tracking-[0.13em] text-rr-text-dim">
+              <span className="rounded-full border border-rr-frame bg-rr-well px-3 py-1.5 font-rr-mono text-[9px] uppercase tracking-[0.13em] text-rr-text-dim">
                 {signal.completedSalesCount} completed sales
               </span>
             )}
