@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
   color-scheme: dark;
 }
+
 
 body {
   margin: 0;
@@ -14,12 +16,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+
 .app-shell {
-  background:
-    radial-gradient(ellipse at top, rgba(231, 229, 223, 0.04), transparent 60%),
-    #0e0e11;
-  color: #f4f3ef;
+  background: #f3eee4;
+  color: #1c1a15;
 }
+
 
 .status-badge {
   font-family: theme("fontFamily.display");
@@ -29,9 +31,12 @@ body {
   text-transform: uppercase;
 }
 
+
 * { box-sizing: border-box; }
 
+
 ::selection { background: rgba(54, 217, 138, 0.34); color: white; }
+
 
 ::-webkit-scrollbar { width: 10px; height: 8px; }
 ::-webkit-scrollbar-track { background: #0a0c0f; }
