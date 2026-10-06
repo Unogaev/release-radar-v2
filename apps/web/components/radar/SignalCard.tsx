@@ -45,7 +45,7 @@ export function SignalCard({
   const factors = lang === "en" ? signal.factorsEn : signal.factors;
 
   return (
-    <article className="flex flex-col self-start overflow-hidden rounded-[24px] border border-white/10 bg-rr-surface shadow-[0_24px_70px_rgba(0,0,0,.24)] transition hover:-translate-y-0.5 hover:border-rr-accent/25 hover:bg-rr-surface-hi">
+    <article className="flex flex-col self-start overflow-hidden rounded-[24px] border border-rr-frame bg-rr-surface shadow-[0_24px_70px_rgba(0,0,0,.24)] transition hover:-translate-y-0.5 hover:border-rr-accent/25 hover:bg-rr-surface-hi">
       <ImageFrame hint={signal.imageHint} src={signal.imageUrl ?? null} href={signal.primaryUrl ?? signal.imageSourceUrl ?? null} className="h-[210px] sm:h-[290px]">
         <div className="absolute left-[18px] top-[18px]">
           <StatusBadge status={signal.status} />
@@ -81,7 +81,7 @@ export function SignalCard({
               </span>
             )}
             {signal.completedSalesCount > 0 && (
-              <span className="rounded-full border border-white/10 bg-white/[.035] px-2.5 py-1 font-rr-mono text-[8.5px] uppercase tracking-[0.12em] text-rr-text-dim">
+              <span className="rounded-full border border-rr-frame bg-rr-well px-2.5 py-1 font-rr-mono text-[8.5px] uppercase tracking-[0.12em] text-rr-text-dim">
                 {signal.completedSalesCount} completed
               </span>
             )}
