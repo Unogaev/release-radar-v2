@@ -21,6 +21,9 @@ type ClientRequest = {
 export default function EarnPage() {
   const { t } = useLanguage();
   const [requests, setRequests] = useState<ClientRequest[] | null>(null);
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const regions = ["all", "Miami, USA", "France / EU", "Dubai, UAE", "Russia"];
+  const filtered = (requests ?? []).filter((r) => regionFilter === "all" || r.region === regionFilter);
 
   useEffect(() => {
     fetch("/api/requests")
@@ -36,6 +39,20 @@ export default function EarnPage() {
         <p className="text-sm text-rr-text-dim mt-1 max-w-xl">{t("earn_subtitle")}</p>
       </header>
 
+      {requests !== null && requests.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {regions.map((rg) => (
+            <button
+              key={rg}
+              onClick={() => setRegionFilter(rg)}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${regionFilter === rg ? "bg-rr-text text-rr-bg" : "border border-rr-frame text-rr-muted hover:text-rr-text"}`}
+            >
+              {rg === "all" ? "All regions" : rg}
+            </button>
+          ))}
+        </div>
+      )}
+
       {requests === null && (
         <div className="text-sm text-rr-muted">…</div>
       )}
@@ -48,9 +65,9 @@ export default function EarnPage() {
         </div>
       )}
 
-      {requests !== null && requests.length > 0 && (
+      {filtered.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {requests.map((r) => (
+          {filtered.map((r) => (
             <Link
               key={r.id}
               href={`/requests/${r.id}`}
@@ -65,7 +82,7 @@ export default function EarnPage() {
                   <span><span className="text-rr-muted">{t("earn_budget")}: </span>${r.maxPriceUsd}</span>
                 )}
                 {r.region && (
-                  <span><span className="text-rr-muted">{t("earn_location")}: </span>{r.region}</span>
+                  <span className="inline-flex items-center rounded-full border border-rr-frame bg-rr-well px-2.5 py-0.5 font-medium text-rr-text">{r.region}</span>
                 )}
                 {r.deadlineAt && (
                   <span><span className="text-rr-muted">{t("earn_deadline")}: </span>{new Date(r.deadlineAt).toLocaleDateString()}</span>
@@ -75,6 +92,10 @@ export default function EarnPage() {
             </Link>
           ))}
         </div>
+      )}
+
+      {requests !== null && requests.length > 0 && filtered.length === 0 && (
+        <div className="text-sm text-rr-muted">No requests in this region yet.</div>
       )}
     </div>
   );
