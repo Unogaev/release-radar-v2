@@ -197,7 +197,7 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
   const filterCounts = useMemo(() => {
     const visualNews = payload?.newsItems.filter((item) => item.imageUrl && item.sourceUrl) ?? [];
     return Object.fromEntries(FILTER_IDS.map((item) => {
-      const signalCount = signals.filter((signal) => signal.categories.includes(item.id) && signal.imageUrl && signal.sourceUrl).length;
+      const signalCount = signals.filter((signal) => signal.categories.includes(item.id) && signal.imageUrl && signal.primaryUrl).length;
       const newsCategories = NEWS_CATEGORIES[item.id];
       const newsCount = item.id === "now"
         ? visualNews.length
