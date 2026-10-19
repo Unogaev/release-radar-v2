@@ -21,6 +21,66 @@ export const VERIFIED_RELEASES = [
   },
 
   {    brand: "Sony",    model: "DualSense Wireless Controller LISA Limited Edition",    sku: null,    category: "gaming",    retailer: "PlayStation",    url: "https://blog.playstation.com/2026/09/21/lisa-x-playstation-arrives-this-october-first-look-at-the-dualsense-wireless-controller-lisa-limited-edition-and-all-new-merchandise/",    retailUsd: 84.99,    startsAtUtc: "2026-10-02T14:00:00.000Z", /* 10:00 AM ET — preorder start */    sourceTimezone: "America/New_York",    sourceNote: "PlayStation Blog (official): $84.99, highly limited quantities, pre-orders begin October 2 at 10am ET, launches October 30.",  }, { brand: "PUMA", model: "Salehe Bembury Hali 1 Pace", sku: "314239-01", category: "sneakers", retailer: "PUMA", url: "https://us.puma.com/us/en/pd/puma-x-salehe-bembury-hali-1-pace-basketball-shoes/314239", retailUsd: 130, startsAtUtc: "2026-10-23T04:00:00.000Z", sourceTimezone: "UTC", sourceNote: "PUMA official product page: available to order 10/23 at 4 AM UTC, $130, style 314239-01.", },
+  {
+    brand: "LEGO",
+    model: "Sagrada Família",
+    sku: "21065",
+    category: "lego",
+    retailer: "LEGO.com",
+    url: "https://www.lego.com/en-us/product/sagrada-familia-21065",
+    retailUsd: 799.99,
+    startsAtUtc: "2026-11-01T05:00:00.000Z",
+    sourceTimezone: "America/New_York",
+    sourceNote: "lego.com Coming Soon page: 12,060 pieces, LEGO exclusive, launches November 1.",
+  },
+  {
+    brand: "LEGO",
+    model: "Cozy Plants",
+    sku: "10371",
+    category: "lego",
+    retailer: "LEGO.com",
+    url: "https://www.lego.com/en-us/product/cozy-plants-10371",
+    retailUsd: 22.99,
+    startsAtUtc: "2026-11-01T05:00:00.000Z",
+    sourceTimezone: "America/New_York",
+    sourceNote: "lego.com Coming Soon page: 248 pieces, launches November 1.",
+  },
+  {
+    brand: "LEGO",
+    model: "Dragon Ball Shenron & Goku",
+    sku: "11390",
+    category: "lego",
+    retailer: "LEGO.com",
+    url: "https://www.lego.com/en-us/product/dragon-ball-shenron-goku-11390",
+    retailUsd: 179.99,
+    startsAtUtc: "2026-11-04T05:00:00.000Z",
+    sourceTimezone: "America/New_York",
+    sourceNote: "lego.com Coming Soon page: 1,764 pieces, LEGO exclusive, launches November 4 (Insiders early access Nov 1).",
+  },
+  {
+    brand: "Tendence",
+    model: "Final Fantasy X 25th Anniversary Tidus",
+    sku: "TY146110",
+    category: "watches",
+    retailer: "Tendence",
+    url: "https://essential-japan.com/news/square-enix-reveals-new-final-fantasy-x-25th-anniversary-watch-collab-collection-inspired-by-tidus-and-yuna/",
+    retailUsd: 438,
+    startsAtUtc: "2026-11-20T01:00:00.000Z",
+    sourceTimezone: "Asia/Tokyo",
+    sourceNote: "Square Enix official announcement 2026-10-17: 200 pieces worldwide, ¥69,300.",
+  },
+  {
+    brand: "Tendence",
+    model: "Final Fantasy X 25th Anniversary Yuna",
+    sku: "TY933010",
+    category: "watches",
+    retailer: "Tendence",
+    url: "https://essential-japan.com/news/square-enix-reveals-new-final-fantasy-x-25th-anniversary-watch-collab-collection-inspired-by-tidus-and-yuna/",
+    retailUsd: 341,
+    startsAtUtc: "2026-11-20T01:00:00.000Z",
+    sourceTimezone: "Asia/Tokyo",
+    sourceNote: "Square Enix official announcement 2026-10-17: 200 pieces worldwide, ¥53,900.",
+  },
   ] as const;
 
 export async function syncVerifiedReleases(now = new Date()): Promise<void> {
@@ -40,7 +100,6 @@ export async function syncVerifiedReleases(now = new Date()): Promise<void> {
     }
 
         let variant = release.sku      ? await prisma.productVariant.findFirst({          where: { identifiers: { some: { kind: "sku", value: release.sku } } },          include: { product: true },        })      : await prisma.productVariant.findFirst({          where: {            product: {              brand: release.brand,              normalizedModel: release.model.toLowerCase(),              category: release.category,            },          },          include: { product: true },        });
-      
       
     
     if (!variant) {
