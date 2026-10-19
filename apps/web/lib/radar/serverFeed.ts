@@ -466,6 +466,11 @@ export async function getRealFeed(): Promise<FeedPayload> {
     return true;
   });
 
+  const upcomingReleases = releaseVariants.filter((v) => {
+    const launchAt = v.releaseEvents[0]?.startAtUtc;
+    return launchAt && new Date(launchAt).getTime() > Date.now();
+  }).length;
+
   const BUCKET_LABEL: Record<string, string> = { buy: "BUY NOW", apply: "APPLY NOW" };
 
   const signalNewsSource = signals.filter((s) => s.status === "buy" || s.status === "apply").slice(0, 10);
@@ -573,5 +578,6 @@ export async function getRealFeed(): Promise<FeedPayload> {
     sources,
     logs,
     scannedAt: (scannedAtSource ?? new Date()).toISOString(),
+    upcomingReleases,
   };
 }
