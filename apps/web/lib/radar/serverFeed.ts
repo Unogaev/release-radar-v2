@@ -417,7 +417,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const PRODUCT_NEWS = /\b(release|drop|launch|collab|limited|exclusive|restock|pre-?order|auction|sold|resale|record|vintage|sneaker|watch|jordan|nike|adidas|chrome hearts|rolex|tudor|patek|cartier|omega|apple|iphone|playstation|xbox|nvidia|radeon|gpu|camera|leica|canon|nikon|fujifilm|dji|porsche|ferrari|lamborghini|electric|ev|vehicle|car|lego|brick|collectible|trading card|memorabilia|fragrance|perfume|jewelry|handbag|archive|clearance|deal|collection|capsule|new arrivals?)\b/i;
   const ENTERTAINMENT_ONLY = /\b(anime|netflix|season\s+\d|episode|trailer|film|movie|music video)\b/i;
   const COMMERCE_CONTEXT = /\b(merch|collectible|figure|shoe|sneaker|watch|jewelry|fashion|capsule|collab|limited|drop|auction|sold|resale)\b/i;
-  const COMMERCE_CATEGORIES = new Set(["sneakers", "streetwear", "watches", "cars", "lego", "collectibles", "vintage", "luxury", "fragrance", "gpu", "cameras", "clearance", "chrome-hearts", "jewelry"]);
+  const COMMERCE_CATEGORIES = new Set(["sneakers", "streetwear", "watches", "cars", "lego", "collectibles", "vintage", "luxury", "fragrance", "gpu", "cameras", "clearance", "chrome-hearts", "jewelry", "tech", "technology", "gaming"]);
   const seenNews = new Set<string>();
   const perSource = new Map<string, number>();
   const perCategory = new Map<string, number>();
