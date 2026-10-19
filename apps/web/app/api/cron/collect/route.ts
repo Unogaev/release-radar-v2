@@ -68,10 +68,14 @@ export async function GET(req: NextRequest) {
           : await fetchRssItems(source.url, 25);
         const existingSignals = await prisma.signal.findMany({
           where: { sourceId: source.id, url: { in: items.map((item) => item.url) } },
-          select: { url: true },
+          select: { url: true, rawText: true },
         });
-        const existingUrls = new Set(existingSignals.map((signal) => signal.url).filter(Boolean));
-        const freshItems = items.filter((item) => !existingUrls.has(item.url));
+        // Dedupe by normalized URL + normalized title: the same story often
+        // reappears under a slightly different URL (tracking params, AMP).
+        const normUrl = (u: string | null) => (u ?? "").trim().toLowerCase().replace(/\/$/, "").replace(/^https?:\/\/(www\.)?/, "");
+        const normTitle = (t: string | null) => (t ?? "").split("\n")[0].toLowerCase().replace(/\s+/g, " ").trim();
+        const existingKeys = new Set(existingSignals.map((s) => `${normUrl(s.url)}::${normTitle(s.rawText)}`));
+        const freshItems = items.filter((item) => !existingKeys.has(`${normUrl(item.url)}::${normTitle(item.title)}`));
         if (freshItems.length) {
           await prisma.signal.createMany({
             data: freshItems.map((item) => ({
