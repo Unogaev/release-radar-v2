@@ -4,6 +4,7 @@ import type { FeedPayload, RadarCategory, Signal, SignalStatus, SourceHealth } f
 import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { readFeedCards } from "./feedCards";
+import { VERIFIED_RELEASES } from "./verifiedReleases";
 
 function signalHeadline(rawText: string | null | undefined) {
   return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -511,6 +512,20 @@ export async function getRealFeed(): Promise<FeedPayload> {
         imageSourceUrl: card?.imageSourceUrl ?? undefined,
           observedAt: v.createdAt.toISOString(),
       launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
+        priceUsd: (() => {
+          const match = VERIFIED_RELEASES.find((r) =>
+            r.brand.toLowerCase() === v.product.brand.toLowerCase() &&
+            r.model.toLowerCase() === v.product.normalizedModel.toLowerCase()
+          );
+          return match?.retailUsd ?? null;
+        })(),
+        retailer: (() => {
+          const match = VERIFIED_RELEASES.find((r) =>
+            r.brand.toLowerCase() === v.product.brand.toLowerCase() &&
+            r.model.toLowerCase() === v.product.normalizedModel.toLowerCase()
+          );
+          return match?.retailer ?? null;
+        })(),
       };
     }),
     ...signalNewsSource.map((s) => ({
