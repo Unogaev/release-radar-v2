@@ -96,4 +96,5 @@ export interface FeedPayload {
   logs: string[];
   scannedAt: string;
   nextScanAt?: string;
+  upcomingReleases: number;
 }
