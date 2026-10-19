@@ -194,6 +194,26 @@ export const RADAR_SOURCE_REGISTRY: RadarSourceDefinition[] = [
   { name: "Home Depot Special Buy", sourceClass: "A_truth", url: "https://www.homedepot.com/SpecialBuy/SpecialBuyOfTheDay", category: "clearance", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Lowe's Clearance", sourceClass: "A_truth", url: "https://www.lowes.com/l/shop/clearance", category: "clearance", sourceType: "MANUAL", trustLevel: 5 },
   { name: "Nordstrom Rack Clearance", sourceClass: "A_truth", url: "https://www.nordstromrack.com/clearance", category: "clearance", sourceType: "MANUAL", trustLevel: 5 },
+  // Verified live RSS, batch 2026-10-19 — sneakers, watches, cars, FR/EU, UAE, tech
+  { name: "Sole Retriever", sourceClass: "C_signal", url: "https://soleretriever.com/rss.xml", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "Sneaker Bar Detroit", sourceClass: "C_signal", url: "https://sneakerbardetroit.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "JustFreshKicks", sourceClass: "C_signal", url: "https://justfreshkicks.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "Sneakers.fr", sourceClass: "C_signal", url: "https://www.sneakers.fr/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "Le Site de la Sneaker", sourceClass: "C_signal", url: "https://www.lesitedelasneaker.com/feed/", category: "sneakers", sourceType: "RSS", trustLevel: 3 },
+  { name: "Revolution Watch", sourceClass: "C_signal", url: "https://revolutionwatch.com/feed/", category: "watches", sourceType: "RSS", trustLevel: 4 },
+  { name: "Watches by SJX", sourceClass: "C_signal", url: "https://watchesbysjx.com/feed", category: "watches", sourceType: "RSS", trustLevel: 4 },
+  { name: "A Blog to Watch", sourceClass: "C_signal", url: "https://www.ablogtowatch.com/feed/", category: "watches", sourceType: "RSS", trustLevel: 4 },
+  { name: "Time+Tide", sourceClass: "C_signal", url: "https://timeandtidewatches.com/feed/", category: "watches", sourceType: "RSS", trustLevel: 4 },
+  { name: "GMT Magazine", sourceClass: "C_signal", url: "https://www.gmtmag.com/feed", category: "watches", sourceType: "RSS", trustLevel: 4 },
+  { name: "Mondial de l'Auto", sourceClass: "A_truth", url: "https://mondial.paris/feed", category: "cars", sourceType: "RSS", trustLevel: 5 },
+  { name: "Bring a Trailer", sourceClass: "B_market", url: "https://bringatrailer.com/feed/", category: "cars", sourceType: "RSS", trustLevel: 4 },
+  { name: "Auto Plus", sourceClass: "C_signal", url: "https://www.autoplus.fr/feed", category: "cars", sourceType: "RSS", trustLevel: 3 },
+  { name: "L'Argus", sourceClass: "C_signal", url: "https://www.largus.fr/RSS", category: "cars", sourceType: "RSS", trustLevel: 3 },
+  { name: "Esquire Middle East", sourceClass: "C_signal", url: "https://www.esquireme.com/feed", category: "luxury", sourceType: "RSS", trustLevel: 3 },
+  { name: "GQ Middle East", sourceClass: "C_signal", url: "https://www.gqmiddleeast.com/feed/rss", category: "luxury", sourceType: "RSS", trustLevel: 3 },
+  { name: "Tom's Hardware", sourceClass: "C_signal", url: "https://www.tomshardware.com/feeds.xml", category: "tech", sourceType: "RSS", trustLevel: 4 },
+  { name: "9to5Mac", sourceClass: "C_signal", url: "https://9to5mac.com/feed/", category: "tech", sourceType: "RSS", trustLevel: 4 },
+  { name: "MacRumors", sourceClass: "C_signal", url: "https://feeds.macrumors.com/MacRumors-All", category: "tech", sourceType: "RSS", trustLevel: 4 },
 ];
 
 export async function ensureRadarSourceRegistry(prisma: PrismaClient): Promise<void> {
