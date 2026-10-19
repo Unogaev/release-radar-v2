@@ -111,7 +111,13 @@ function NewRequestForm() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>{t("req_f_region")}</label>
-            <input value={region} onChange={(e) => setRegion(e.target.value)} placeholder={t("req_f_region_ph")} className={`${inputCls} mt-1.5`} />
+            <select value={region} onChange={(e) => setRegion(e.target.value)} className={`${inputCls} mt-1.5`}>
+              <option value="">—</option>
+              <option value="Miami, USA">Miami, USA</option>
+              <option value="France / EU">France / EU</option>
+              <option value="Dubai, UAE">Dubai, UAE</option>
+              <option value="Russia">Russia</option>
+            </select>
           </div>
           <div>
             <label className={labelCls}>{t("req_f_zip")}</label>
