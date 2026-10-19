@@ -87,6 +87,8 @@ export interface NewsItem {
   imageSourceUrl?: string;
   observedAt: string;
   launchAt?: string | null;
+  priceUsd?: number | null;
+  retailer?: string | null;
 }
 
 export interface FeedPayload {
