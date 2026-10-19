@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -146,7 +145,7 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
   const c = COPY[lang];
   const signals = payload?.signals ?? [];
   const visible = useMemo(() => sortSignals(signals.filter((s) => s.categories.includes(filter) && s.imageUrl && s.primaryUrl).map(derive)), [signals, filter]);
-  const upcomingCount = signals.filter((s) => s.categories.includes("soon")).length;
+  const upcomingCount = signals.filter((s) => s.categories.includes("soon")).length + (payload?.upcomingReleases ?? 0);
   const healthySources = payload?.sources.filter((s) => s.state === "ok").length ?? 0;
   const manualSources = payload?.sources.filter((s) => s.state === "manual").length ?? 0;
   const troubledSources = payload?.sources.filter((s) => s.state === "down" || s.state === "throttled").length ?? 0;
