@@ -97,6 +97,41 @@ function NewsCard({ item, lang, featured = false }: { item: NewsItem; lang: Lang
   );
 }
 
+function ReleaseCard({ item, lang, now }: { item: NewsItem; lang: Lang; now: number | null }) {
+  const launchAt = item.launchAt ? new Date(item.launchAt) : null;
+  const msLeft = launchAt !== null && now !== null ? launchAt.getTime() - now : null;
+  const countdown = msLeft !== null && msLeft > 0 ? formatCountdown(msLeft) : null;
+  const dateStr = launchAt ? launchAt.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", { month: "long", day: "numeric" }) : null;
+  const timeStr = launchAt ? launchAt.toLocaleTimeString(lang === "ru" ? "ru-RU" : "en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" }) : null;
+  return (
+    <article className="group overflow-hidden rounded-[20px] border border-rr-frame bg-rr-surface transition hover:border-rr-ghost">
+      <div className="relative aspect-[16/10] overflow-hidden bg-rr-surface-hi">
+        {item.imageUrl ? <img src={item.imageUrl} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" /> : <div className="flex h-full items-center justify-center text-rr-muted"><Newspaper size={32} /></div>}
+        {countdown && <div className="absolute right-3 top-3 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur">{countdown}</div>}
+      </div>
+      <div className="p-5">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rr-accent">{item.category}</div>
+        <h3 className="mt-2 text-[17px] font-semibold leading-tight text-rr-text">{decodeHtmlEntities(item.headline)}</h3>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-rr-muted">
+          {dateStr && <span>{dateStr}{timeStr ? ` · ${timeStr}` : ""}</span>}
+          {item.priceUsd != null && <span className="font-semibold text-rr-text">${item.priceUsd.toLocaleString()}</span>}
+          {item.retailer && <span>{item.retailer}</span>}
+        </div>
+        {item.sourceUrl && <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-rr-accent">{tr(lang, "Открыть", "Open", "فتح")}<ArrowUpRight size={13} /></a>}
+      </div>
+    </article>
+  );
+}
+
+function formatCountdown(ms: number): string {
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  const mins = Math.floor((ms % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
 function MobileNewsRail({ items, lang }: { items: NewsItem[]; lang: Lang }) {
   const visualItems = items.filter((item) => item.imageUrl && item.sourceUrl).slice(0, 3);
   if (!visualItems.length) return null;
@@ -173,6 +208,7 @@ export function RadarFeed({ payload, error, isStale = false, isPending = false, 
     return (categories ? all.filter((item) => item.category && categories.includes(item.category)) : all).slice(0, 9);
   }, [payload?.newsItems, filter]);
   const [hero, ...rest] = visible;
+  const releaseItems = useMemo(() => (payload?.newsItems ?? []).filter((item) => item.kind === "RELEASE" && item.launchAt && new Date(item.launchAt).getTime() > Date.now() - 86400000).slice(0, 6), [payload?.newsItems]);
   // The premium hero is a buying-desk spotlight: it only ever features a
   // product-linked item (a confirmed release or a computed signal). Pure
   // editorial news never masquerades as a live signal — when there is no
@@ -219,6 +255,7 @@ const renderedIds = useMemo(() => {
           <MobileNewsRail items={uniqueNews} lang={lang} />
           <div className="grid gap-2 py-4 sm:hidden"><div className="grid grid-cols-2 gap-2"><select aria-label="Language" value={lang} onChange={(event) => setLang(event.target.value as Lang)} className="rounded-[14px] border border-rr-frame bg-rr-surface px-3 py-3 text-[12px] font-semibold text-rr-text outline-none"><option value="en">English</option><option value="ru">Русский</option><option value="ar">العربية</option></select><select aria-label="Market" value={market} onChange={(event) => setMarket(event.target.value as typeof market)} className="rounded-[14px] border border-rr-frame bg-rr-surface px-3 py-3 text-[12px] font-semibold text-rr-text outline-none"><option value="us">USA · USD</option><option value="ae">UAE · AED</option><option value="ru">Russia · RUB</option></select></div><label htmlFor="radar-filter" className="mt-2 block text-[9px] font-semibold uppercase tracking-[.18em] text-rr-muted">{tr(lang, "Раздел радара", "Radar section", "قسم الرادار")}</label><select id="radar-filter" value={filter} onChange={(event) => setFilter(event.target.value as RadarCategory)} className="w-full appearance-none rounded-[14px] border border-rr-frame bg-rr-surface px-4 py-3 text-[13px] font-semibold text-rr-text outline-none">{availableFilters.map((f) => <option key={f.id} value={f.id}>{f[lang]} · {filterCounts[f.id]}</option>)}</select></div>
           <nav className="hidden gap-2 overflow-x-auto py-2 sm:flex">{availableFilters.map((f) => <button key={f.id} onClick={() => setFilter(f.id)} className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-semibold transition ${filter === f.id ? "bg-[#ece5d9] text-[#171513]" : "border border-rr-frame bg-rr-well text-rr-muted hover:text-rr-text"}`}>{f[lang]} <span className={`ms-1 ${filter === f.id ? "text-black/45" : "text-rr-muted"}`}>{filterCounts[f.id]}</span></button>)}</nav>
+          {releaseItems.length > 0 && <section className="mb-8"><div className="mb-4 flex items-baseline justify-between"><h2 className="font-rr-editorial text-[24px] font-semibold sm:text-[28px]">{tr(lang, "Ближайшие релизы", "Upcoming releases", "الإصدارات القادمة")}</h2><span className="text-[12px] text-rr-muted">{releaseItems.length}</span></div><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{releaseItems.map((item) => <ReleaseCard key={item.id} item={item} lang={lang} now={now} />)}</div></section>}
           <section className="mt-1 sm:mt-5">{visible.length ? <div><SignalHero signal={hero} now={now} onAction={(id, action) => onAction?.(id, action)} />{rest.length > 0 && <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{rest.map((s) => <SignalCard key={s.id} signal={s} now={now} onAction={(id, action) => onAction?.(id, action)} />)}</div>}</div> : <div>{heroCandidate ? <><PremiumOpportunityHero item={heroCandidate} lang={lang} /><div className="mb-5 mt-7 flex flex-col justify-between gap-3 rounded-[16px] border border-rr-prepare/20 bg-rr-prepare-bg p-4 sm:flex-row sm:items-center"><div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-rr-prepare" /><div><div className="text-sm font-semibold">{lang === "ru" ? "Радар нашёл новые позиции — идёт проверка сделки" : "Radar found new items — deal verification is in progress"}</div><div className="mt-1 text-xs leading-5 text-rr-muted">{lang === "ru" ? "Фото и ссылки взяты из живых источников. Эти позиции ещё не BUY NOW: цена, checkout и реальные продажи проверяются отдельно." : "Images and links come from live sources. These are not BUY NOW yet: price, checkout and completed sales are verified separately."}</div></div></div><span className="shrink-0 rounded-full border border-rr-frame px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-rr-text-dim">{categoryNews.length} {lang === "ru" ? "сигналов" : "signals"}</span></div></> : <div className="rounded-[18px] border border-rr-frame bg-rr-surface p-5 sm:p-7"><div className="flex items-start gap-3"><ShieldCheck size={19} className="mt-0.5 shrink-0 text-rr-prepare" /><div><h2 className="text-base font-semibold">{c.noAction}</h2><p className="mt-1 max-w-[760px] text-[13px] leading-5 text-rr-muted">{c.noActionText}</p></div></div></div>}{heroRest.length > 0 && <div className={`grid gap-5 md:grid-cols-2 xl:grid-cols-3 ${heroCandidate ? "" : "mt-6"}`}>{heroRest.map((item) => <NewsCard key={item.id} item={item} lang={lang} />)}</div>}</div>}</section>
           <section className="mt-14 hidden border-t border-rr-frame pt-9 lg:block"><div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-rr-prepare">Intelligence → opportunity</div><h2 className="mt-2 font-rr-editorial text-4xl font-semibold tracking-[-0.025em]">{c.intel}</h2><p className="mt-2 max-w-[700px] text-sm leading-6 text-rr-muted">{c.intelText}</p></div><Link href="/news" className="inline-flex items-center gap-2 text-xs font-bold text-rr-text-dim">{c.allNews}<ArrowUpRight size={14} /></Link></div>{uniqueNews.length ? <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{uniqueNews.map((item, index) => <NewsCard key={item.id} item={item} lang={lang} featured={index === 0} />)}</div> : <div className="rounded-[22px] border border-dashed border-rr-frame p-8 text-sm text-rr-muted">{c.emptyNews}</div>}</section>
           <section className="mt-12 flex flex-col justify-between gap-4 rounded-[20px] border border-rr-frame bg-rr-well p-5 sm:flex-row sm:items-center"><div><div className="text-sm font-semibold">{c.sourceHealth}</div><div className="mt-1 text-xs text-rr-muted"><span className="text-rr-ok">{healthySources} {lang === "ru" ? "автоматически проверены" : "checked automatically"}</span><span> · {manualSources} {lang === "ru" ? "ожидают первого автоматического обхода" : "awaiting first automated sweep"}</span><span> · {payload?.sources.length ?? 0} {lang === "ru" ? "всего" : "total"}</span>{troubledSources > 0 && <span> · {troubledSources} {c.sourcesIssue}</span>}</div></div><Link href="/sources" className="inline-flex items-center gap-2 text-xs font-semibold text-rr-text-dim">{c.source}<ArrowUpRight size={13} /></Link></section>
