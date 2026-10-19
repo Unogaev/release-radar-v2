@@ -20,7 +20,7 @@ export const VERIFIED_RELEASES = [
     sourceNote: "Nike SNKRS official product page: $210, available September 26 at 2:00 PM, SKU IQ5340-001.",
   },
 
-  {    brand: "Sony",    model: "DualSense Wireless Controller LISA Limited Edition",    sku: null,    category: "gaming",    retailer: "PlayStation",    url: "https://blog.playstation.com/2026/09/21/lisa-x-playstation-arrives-this-october-first-look-at-the-dualsense-wireless-controller-lisa-limited-edition-and-all-new-merchandise/",    retailUsd: 84.99,    startsAtUtc: "2026-10-02T14:00:00.000Z", /* 10:00 AM ET — preorder start */    sourceTimezone: "America/New_York",    sourceNote: "PlayStation Blog (official): $84.99, highly limited quantities, pre-orders begin October 2 at 10am ET, launches October 30.",  }, { brand: "PUMA", model: "Salehe Bembury Hali 1 Pace", sku: "314239-01", category: "sneakers", retailer: "PUMA", url: "https://us.puma.com/us/en/pd/puma-x-salehe-bembury-hali-1-pace-basketball-shoes/314239", retailUsd: 130, startsAtUtc: "2026-10-23T04:00:00.000Z", sourceTimezone: "UTC", sourceNote: "PUMA official product page: available to order 10/23 at 4 AM UTC, $130, style 314239-01.", },
+  {    brand: "Sony",    model: "DualSense Wireless Controller LISA Limited Edition",    sku: null,    category: "gaming",    retailer: "PlayStation",    url: "https://blog.playstation.com/2026/09/21/lisa-x-playstation-arrives-this-october-first-look-at-the-dualsense-wireless-controller-lisa-limited-edition-and-all-new-merchandise/",    retailUsd: 84.99,    startsAtUtc: "2026-10-02T14:00:00.000Z", /* 10:00 AM ET — preorder start */    sourceTimezone: "America/New_York",    sourceNote: "PlayStation Blog (official): $84.99, highly limited quantities, pre-orders begin October 2 at 10am ET, launches October 30.",  }, { brand: "PUMA", model: "Salehe Bembury Hali 1 Pace", sku: "314239-01", category: "sneakers", retailer: "PUMA", url: "https://us.puma.com/us/en/pd/puma-x-salehe-bembury-hali-1-pace-basketball-shoes/314239", imageUrl: "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/314239/01/sv01/fnd/PNA/fmt/png/PUMA-x-SALEHE-BEMBURY-Hali-1-Pace-Basketball-Shoes", retailUsd: 130, startsAtUtc: "2026-10-23T04:00:00.000Z", sourceTimezone: "UTC", sourceNote: "PUMA official product page: available to order 10/23 at 4 AM UTC, $130, style 314239-01.", },
   {
     brand: "LEGO",
     model: "Sagrada Família",
@@ -28,6 +28,7 @@ export const VERIFIED_RELEASES = [
     category: "lego",
     retailer: "LEGO.com",
     url: "https://www.lego.com/en-us/product/sagrada-familia-21065",
+    imageUrl: "https://www.lego.com/cdn/cs/set/assets/blt07f2bb3c9389f695/blt7fc2e495b14acd1c-21065_Prod_en-gb.png?fit=bounds&format=jpg&quality=80&width=1500&height=1500&dpr=1",
     retailUsd: 799.99,
     startsAtUtc: "2026-11-01T05:00:00.000Z",
     sourceTimezone: "America/New_York",
@@ -40,6 +41,7 @@ export const VERIFIED_RELEASES = [
     category: "lego",
     retailer: "LEGO.com",
     url: "https://www.lego.com/en-us/product/cozy-plants-10371",
+    imageUrl: "https://www.lego.com/cdn/cs/set/assets/blt253c1cfce17d3a48/10371_Prod.png?fit=bounds&format=jpg&quality=80&width=1500&height=1500&dpr=1",
     retailUsd: 22.99,
     startsAtUtc: "2026-11-01T05:00:00.000Z",
     sourceTimezone: "America/New_York",
@@ -52,6 +54,7 @@ export const VERIFIED_RELEASES = [
     category: "lego",
     retailer: "LEGO.com",
     url: "https://www.lego.com/en-us/product/dragon-ball-shenron-goku-11390",
+    imageUrl: "https://www.lego.com/cdn/cs/set/assets/bltd7e602957cfcae53/11390_Prod.png?fit=bounds&format=jpg&quality=80&width=1500&height=1500&dpr=1",
     retailUsd: 179.99,
     startsAtUtc: "2026-11-04T05:00:00.000Z",
     sourceTimezone: "America/New_York",
@@ -64,6 +67,7 @@ export const VERIFIED_RELEASES = [
     category: "watches",
     retailer: "Tendence",
     url: "https://essential-japan.com/news/square-enix-reveals-new-final-fantasy-x-25th-anniversary-watch-collab-collection-inspired-by-tidus-and-yuna/",
+    imageUrl: "https://cdn.essential-japan.com/wp-content/uploads/2026/10/Final-Fantasy-X-25th-Anniversary-Watch-Collab-3.webp",
     retailUsd: 438,
     startsAtUtc: "2026-11-20T01:00:00.000Z",
     sourceTimezone: "Asia/Tokyo",
@@ -76,12 +80,13 @@ export const VERIFIED_RELEASES = [
     category: "watches",
     retailer: "Tendence",
     url: "https://essential-japan.com/news/square-enix-reveals-new-final-fantasy-x-25th-anniversary-watch-collab-collection-inspired-by-tidus-and-yuna/",
+    imageUrl: "https://cdn.essential-japan.com/wp-content/uploads/2026/10/Final-Fantasy-X-25th-Anniversary-Watch-Collab-8.webp",
     retailUsd: 341,
     startsAtUtc: "2026-11-20T01:00:00.000Z",
     sourceTimezone: "Asia/Tokyo",
     sourceNote: "Square Enix official announcement 2026-10-17: 200 pieces worldwide, ¥53,900.",
   },
-  ] as const;
+] as const;
 
 export async function syncVerifiedReleases(now = new Date()): Promise<void> {
   for (const release of VERIFIED_RELEASES) {
@@ -100,8 +105,7 @@ export async function syncVerifiedReleases(now = new Date()): Promise<void> {
     }
 
         let variant = release.sku      ? await prisma.productVariant.findFirst({          where: { identifiers: { some: { kind: "sku", value: release.sku } } },          include: { product: true },        })      : await prisma.productVariant.findFirst({          where: {            product: {              brand: release.brand,              normalizedModel: release.model.toLowerCase(),              category: release.category,            },          },          include: { product: true },        });
-      
-    
+
     if (!variant) {
       let product = await prisma.product.findFirst({
         where: { brand: release.brand, normalizedModel: release.model.toLowerCase(), category: release.category },
@@ -111,7 +115,8 @@ export async function syncVerifiedReleases(now = new Date()): Promise<void> {
       } });
       variant = await prisma.productVariant.create({
         data: {
-          productId: product.id,          variantLabel: release.sku ?? release.model,
+          productId: product.id,
+          variantLabel: release.sku ?? release.model,
           ...(release.sku ? { identifiers: { create: { kind: "sku", value: release.sku } } } : {}),
         },
         include: { product: true },
@@ -143,7 +148,13 @@ export async function syncVerifiedReleases(now = new Date()): Promise<void> {
       variantAvailable: null, shippingState: "unknown", pickupState: "unknown",
       cartState: "unknown", checkoutState: "unknown", zip: "33160", sessionRegion: "US-FL",
     } });
-
+    if ("imageUrl" in release && release.imageUrl) {
+      await prisma.feedCard.upsert({
+        where: { productVariantId: variant.id },
+        update: { imageUrl: release.imageUrl, primaryUrl: release.url, linkLive: true, imageProvenance: "verified-release" },
+        create: { productVariantId: variant.id, imageUrl: release.imageUrl, imageSourceUrl: release.url, imageProvenance: "verified-release", primaryUrl: release.url, linkLive: true },
+      });
+    }
     const previous = await prisma.decision.findFirst({
       where: { productVariantId: variant.id }, orderBy: { createdAt: "desc" },
     });
