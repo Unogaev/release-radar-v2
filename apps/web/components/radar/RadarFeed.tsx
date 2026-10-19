@@ -177,7 +177,7 @@ function PremiumOpportunityHero({ item, lang }: { item: NewsItem; lang: Lang }) 
 
 export function RadarFeed({ payload, error, isStale = false, isPending = false, onRetry, onAction }: {
   payload: FeedPayload | null;
-  error: string | null;
+  error?: string | null;
   isStale?: boolean;
   isPending?: boolean;
   onRetry: () => void;
