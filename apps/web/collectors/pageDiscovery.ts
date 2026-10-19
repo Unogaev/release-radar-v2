@@ -5,6 +5,23 @@ import { decodeHtmlEntities } from "@/lib/radar/text";
 const INTERESTING = /\b(new|launch|release|drop|limited|exclusive|edition|collab|pre-?order|restock|collection|arrivals?|available|anniversary|auction|sold)\b/i;
 const REJECT = /\b(login|sign in|privacy|terms|cookie|customer service|contact|newsletter|store locator|accessibility)\b/i;
 
+function cleanTitle(raw: string): string {
+  let t = raw
+    .replace(/^(?:\d{1,2}\/\d{1,2}\/\d{2,4})\s*/, "") // leading date like 10/16/26
+    .replace(/\s*Read more\s*$/i, "") // trailing "Read more"
+    .replace(/\s+/g, " ")
+    .trim();
+  // Deduplicate repeated phrases: "X X" -> "X"
+  const words = t.split(" ");
+  if (words.length >= 4) {
+    const half = Math.floor(words.length / 2);
+    const first = words.slice(0, half).join(" ");
+    const second = words.slice(half).join(" ");
+    if (first === second) t = first;
+  }
+  return t;
+}
+
 function publicUrl(value: string | undefined, base: string): string | null {
   if (!value) return null;
   try {
@@ -41,7 +58,7 @@ export async function fetchPageDiscoveries(pageUrl: string, limit = 8): Promise<
   }
   const pageImage = publicUrl(root.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? root.querySelector('meta[name="twitter:image"]')?.getAttribute("content"), response.url);
   for (const anchor of root.querySelectorAll("main a, article a, [role=main] a")) {
-    const title = decodeHtmlEntities(anchor.text.replace(/\s+/g, " ").trim());
+    const title = cleanTitle(decodeHtmlEntities(anchor.text.replace(/\s+/g, " ").trim()));
     if (title.length < 12 || title.length > 180 || !INTERESTING.test(title) || REJECT.test(title)) continue;
     const url = publicUrl(anchor.getAttribute("href"), response.url);
     if (!url) continue;
