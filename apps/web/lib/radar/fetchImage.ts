@@ -222,7 +222,55 @@ async function imageFromShopifyJson(pageUrl: string): Promise<ResolvedImage | nu
   }
 }
 
+function titleTokens(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
+}
+
+async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: string): Promise<ResolvedImage | null> {
+  try {
+    const origin = new URL(storeUrl).origin;
+    const key = `catalog:${origin}:${brand}:${model}`;
+    if (cache.has(key)) return cache.get(key) ?? null;
+    const modelTokens = new Set(titleTokens(`${brand} ${model}`));
+    if (modelTokens.size === 0) return null;
+    let result: ResolvedImage | null = null;
+    for (let page = 1; page <= 3 && !result; page++) {
+      const res = await fetch(`${origin}/products.json?limit=250&page=${page}`, {
+        signal: AbortSignal.timeout(5_000),
+        headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
+      });
+      if (!res.ok) break;
+      const data = (await res.json()) as {
+        products?: Array<{ title?: string; vendor?: string; handle?: string; images?: Array<{ src?: string }> }>;
+      };
+      const products = data.products ?? [];
+      if (products.length === 0) break;
+      for (const p of products) {
+        const titleToks = titleTokens(`${p.vendor ?? ""} ${p.title ?? ""}`);
+        if (titleToks.length < 3) continue;
+        const hit = titleToks.filter((t) => modelTokens.has(t)).length;
+        if (hit >= Math.ceil(titleToks.length * 0.8)) {
+          const src = p.images?.[0]?.src;
+          if (src && isPublicHttpUrl(src) && !REJECTED_IMAGE.test(src)) {
+            result = { url: src, sourceUrl: `${origin}/products/${p.handle ?? ""}`, provenance: "official-search" };
+            break;
+          }
+        }
+      }
+      if (products.length < 250) break;
+    }
+    cache.set(key, result);
+    return result;
+  } catch {
+    return null;
+  }
+}
+
 export async function getProductImage(brand: string, model: string, officialPageUrl?: string | null): Promise<ResolvedImage | null> {
   const direct = officialPageUrl ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
-  return direct ?? imageFromOfficialSearch(brand, model, officialPageUrl);
+  return direct ?? (officialPageUrl ? await imageFromShopifyCatalog(brand, model, officialPageUrl) : null) ?? imageFromOfficialSearch(brand, model, officialPageUrl);
 }
