@@ -15,7 +15,10 @@ export function FeedHeader({ urgentCount, checkedAt, onSearch }: {
           <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#16a34a] text-white">
             <Radar size={18} />
           </span>
-          <span className="text-[15px] font-bold text-[#1a1a1a]">Release Radar</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-[15px] font-bold text-[#1a1a1a]">Alert<span className="text-[#16a34a]">yy</span></span>
+            <span className="mt-1 hidden text-[10px] font-medium tracking-wide text-[#9ca3af] sm:block">We watch. You buy first.</span>
+          </span>
         </Link>
         <Link
           href="/now?filter=urgent"
@@ -27,7 +30,7 @@ export function FeedHeader({ urgentCount, checkedAt, onSearch }: {
         <div className="flex-1" />
         {checkedAt && (
           <span className="hidden text-[12px] tabular-nums text-[#9ca3af] sm:block">
-            checked {checkedAt}
+            Alertyy checked {checkedAt}
           </span>
         )}
         <button onClick={onSearch} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f3f4f6]">
