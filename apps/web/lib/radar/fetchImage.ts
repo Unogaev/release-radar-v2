@@ -4,12 +4,21 @@ export type ResolvedImage = {
   url: string;
   sourceUrl: string;
   provenance: "product-page" | "official-page" | "official-search";
+  /** Real catalog price (Shopify variants[0].price) when this result came from
+   *  a Shopify product/catalog match; null otherwise — never estimated. */
+  priceUsd?: number | null;
 };
 
 const cache = new Map<string, ResolvedImage | null>();
 const livePageCache = new Map<string, boolean>();
 const FETCH_TIMEOUT_MS = 7_000;
 const REJECTED_IMAGE = /(?:logo|avatar|author|icon|emoji|badge|spinner|loader|placeholder|tracking|pixel|advert|doubleclick|gravatar)/i;
+
+function shopifyPriceUsd(raw: string | undefined): number | null {
+  if (!raw) return null;
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
 
 function isPublicHttpUrl(value: string): boolean {
   try {
@@ -213,10 +222,10 @@ async function imageFromShopifyJson(pageUrl: string): Promise<ResolvedImage | nu
       headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { product?: { images?: Array<{ src?: string }>; image?: { src?: string } } };
+    const data = (await res.json()) as { product?: { images?: Array<{ src?: string }>; image?: { src?: string }; variants?: Array<{ price?: string }> } };
     const src = data.product?.images?.[0]?.src ?? data.product?.image?.src;
     if (!src || !isPublicHttpUrl(src) || REJECTED_IMAGE.test(src)) return null;
-    return { url: src, sourceUrl: pageUrl, provenance: "product-page" };
+    return { url: src, sourceUrl: pageUrl, provenance: "product-page", priceUsd: shopifyPriceUsd(data.product?.variants?.[0]?.price) };
   } catch {
     return null;
   }
@@ -249,7 +258,7 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
       });
       if (!res.ok) break;
       const data = (await res.json()) as {
-        products?: Array<{ title?: string; vendor?: string; handle?: string; images?: Array<{ src?: string }> }>;
+        products?: Array<{ title?: string; vendor?: string; handle?: string; images?: Array<{ src?: string }>; variants?: Array<{ price?: string }> }>;
       };
       const products = data.products ?? [];
       if (products.length === 0) break;
@@ -266,7 +275,7 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
         const src = p.images?.[0]?.src;
         if (!src || !isPublicHttpUrl(src) || REJECTED_IMAGE.test(src)) continue;
         if (!best || score > best.score || (score === best.score && hits > best.hits)) {
-          best = { score, hits, img: { url: src, sourceUrl: `${origin}/products/${p.handle ?? ""}`, provenance: "official-search" } };
+          best = { score, hits, img: { url: src, sourceUrl: `${origin}/products/${p.handle ?? ""}`, provenance: "official-search", priceUsd: shopifyPriceUsd(p.variants?.[0]?.price) } };
         }
       }
       if (products.length < 250) break;
