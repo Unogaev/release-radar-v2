@@ -22,16 +22,35 @@ function clean(v: string | null | undefined): string | null {
   return v;
 }
 
+const HEADLINE_PREFIX: Record<string, string> = {
+  "Неожиданный ресток": "Unexpected restock",
+  "Изменилась цена или доступность": "Price or availability changed",
+  "Ресток": "Restock",
+  "Снижение цены": "Price drop",
+  "Новая цена": "New price",
+};
+
+function translateHeadline(h: string): string {
+  const idx = h.indexOf(" · ");
+  if (idx > 0) {
+    const first = h.slice(0, idx);
+    const en = HEADLINE_PREFIX[first];
+    if (en) return en + h.slice(idx);
+  }
+  return h;
+}
+
 function signalToCard(s: Signal): FeedCardData {
   const status = normStatus(s.status);
   const isAlert = status === "buy" || status === "apply" || status === "prepare" || status === "client";
+  const futureLaunch = s.launchAt ? new Date(s.launchAt).getTime() > Date.now() : false;
   const hasFull = s.retail != null && s.completedSalesCount > 0 && s.expectedResale != null;
   return {
     id: s.id,
-    kind: isAlert ? "ALERT" : s.launchAt ? "RELEASE" : "SIGNAL",
+    kind: futureLaunch ? "RELEASE" : isAlert ? "ALERT" : "SIGNAL",
     status,
     brand: clean(s.brand),
-    name: s.model,
+    name: translateHeadline(s.model),
     sku: clean(s.sku) ?? clean(s.reference),
     imageUrl: s.imageUrl ?? null,
     retailUsd: s.retail,
@@ -55,7 +74,7 @@ function newsToCard(n: NewsItem): FeedCardData {
     kind,
     status: null,
     brand: n.brand ?? null,
-    name: n.headline,
+    name: translateHeadline(n.headline),
     imageUrl: n.imageUrl ?? null,
     retailUsd: n.priceUsd ?? null,
     launchAt: n.launchAt ?? null,
