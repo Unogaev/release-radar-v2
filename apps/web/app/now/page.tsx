@@ -1,7 +1,7 @@
 import type { FeedPayload } from "@/lib/radar/types";
 import { getRealFeed } from "@/lib/radar/serverFeed";
 import { requireUserId } from "@/lib/session";
-import { RadarFeedClient } from "./RadarFeedClient";
+import { VitrinaNowClient } from "./VitrinaNowClient";
 
 export const revalidate = 60;
 
@@ -14,5 +14,5 @@ export default async function NowPage() {
   const payload = await getFeed();
   const isStale = Date.now() - new Date(payload.scannedAt).getTime() > 5 * 60_000;
 
-  return <RadarFeedClient payload={payload} isStale={isStale} />;
+  return <VitrinaNowClient payload={payload} isStale={isStale} />;
 }
