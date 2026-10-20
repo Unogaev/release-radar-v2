@@ -225,6 +225,8 @@ async function imageFromShopifyJson(pageUrl: string): Promise<ResolvedImage | nu
 function titleTokens(s: string): string[] {
   return s
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9 ]/g, " ")
     .split(/\s+/)
     .filter((w) => w.length > 2);
@@ -236,9 +238,11 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
     const key = `catalog:${origin}:${brand}:${model}`;
     if (cache.has(key)) return cache.get(key) ?? null;
     const modelTokens = new Set(titleTokens(`${brand} ${model}`));
+    const brandToks = titleTokens(brand);
+    const distinctive = brandToks.filter((w) => w.length >= 4);
     if (modelTokens.size === 0) return null;
-    let result: ResolvedImage | null = null;
-    for (let page = 1; page <= 3 && !result; page++) {
+    let best: { score: number; hits: number; img: ResolvedImage } | null = null;
+    for (let page = 1; page <= 3; page++) {
       const res = await fetch(`${origin}/products.json?limit=250&page=${page}`, {
         signal: AbortSignal.timeout(5_000),
         headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
@@ -252,17 +256,22 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
       for (const p of products) {
         const titleToks = titleTokens(`${p.vendor ?? ""} ${p.title ?? ""}`);
         if (titleToks.length < 3) continue;
-        const hit = titleToks.filter((t) => modelTokens.has(t)).length;
-        if (hit >= Math.ceil(titleToks.length * 0.8)) {
-          const src = p.images?.[0]?.src;
-          if (src && isPublicHttpUrl(src) && !REJECTED_IMAGE.test(src)) {
-            result = { url: src, sourceUrl: `${origin}/products/${p.handle ?? ""}`, provenance: "official-search" };
-            break;
-          }
+        const brandOk = distinctive.length
+          ? distinctive.some((t) => titleToks.includes(t))
+          : brandToks.every((t) => titleToks.includes(t));
+        if (!brandOk) continue;
+        const hits = titleToks.filter((t) => modelTokens.has(t)).length;
+        const score = hits / titleToks.length;
+        if (score < 0.8 || hits < 3) continue;
+        const src = p.images?.[0]?.src;
+        if (!src || !isPublicHttpUrl(src) || REJECTED_IMAGE.test(src)) continue;
+        if (!best || score > best.score || (score === best.score && hits > best.hits)) {
+          best = { score, hits, img: { url: src, sourceUrl: `${origin}/products/${p.handle ?? ""}`, provenance: "official-search" } };
         }
       }
       if (products.length < 250) break;
     }
+    const result = best?.img ?? null;
     cache.set(key, result);
     return result;
   } catch {
