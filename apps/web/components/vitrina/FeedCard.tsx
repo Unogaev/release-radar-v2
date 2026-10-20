@@ -25,6 +25,7 @@ export interface FeedCardData {
   launchAt?: string | null;
   store?: string | null;
   region?: string | null;
+  isMarketStory?: boolean;
   checkedAt?: string | null;
   purchaseUrl?: string | null;
   sourceUrl?: string | null;
