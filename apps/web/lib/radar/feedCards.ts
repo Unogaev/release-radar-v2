@@ -124,7 +124,7 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     });
     // Images barely change: only re-resolve when missing. Link liveness is
     // re-checked every run so dead store links stop being offered as actions.
-    const needImage = !existing?.imageUrl;
+    const needImage = !existing?.imageUrl || existing?.imageProvenance === "official-search";
     const [embedded, fetched, linkState] = await Promise.all([
       needImage ? embeddedSignalImageFor(c.productVariantId).catch(() => null) : Promise.resolve(null),
       needImage ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
@@ -137,9 +137,9 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     // otherwise.
     const linkLive = linkState ?? existing?.linkLive ?? false;
     const data = {
-      imageUrl: needImage ? image?.url ?? null : existing?.imageUrl ?? null,
-      imageSourceUrl: needImage ? image?.sourceUrl ?? null : existing?.imageSourceUrl ?? null,
-      imageProvenance: needImage ? image?.provenance ?? null : existing?.imageProvenance ?? null,
+      imageUrl: image?.url ?? existing?.imageUrl ?? null,
+      imageSourceUrl: image?.sourceUrl ?? existing?.imageSourceUrl ?? null,
+      imageProvenance: image?.provenance ?? existing?.imageProvenance ?? null,
       primaryUrl: linkLive ? c.url : null,
       linkLive,
       checkedAt: new Date(),
