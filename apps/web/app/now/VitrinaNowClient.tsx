@@ -22,6 +22,46 @@ function clean(v: string | null | undefined): string | null {
   return v;
 }
 
+const STORE_REGION: Record<string, string> = {
+  kith: "USA",
+  "bobs watches": "USA",
+  stockx: "USA",
+  goat: "USA",
+  nike: "USA",
+  snkrs: "USA",
+  target: "USA",
+  "best buy": "USA",
+  walmart: "USA",
+  gamestop: "USA",
+  newegg: "USA",
+  "micro center": "USA",
+  "b&h": "USA",
+  rhode: "USA",
+  skims: "USA",
+  supreme: "USA",
+  adidas: "USA",
+  "new balance": "USA",
+  "dover street market": "UK",
+  palace: "UK",
+  "end.": "UK",
+  ssense: "Canada",
+};
+
+function regionOfStore(store: string | null | undefined): string | null {
+  if (!store) return null;
+  const v = store.toLowerCase().trim();
+  if (STORE_REGION[v]) return STORE_REGION[v];
+  const compact = v.replace(/[^a-z0-9]/g, "");
+  if (compact === "end" || compact.startsWith("endclothing")) return "UK";
+  for (const [key, region] of Object.entries(STORE_REGION)) {
+    if (key === "end.") continue;
+    if (v.includes(key)) return region;
+    const compactKey = key.replace(/[^a-z0-9]/g, "");
+    if (compactKey.length >= 3 && compact.includes(compactKey)) return region;
+  }
+  return null;
+}
+
 const HEADLINE_PREFIX: Record<string, string> = {
   "Неожиданный ресток": "Unexpected restock",
   "Изменилась цена или доступность": "Price or availability changed",
@@ -59,6 +99,7 @@ function signalToCard(s: Signal): FeedCardData {
     askFromUsd: s.askFloor,
     launchAt: s.launchAt,
     store: clean(s.store),
+    region: regionOfStore(s.store),
     checkedAt: s.checkedAt,
     purchaseUrl: s.ctaConfirmed ? (s.primaryUrl ?? null) : null,
     sourceUrl: s.primaryUrl ?? null,
@@ -80,6 +121,8 @@ function newsToCard(n: NewsItem): FeedCardData {
     retailUsd: n.priceUsd ?? null,
     launchAt: n.launchAt ?? null,
     store: n.retailer ?? n.source ?? null,
+    region: regionOfStore(n.retailer ?? n.source ?? null),
+    isMarketStory: n.kind === "MARKET",
     checkedAt: n.observedAt,
     sourceUrl: n.sourceUrl ?? null,
   };
