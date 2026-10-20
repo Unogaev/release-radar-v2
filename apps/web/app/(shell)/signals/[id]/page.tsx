@@ -107,9 +107,8 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
   const playbookStore =
     pv.availabilityChecks.find((c) => c.sellerOfRecord)?.sellerOfRecord ?? null;
   const statusUpper = decision.status.toUpperCase();
-  const isFutureRelease = releaseEvent
-    ? new Date(releaseEvent.startAtUtc).getTime() > Date.now()
-    : false;
+  const releaseStart = releaseEvent?.startAtUtc ?? null;
+  const isFutureRelease = releaseStart ? releaseStart.getTime() > Date.now() : false;
   const releaseLine = statusUpper.includes("BUY")
     ? "First come, first served — this can sell out in under a minute."
     : statusUpper.includes("APPLY")
