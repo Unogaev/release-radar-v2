@@ -561,7 +561,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         decisionId: a.decisionId,
         kind: "ALERT" as const,
         headline,
-        source: "Release Radar",
+        source: "Alertyy",
         category: "alerts",
         sourceUrl: card?.linkLive ? card.primaryUrl : payloadUrl,
         imageUrl: proxyImageUrl(card?.imageUrl),
