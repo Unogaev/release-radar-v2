@@ -139,27 +139,67 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     // re-checked every run so dead store links stop being offered as actions.
     const needImage =
       !existing?.imageUrl || existing?.imageProvenance === "official-search" || isRootUrl(existing?.imageSourceUrl);
-    // A variant whose latest check carries no price yet also runs the
-    // resolver: a Shopify catalog/product match returns the store's real
-    // price (variants[0].price) alongside the image.
-    const needPrice = c.checkId != null && c.checkPriceUsd == null;
+    // A variant with no priced check yet also runs the resolver: a Shopify
+    // catalog/product match returns the store's real price (variants[0].price)
+    // alongside the image. A variant with no check at all counts too — the
+    // price then lands on a freshly created check (below).
+    const needPrice = c.checkPriceUsd == null;
     const [embedded, fetched, linkState] = await Promise.all([
       needImage ? embeddedSignalImageFor(c.productVariantId).catch(() => null) : Promise.resolve(null),
       needImage || needPrice ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
       isLiveExternalUrl(c.url).catch(() => null),
     ]);
     const image = needImage ? embedded ?? fetched : null;
-    // Persist the matched catalog price onto the latest availability check —
-    // the exact row the feed reads — but only into an empty priceUsd: an
-    // observed price is never overwritten by a catalog match.
+    // Persist the matched catalog price onto the availability check the feed
+    // reads (the variant's latest) — but only into an empty priceUsd: an
+    // observed price is never overwritten by a catalog match. When the
+    // variant has no check at all, create one carrying the catalog price:
+    // the feed reads the price from the latest check, so without a row the
+    // price has nowhere to land. The created check uses the same neutral
+    // states the Shopify adapter reports (nothing was cart- or checkout-
+    // tested — only the catalog price was observed), so it cannot pass the
+    // buy gates on its own; the store is credited via sellerOfRecord, the
+    // same way the adapter credits it.
     let priced = false;
     const catalogPrice = fetched?.priceUsd ?? null;
-    if (needPrice && catalogPrice != null && c.checkId) {
-      await prisma.availabilityCheck.update({
-        where: { id: c.checkId },
-        data: { priceUsd: catalogPrice },
-      });
-      priced = true;
+    if (needPrice && catalogPrice != null) {
+      if (c.checkId) {
+        await prisma.availabilityCheck.update({
+          where: { id: c.checkId },
+          data: { priceUsd: catalogPrice },
+        });
+        priced = true;
+      } else if (c.url) {
+        let origin: string | null = null;
+        try {
+          origin = new URL(c.url).origin;
+        } catch {
+          origin = null;
+        }
+        const source = origin
+          ? await prisma.source.findFirst({
+              where: { url: { startsWith: origin } },
+              select: { id: true },
+            })
+          : null;
+        if (source) {
+          await prisma.availabilityCheck.create({
+            data: {
+              productVariantId: c.productVariantId,
+              sourceId: source.id,
+              shippingState: "unknown",
+              pickupState: "unknown",
+              cartState: "not_attempted",
+              checkoutState: "not_attempted",
+              sellerOfRecord: origin,
+              url: c.url,
+              priceUsd: catalogPrice,
+              currency: "USD",
+            },
+          });
+          priced = true;
+        }
+      }
     }
     // linkState null = ambiguous (bot-protection 403): keep the previously
     // verified liveness. A browser-verified intake observation seeds
