@@ -246,24 +246,23 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
-  // A priced availability check can sit on a sibling or duplicate variant
-  // row of the same product (same brand + model), while the decision's own
-  // variant has no priced latest check. The brand + model dedupe below
-  // keeps one card per product, so resolve the newest priced check per
-  // product group as a fallback for the card price only. The variant's own
-  // latest check still drives seller, stock, CTA and freshness, and which
-  // check counts as "latest" for the rest of the logic is unchanged.
-  const productKeyList = [
-    ...new Map(
-      decisions.map((d) => {
-        const p = d.productVariant.product;
-        return [`${p.brand}::${p.normalizedModel}`, { brand: p.brand, normalizedModel: p.normalizedModel }] as const;
-      })
-    ).values(),
-  ];
-  const pricedProducts = productKeyList.length
+  // A priced availability check can sit on a sibling or duplicate product
+  // row — the same product ingested twice with different brand/model casing,
+  // or a base product whose shade lives in the variant label while the card's
+  // product row carries the shade inside its model name. The decision's own
+  // variant may then have no priced latest check even though a priced check
+  // for the product exists. The brand + model dedupe below keeps one card
+  // per product, so resolve the newest priced check per product group as a
+  // fallback for the card price only. The variant's own latest check still
+  // drives seller, stock, CTA and freshness, and which check counts as
+  // "latest" for the rest of the logic is unchanged.
+  const decisionBrands = [...new Set(decisions.map((d) => d.productVariant.product.brand))];
+  const pricedProducts = decisionBrands.length
     ? await prisma.product.findMany({
-        where: { OR: productKeyList },
+        where: {
+          OR: decisionBrands.map((b) => ({ brand: { equals: b, mode: "insensitive" as const } })),
+          variants: { some: { availabilityChecks: { some: { priceUsd: { not: null } } } } },
+        },
         include: {
           variants: {
             include: {
@@ -279,13 +278,19 @@ export async function getRealFeed(): Promise<FeedPayload> {
     : [];
   const pricedCheckByProductKey = new Map<string, { priceUsd: number; checkedAt: Date }>();
   for (const p of pricedProducts) {
-    const key = `${p.brand}::${p.normalizedModel}`.toLowerCase();
+    const baseKey = `${p.brand}::${p.normalizedModel}`.toLowerCase();
     for (const v of p.variants) {
       const c = v.availabilityChecks[0];
       if (!c || c.priceUsd == null) continue;
-      const current = pricedCheckByProductKey.get(key);
-      if (!current || c.checkedAt > current.checkedAt) {
-        pricedCheckByProductKey.set(key, { priceUsd: c.priceUsd, checkedAt: c.checkedAt });
+      const keys = [baseKey];
+      if (v.variantLabel && v.variantLabel !== "default") {
+        keys.push(`${p.brand}::${p.normalizedModel} ${v.variantLabel}`.toLowerCase());
+      }
+      for (const key of keys) {
+        const current = pricedCheckByProductKey.get(key);
+        if (!current || c.checkedAt > current.checkedAt) {
+          pricedCheckByProductKey.set(key, { priceUsd: c.priceUsd, checkedAt: c.checkedAt });
+        }
       }
     }
   }
@@ -300,127 +305,127 @@ export async function getRealFeed(): Promise<FeedPayload> {
   // Variants without a row yet degrade gracefully via the honesty gate.
   const cardByVariantId = await readFeedCards([...new Set(decisions.map((d) => d.productVariantId))]);
   const signals: Signal[] = decisions
-      .filter((d) => STATUS_MAP[d.status])
-      .filter((d) => {
-        if (seenVariants.has(d.productVariantId)) return false;
-        seenVariants.add(d.productVariantId);
-        return true;
-      })
-      .filter((d) => {
-        const key = `${d.productVariant.product.brand}::${d.productVariant.product.normalizedModel}`.toLowerCase();
-        if (seenSignalProducts.has(key)) return false;
-        seenSignalProducts.add(key);
-        return true;
-      })
-      .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
-      .map((d) => {
-        const map = STATUS_MAP[d.status];
-        const pv = d.productVariant;
-        const product = pv.product;
-        const release = pv.releaseEvents[0];
-        const check = pv.availabilityChecks[0];
-        const sales = pv.marketSales;
-        const asks = pv.marketAsks;
+    .filter((d) => STATUS_MAP[d.status])
+    .filter((d) => {
+      if (seenVariants.has(d.productVariantId)) return false;
+      seenVariants.add(d.productVariantId);
+      return true;
+    })
+    .filter((d) => {
+      const key = `${d.productVariant.product.brand}::${d.productVariant.product.normalizedModel}`.toLowerCase();
+      if (seenSignalProducts.has(key)) return false;
+      seenSignalProducts.add(key);
+      return true;
+    })
+    .filter((d) => isTrackedProduct(d.productVariant, d.productVariant.availabilityChecks[0]))
+    .map((d) => {
+      const map = STATUS_MAP[d.status];
+      const pv = d.productVariant;
+      const product = pv.product;
+      const release = pv.releaseEvents[0];
+      const check = pv.availabilityChecks[0];
+      const sales = pv.marketSales;
+      const asks = pv.marketAsks;
 
-        const categories: RadarCategory[] = ["now"];
-        if (map.extraCategory) categories.push(map.extraCategory);
-        const mappedCat = CATEGORY_MAP[product.category];
-        if (mappedCat) categories.push(mappedCat);
+      const categories: RadarCategory[] = ["now"];
+      if (map.extraCategory) categories.push(map.extraCategory);
+      const mappedCat = CATEGORY_MAP[product.category];
+      if (mappedCat) categories.push(mappedCat);
 
-        const brand = product.brand;
-        const model = titleCase(product.normalizedModel);
+      const brand = product.brand;
+      const model = titleCase(product.normalizedModel);
 
-        // Acquisition cost includes the known Miami-Dade 7% sales tax. Marketplace
-        // fees and outbound shipping are applied only on the exit side below.
-        const retail = check?.priceUsd ?? pricedCheckByProductKey.get(`${product.brand}::${product.normalizedModel}`.toLowerCase())?.priceUsd ?? null;
-        const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
-        const ctaConfirmed = check?.ctaState === "enabled";
-                // The collector cron resolves the product image and verifies the
-        // store link in the background (lib/radar/feedCards.ts). No live
-        // network calls happen here; until a row exists the honesty gate
-        // below degrades the card to WATCH instead of an unverified action.
-        const card = cardByVariantId.get(d.productVariantId) ?? null;
-        const primaryUrl = card?.linkLive ? card.primaryUrl : null;
-        const salePrices = sales.map((sale) => sale.priceMinor / 100);
-        const askPrices = asks.map((ask) => ask.priceMinor / 100);
-        const completedMedian = median(salePrices);
-        const expectedResale = completedMedian;
-        const liquidity = liquidityFor(sales);
-        const forecast = saleForecast(salePrices, askPrices, liquidity);
-        const minExit20 = cost === null
-          ? null
-          : (cost * 1.2 + OUTBOUND_SHIPPING_ESTIMATE) / (1 - MARKETPLACE_FEE_RATE);
+      // Acquisition cost includes the known Miami-Dade 7% sales tax. Marketplace
+      // fees and outbound shipping are applied only on the exit side below.
+      const retail = check?.priceUsd ?? pricedCheckByProductKey.get(`${product.brand}::${product.normalizedModel}`.toLowerCase())?.priceUsd ?? null;
+      const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
+      const ctaConfirmed = check?.ctaState === "enabled";
+      // The collector cron resolves the product image and verifies the
+      // store link in the background (lib/radar/feedCards.ts). No live
+      // network calls happen here; until a row exists the honesty gate
+      // below degrades the card to WATCH instead of an unverified action.
+      const card = cardByVariantId.get(d.productVariantId) ?? null;
+      const primaryUrl = card?.linkLive ? card.primaryUrl : null;
+      const salePrices = sales.map((sale) => sale.priceMinor / 100);
+      const askPrices = asks.map((ask) => ask.priceMinor / 100);
+      const completedMedian = median(salePrices);
+      const expectedResale = completedMedian;
+      const liquidity = liquidityFor(sales);
+      const forecast = saleForecast(salePrices, askPrices, liquidity);
+      const minExit20 = cost === null
+        ? null
+        : (cost * 1.2 + OUTBOUND_SHIPPING_ESTIMATE) / (1 - MARKETPLACE_FEE_RATE);
 
-        const sku = pickIdentifier(pv.identifiers, (k) => k.includes("sku")) ?? "—";
-        const reference =
-          pickIdentifier(pv.identifiers, (k) => /ref|upc|mpn|model/.test(k)) ?? "—";
+      const sku = pickIdentifier(pv.identifiers, (k) => k.includes("sku")) ?? "—";
+      const reference =
+        pickIdentifier(pv.identifiers, (k) => /ref|upc|mpn|model/.test(k)) ?? "—";
 
-        // Honesty gate: an actionable (buy/apply) card without a confirmed price,
-        // photo, working store link or (for "buy") a confirmed active CTA is not
-        // a finished, trustworthy card — show it as WATCH instead of pretending
-        // it's ready to act on.
-        let bucket = map.bucket;
-        let kindLabel = map.kindLabel;
-        const missing: string[] = [];
-        if (bucket === "buy" || bucket === "apply") {
-          if (retail === null) missing.push("price");
-          if (!card?.imageUrl) missing.push("photo");
-          if (!primaryUrl) missing.push("link");
-          if (bucket === "buy" && !ctaConfirmed) missing.push("cta"); /* A buy/apply action is only as good as its last verification: a weeks-old stock check is not a live deal. Without a fresh check the card honestly drops to watch instead of posing as a current BUY NOW. */ const checkAgeMs = check?.checkedAt ? Date.now() - new Date(check.checkedAt).getTime() : Number.POSITIVE_INFINITY; if (checkAgeMs > 48 * 3600 * 1000) missing.push("fresh_check");
-          
-        }
-        const downgraded = missing.length > 0;
-        if (downgraded) {
-          bucket = "watch";
-          kindLabel = "watch";
-        }
+      // Honesty gate: an actionable (buy/apply) card without a confirmed price,
+      // photo, working store link or (for "buy") a confirmed active CTA is not
+      // a finished, trustworthy card — show it as WATCH instead of pretending
+      // it's ready to act on.
+      let bucket = map.bucket;
+      let kindLabel = map.kindLabel;
+      const missing: string[] = [];
+      if (bucket === "buy" || bucket === "apply") {
+        if (retail === null) missing.push("price");
+        if (!card?.imageUrl) missing.push("photo");
+        if (!primaryUrl) missing.push("link");
+        if (bucket === "buy" && !ctaConfirmed) missing.push("cta"); /* A buy/apply action is only as good as its last verification: a weeks-old stock check is not a live deal. Without a fresh check the card honestly drops to watch instead of posing as a current BUY NOW. */ const checkAgeMs = check?.checkedAt ? Date.now() - new Date(check.checkedAt).getTime() : Number.POSITIVE_INFINITY; if (checkAgeMs > 48 * 3600 * 1000) missing.push("fresh_check");
 
-        const why = buildWhy(bucket, downgraded, missing, check?.sellerOfRecord ?? null, d.evidenceConfidence);
-        const factors = buildFactors(downgraded, missing, d.evidenceConfidence);
+      }
+      const downgraded = missing.length > 0;
+      if (downgraded) {
+        bucket = "watch";
+        kindLabel = "watch";
+      }
 
-        return {
-          id: d.id, evidenceConfidence: d.evidenceConfidence,
-          status: bucket, kindLabel,
-          categories,
-          brand,
-          model,
-          reference,
-          sku,
-          imageUrl: proxyImageUrl(card?.imageUrl),
-          imageHint: `${brand} ${model}`,
-          imageSourceUrl: card?.imageSourceUrl ?? undefined,
-          imageProvenance: (card?.imageProvenance as Signal["imageProvenance"]) ?? undefined,
-          retail,
-          cost,
-          expectedResale,
-          completedLow: salePrices.length ? Math.min(...salePrices) : null,
-          completedMedian,
-          completedHigh: salePrices.length ? Math.max(...salePrices) : null,
-          completedSalesCount: salePrices.length,
-          askFloor: askPrices.length ? Math.min(...askPrices) : null,
-          forecastLow: forecast.low,
-          forecastHigh: forecast.high,
-          forecastDaysMin: forecast.daysMin,
-          forecastDaysMax: forecast.daysMax,
-          forecastConfidence: forecast.confidence,
-          forecastBasis: forecast.basis,
-          minExit20,
-          marketplaceFeePct: MARKETPLACE_FEE_RATE * 100,
-          shippingEstimate: OUTBOUND_SHIPPING_ESTIMATE,
-          taxRatePct: MIAMI_DADE_TAX_RATE * 100,
-          liquidity,
-          store: check?.sellerOfRecord ?? "—",
-          stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
-          primaryUrl,
-          checkedAt: (card?.checkedAt ?? check?.checkedAt ?? d.createdAt).toISOString(),
-          launchAt: release?.startAtUtc?.toISOString() ?? null,
-          ctaConfirmed,
-          why: why.ru,
-          whyEn: why.en,
-          factors: factors.ru,
-          factorsEn: factors.en,
-        } satisfies Signal;
-      });
+      const why = buildWhy(bucket, downgraded, missing, check?.sellerOfRecord ?? null, d.evidenceConfidence);
+      const factors = buildFactors(downgraded, missing, d.evidenceConfidence);
+
+      return {
+        id: d.id, evidenceConfidence: d.evidenceConfidence,
+        status: bucket, kindLabel,
+        categories,
+        brand,
+        model,
+        reference,
+        sku,
+        imageUrl: proxyImageUrl(card?.imageUrl),
+        imageHint: `${brand} ${model}`,
+        imageSourceUrl: card?.imageSourceUrl ?? undefined,
+        imageProvenance: (card?.imageProvenance as Signal["imageProvenance"]) ?? undefined,
+        retail,
+        cost,
+        expectedResale,
+        completedLow: salePrices.length ? Math.min(...salePrices) : null,
+        completedMedian,
+        completedHigh: salePrices.length ? Math.max(...salePrices) : null,
+        completedSalesCount: salePrices.length,
+        askFloor: askPrices.length ? Math.min(...askPrices) : null,
+        forecastLow: forecast.low,
+        forecastHigh: forecast.high,
+        forecastDaysMin: forecast.daysMin,
+        forecastDaysMax: forecast.daysMax,
+        forecastConfidence: forecast.confidence,
+        forecastBasis: forecast.basis,
+        minExit20,
+        marketplaceFeePct: MARKETPLACE_FEE_RATE * 100,
+        shippingEstimate: OUTBOUND_SHIPPING_ESTIMATE,
+        taxRatePct: MIAMI_DADE_TAX_RATE * 100,
+        liquidity,
+        store: check?.sellerOfRecord ?? "—",
+        stock: check?.visibleUiStatus ?? check?.ctaState ?? "—",
+        primaryUrl,
+        checkedAt: (card?.checkedAt ?? check?.checkedAt ?? d.createdAt).toISOString(),
+        launchAt: release?.startAtUtc?.toISOString() ?? null,
+        ctaConfirmed,
+        why: why.ru,
+        whyEn: why.en,
+        factors: factors.ru,
+        factorsEn: factors.en,
+      } satisfies Signal;
+    });
 
   const sourceRows = await prisma.source.findMany({
     orderBy: { lastCheckedAt: "desc" },
@@ -481,7 +486,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     return true;
   }).slice(0, 36);
 
-    // News images were already extracted from each RSS item at ingest time by
+  // News images were already extracted from each RSS item at ingest time by
   // the collector cron and embedded in rawText as [rr:image=...]. Re-fetching
   // every source feed live on each render was pure waste; the render path is
   // a pure database read and never fires per-card page fetches.
@@ -529,7 +534,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const alertCards = await readFeedCards([...new Set(recentAlerts.map((a) => a.decision.productVariantId))]);
 
-    // Release-variant and news images come from the materialized FeedCard rows
+  // Release-variant and news images come from the materialized FeedCard rows
   // (built by the collector cron); news signals additionally carry their
   // RSS-embedded image. No live feed re-fetching, no per-signal HEAD checks:
   // these are editorial links, not money links, and were ingested minutes ago.
@@ -557,8 +562,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
         sourceUrl: card?.linkLive ? card.primaryUrl : null,
         imageUrl: proxyImageUrl(card?.imageUrl),
         imageSourceUrl: card?.imageSourceUrl ?? undefined,
-          observedAt: v.createdAt.toISOString(),
-      launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
+        observedAt: v.createdAt.toISOString(),
+        launchAt: v.releaseEvents[0]?.startAtUtc?.toISOString() ?? null,
         priceUsd: (() => {
           const match = VERIFIED_RELEASES.find((r) =>
             r.brand.toLowerCase() === v.product.brand.toLowerCase() &&
