@@ -251,16 +251,20 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
     const distinctive = brandToks.filter((w) => w.length >= 4);
     if (modelTokens.size === 0) return null;
     let best: { score: number; hits: number; img: ResolvedImage } | null = null;
+    let dbgBrandOk = 0;
+    let dbgBestScore = 0;
+    let dbgBestTitle = "";
     for (let page = 1; page <= 3; page++) {
       const res = await fetch(`${origin}/products.json?limit=250&page=${page}`, {
         signal: AbortSignal.timeout(15_000),
         headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
       });
-      if (!res.ok) break;
+      if (!res.ok) { console.log("[imgdbg] catalog http", origin, page, res.status); break; }
       const data = (await res.json()) as {
         products?: Array<{ title?: string; vendor?: string; handle?: string; images?: Array<{ src?: string }>; variants?: Array<{ price?: string }> }>;
       };
       const products = data.products ?? [];
+      console.log("[imgdbg] catalog page", origin, page, res.status, products.length);
       if (products.length === 0) break;
       for (const p of products) {
         const titleToks = titleTokens(`${p.vendor ?? ""} ${p.title ?? ""}`);
@@ -269,8 +273,10 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
           ? distinctive.some((t) => titleToks.includes(t))
           : brandToks.every((t) => titleToks.includes(t));
         if (!brandOk) continue;
+        dbgBrandOk++;
         const hits = titleToks.filter((t) => modelTokens.has(t)).length;
         const score = hits / titleToks.length;
+        if (score > dbgBestScore) { dbgBestScore = score; dbgBestTitle = `${p.vendor ?? ""} :: ${p.title ?? ""}`; }
         if (score < 0.8 || hits < 3) continue;
         const src = p.images?.[0]?.src;
         if (!src || !isPublicHttpUrl(src) || REJECTED_IMAGE.test(src)) continue;
@@ -280,10 +286,12 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
       }
       if (products.length < 250) break;
     }
+    console.log("[imgdbg] catalog done", JSON.stringify({ origin, brand, model, modelTokens: Array.from(modelTokens), brandOkCount: dbgBrandOk, bestScore: dbgBestScore, bestTitle: dbgBestTitle, matched: Boolean(best), price: best?.img.priceUsd ?? null }));
     const result = best?.img ?? null;
     cache.set(key, result);
     return result;
-  } catch {
+  } catch (err) {
+    console.log("[imgdbg] catalog error", storeUrl, String(err));
     return null;
   }
 }
@@ -297,6 +305,7 @@ function isDeepUrl(u: string): boolean {
 }
 
 export async function getProductImage(brand: string, model: string, officialPageUrl?: string | null): Promise<ResolvedImage | null> {
+  console.log("[imgdbg] getProductImage", JSON.stringify({ brand, model, officialPageUrl }));
   const direct = officialPageUrl && isDeepUrl(officialPageUrl) ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
   return direct ?? (officialPageUrl ? await imageFromShopifyCatalog(brand, model, officialPageUrl) : null) ?? imageFromOfficialSearch(brand, model, officialPageUrl);
 }
