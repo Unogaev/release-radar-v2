@@ -71,6 +71,7 @@ function newsToCard(n: NewsItem): FeedCardData {
   const kind = n.kind === "RELEASE" ? "RELEASE" : n.kind === "ALERT" ? "ALERT" : n.kind === "SIGNAL" ? "SIGNAL" : "NEWS";
   return {
     id: n.id,
+    detailId: n.decisionId ?? null,
     kind,
     status: null,
     brand: n.brand ?? null,
