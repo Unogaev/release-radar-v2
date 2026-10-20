@@ -78,6 +78,10 @@ type CardCandidate = {
   model: string;
   url: string | null;
   rank: number;
+  /** The variant's latest availability check — the row the feed reads the
+   *  retail price from (serverFeed takes availabilityChecks[0].priceUsd). */
+  checkId: string | null;
+  checkPriceUsd: number | null;
 };
 
 function titleCase(s: string): string {
@@ -126,7 +130,7 @@ async function embeddedSignalImageFor(
   return null;
 }
 
-async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: boolean }> {
+async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: boolean; priced: boolean }> {
   try {
     const existing = await prisma.feedCard.findUnique({
       where: { productVariantId: c.productVariantId },
@@ -135,12 +139,28 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     // re-checked every run so dead store links stop being offered as actions.
     const needImage =
       !existing?.imageUrl || existing?.imageProvenance === "official-search" || isRootUrl(existing?.imageSourceUrl);
+    // A variant whose latest check carries no price yet also runs the
+    // resolver: a Shopify catalog/product match returns the store's real
+    // price (variants[0].price) alongside the image.
+    const needPrice = c.checkId != null && c.checkPriceUsd == null;
     const [embedded, fetched, linkState] = await Promise.all([
       needImage ? embeddedSignalImageFor(c.productVariantId).catch(() => null) : Promise.resolve(null),
-      needImage ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
+      needImage || needPrice ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
       isLiveExternalUrl(c.url).catch(() => null),
     ]);
-    const image = embedded ?? fetched;
+    const image = needImage ? embedded ?? fetched : null;
+    // Persist the matched catalog price onto the latest availability check —
+    // the exact row the feed reads — but only into an empty priceUsd: an
+    // observed price is never overwritten by a catalog match.
+    let priced = false;
+    const catalogPrice = fetched?.priceUsd ?? null;
+    if (needPrice && catalogPrice != null && c.checkId) {
+      await prisma.availabilityCheck.update({
+        where: { id: c.checkId },
+        data: { priceUsd: catalogPrice },
+      });
+      priced = true;
+    }
     // linkState null = ambiguous (bot-protection 403): keep the previously
     // verified liveness. A browser-verified intake observation seeds
     // linkLive=true, which survives here until a definitive check says
@@ -159,9 +179,9 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
       create: { productVariantId: c.productVariantId, ...data },
       update: data,
     });
-    return { ok: true, img: Boolean(image) };
+    return { ok: true, img: Boolean(image), priced };
   } catch {
-    return { ok: false, img: false };
+    return { ok: false, img: false, priced: false };
   }
 }
 
@@ -170,7 +190,7 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
  * Budget-conscious: a bounded slice per run, missing cards first, then the
  * stalest. Called from the hourly collector cron.
  */
-export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number; failed: number; withImage: number; attempts: Array<{ t: string; u: string | null; img: boolean }> }> {
+export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number; failed: number; withImage: number; withPrice: number; attempts: Array<{ t: string; u: string | null; img: boolean; priced: boolean }> }> {
   await ensureFeedCardTable();
 
   const [decisions, releaseVariants] = await Promise.all([
@@ -186,7 +206,7 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
             availabilityChecks: {
               orderBy: { checkedAt: "desc" },
               take: 1,
-              select: { url: true },
+              select: { url: true, id: true, priceUsd: true },
             },
             evidence: {
               orderBy: { observedAt: "desc" },
@@ -213,6 +233,11 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
       select: {
         id: true,
         product: { select: { brand: true, normalizedModel: true } },
+        availabilityChecks: {
+          orderBy: { checkedAt: "desc" },
+          take: 1,
+          select: { id: true, priceUsd: true },
+        },
         evidence: {
           orderBy: { observedAt: "desc" },
           take: 1,
@@ -225,10 +250,10 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
 
   const seen = new Set<string>();
   const candidates: CardCandidate[] = [];
-  const rank = (updatedAt: Date | undefined, hasImage: boolean) =>
+  const rank = (updatedAt: Date | undefined, complete: boolean) =>
     // Missing card first (epoch), then stalest; variants that still need an
-    // image outrank ones that only need a link re-check.
-    (updatedAt ? updatedAt.getTime() : 0) + (hasImage ? 1e15 : 0);
+    // image or a price outrank ones that only need a link re-check.
+    (updatedAt ? updatedAt.getTime() : 0) + (complete ? 1e15 : 0);
 
   const push = (
     id: string,
@@ -236,18 +261,30 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
     model: string,
     url: string | null,
     card?: { updatedAt: Date; imageUrl: string | null } | null,
+    check?: { id: string; priceUsd: number | null } | null,
   ) => {
     if (seen.has(id)) return;
     seen.add(id);
-    candidates.push({ productVariantId: id, brand, model, url, rank: rank(card?.updatedAt, Boolean(card?.imageUrl)) });
+    // Complete = has an image AND the latest check already carries a price
+    // (or there is no check a catalog price could be written to).
+    const complete = Boolean(card?.imageUrl) && (check == null || check.priceUsd != null);
+    candidates.push({
+      productVariantId: id,
+      brand,
+      model,
+      url,
+      rank: rank(card?.updatedAt, complete),
+      checkId: check?.id ?? null,
+      checkPriceUsd: check?.priceUsd ?? null,
+    });
   };
 
   for (const d of decisions) {
     const pv = d.productVariant;
-    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), preferProductUrl([pv.availabilityChecks[0]?.url, pv.evidence[0]?.url, pv.signals[0]?.url]) ?? pv.evidence[0]?.source?.url ?? pv.signals[0]?.source?.url ?? null, pv.feedCard);
+    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), preferProductUrl([pv.availabilityChecks[0]?.url, pv.evidence[0]?.url, pv.signals[0]?.url]) ?? pv.evidence[0]?.source?.url ?? pv.signals[0]?.source?.url ?? null, pv.feedCard, pv.availabilityChecks[0] ?? null);
   }
   for (const v of releaseVariants) {
-    push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? v.evidence[0]?.source?.url ?? null, v.feedCard);
+    push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? v.evidence[0]?.source?.url ?? null, v.feedCard, v.availabilityChecks[0] ?? null);
   }
 
   candidates.sort((a, b) => a.rank - b.rank);
@@ -263,8 +300,9 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
     else failed += 1;
   }
   const withImage = outcomes.filter((o) => o.img).length;
-  const attempts = slice.map((c, i) => ({ t: `${c.brand} ${c.model}`.slice(0, 60), u: c.url, img: outcomes[i]?.img ?? false }));
-  return { refreshed, failed, withImage, attempts };
+  const withPrice = outcomes.filter((o) => o.priced).length;
+  const attempts = slice.map((c, i) => ({ t: `${c.brand} ${c.model}`.slice(0, 60), u: c.url, img: outcomes[i]?.img ?? false, priced: outcomes[i]?.priced ?? false }));
+  return { refreshed, failed, withImage, withPrice, attempts };
 }
 
 export type FeedCardRow = {
