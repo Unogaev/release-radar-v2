@@ -5,7 +5,6 @@ import { FeedCard, type FeedCardData } from "./FeedCard";
 import { CardSkeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { LayoutGrid, List, SearchX } from "lucide-react";
-import type { CardKind } from "@/lib/radar/cardViewModel";
 
 export interface VitrinaFeedInput {
   cards: FeedCardData[];
@@ -23,11 +22,9 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]["key"];
 
-function kindOf(c: FeedCardData): CardKind {
-  return c.kind;
-}
+const GRID = "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4";
 
-export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput) {
+export function VitrinaFeed({ cards }: VitrinaFeedInput) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -38,7 +35,9 @@ export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput)
       case "releases":
         return cards.filter((c) => c.kind === "RELEASE");
       case "restocks":
-        return cards.filter((c) => c.kind === "SIGNAL" && (c.status === "verify" || (c.name ?? "").toLowerCase().includes("restock")));
+        return cards.filter(
+          (c) => c.kind === "SIGNAL" || (c.name ?? "").toLowerCase().includes("restock"),
+        );
       case "news":
         return cards.filter((c) => c.kind === "NEWS");
       default:
@@ -47,21 +46,40 @@ export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput)
   }, [cards, filter]);
 
   const urgent = useMemo(() => cards.filter((c) => c.kind === "ALERT"), [cards]);
-  const releases = useMemo(() => visible.filter((c) => c.kind === "RELEASE"), [visible]);
-  const rest = useMemo(() => visible.filter((c) => c.kind !== "ALERT" && c.kind !== "RELEASE"), [visible]);
+  const releases = useMemo(() => cards.filter((c) => c.kind === "RELEASE"), [cards]);
+  const rest = useMemo(
+    () => cards.filter((c) => c.kind !== "ALERT" && c.kind !== "RELEASE"),
+    [cards],
+  );
 
   const isFiltered = filter !== "all";
 
+  const emptyFiltered = (
+    <EmptyState
+      icon={<SearchX size={32} />}
+      title="Nothing in this category yet."
+      action={
+        <button
+          onClick={() => setFilter("all")}
+          className="rounded-full bg-[#1a1a1a] px-4 py-2 text-[13px] font-medium text-white"
+        >
+          Show all
+        </button>
+      }
+    />
+  );
+
   return (
     <div>
-      {/* filter chips */}
       <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition ${
-              filter === f.key ? "bg-[#1a1a1a] text-white" : "bg-white text-[#6b7280] border border-[#e5e7eb]"
+              filter === f.key
+                ? "bg-[#1a1a1a] text-white"
+                : "border border-[#e5e7eb] bg-white text-[#6b7280]"
             }`}
           >
             {f.label}
@@ -82,10 +100,19 @@ export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput)
           icon={<SearchX size={32} />}
           title="No signals right now. New drops appear here as sources update."
         />
+      ) : isFiltered ? (
+        visible.length === 0 ? (
+          emptyFiltered
+        ) : (
+          <div className={GRID}>
+            {visible.map((c) => (
+              <FeedCard key={c.id} data={c} />
+            ))}
+          </div>
+        )
       ) : (
         <>
-          {/* urgent */}
-          {!isFiltered && urgent.length > 0 && (
+          {urgent.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-[14px] font-semibold text-[#1a1a1a]">Urgent · {urgent.length}</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -95,41 +122,25 @@ export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput)
               </div>
             </section>
           )}
-
-          {/* releases */}
           {releases.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-[14px] font-semibold text-[#1a1a1a]">Upcoming releases · {releases.length}</h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+              <div className={GRID}>
                 {releases.map((c) => (
                   <FeedCard key={c.id} data={c} />
                 ))}
               </div>
             </section>
           )}
-
-          {/* rest of feed */}
           {rest.length > 0 && (
             <section>
-              {!isFiltered && <h2 className="mb-3 text-[14px] font-semibold text-[#1a1a1a]">Market news</h2>}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+              <h2 className="mb-3 text-[14px] font-semibold text-[#1a1a1a]">Market news</h2>
+              <div className={GRID}>
                 {rest.map((c) => (
                   <FeedCard key={c.id} data={c} />
                 ))}
               </div>
             </section>
-          )}
-
-          {visible.length === 0 && (
-            <EmptyState
-              icon={<SearchX size={32} />}
-              title="Nothing in this category yet."
-              action={
-                <button onClick={() => setFilter("all")} className="rounded-full bg-[#1a1a1a] px-4 py-2 text-[13px] font-medium text-white">
-                  Show all
-                </button>
-              }
-            />
           )}
         </>
       )}
@@ -139,7 +150,7 @@ export function VitrinaFeed({ cards, urgentCount, checkedAt }: VitrinaFeedInput)
 
 export function VitrinaFeedLoading() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+    <div className={GRID}>
       {Array.from({ length: 8 }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
