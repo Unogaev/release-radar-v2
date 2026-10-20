@@ -246,6 +246,50 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
 
+  // A priced availability check can sit on a sibling or duplicate variant
+  // row of the same product (same brand + model), while the decision's own
+  // variant has no priced latest check. The brand + model dedupe below
+  // keeps one card per product, so resolve the newest priced check per
+  // product group as a fallback for the card price only. The variant's own
+  // latest check still drives seller, stock, CTA and freshness, and which
+  // check counts as "latest" for the rest of the logic is unchanged.
+  const productKeyList = [
+    ...new Map(
+      decisions.map((d) => {
+        const p = d.productVariant.product;
+        return [`${p.brand}::${p.normalizedModel}`, { brand: p.brand, normalizedModel: p.normalizedModel }] as const;
+      })
+    ).values(),
+  ];
+  const pricedProducts = productKeyList.length
+    ? await prisma.product.findMany({
+        where: { OR: productKeyList },
+        include: {
+          variants: {
+            include: {
+              availabilityChecks: {
+                where: { priceUsd: { not: null } },
+                orderBy: { checkedAt: "desc" },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    : [];
+  const pricedCheckByProductKey = new Map<string, { priceUsd: number; checkedAt: Date }>();
+  for (const p of pricedProducts) {
+    const key = `${p.brand}::${p.normalizedModel}`.toLowerCase();
+    for (const v of p.variants) {
+      const c = v.availabilityChecks[0];
+      if (!c || c.priceUsd == null) continue;
+      const current = pricedCheckByProductKey.get(key);
+      if (!current || c.checkedAt > current.checkedAt) {
+        pricedCheckByProductKey.set(key, { priceUsd: c.priceUsd, checkedAt: c.checkedAt });
+      }
+    }
+  }
+
   const seenVariants = new Set<string>();
   // Guard against duplicate product rows (same brand + model ingested as two
   // variants): the feed shows one card per product, newest first. The pipeline
@@ -288,7 +332,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
         // Acquisition cost includes the known Miami-Dade 7% sales tax. Marketplace
         // fees and outbound shipping are applied only on the exit side below.
-        const retail = check?.priceUsd ?? null;
+        const retail = check?.priceUsd ?? pricedCheckByProductKey.get(`${product.brand}::${product.normalizedModel}`.toLowerCase())?.priceUsd ?? null;
         const cost = retail === null ? null : retail * (1 + MIAMI_DADE_TAX_RATE);
         const ctaConfirmed = check?.ctaState === "enabled";
                 // The collector cron resolves the product image and verifies the
