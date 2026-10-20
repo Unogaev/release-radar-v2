@@ -84,6 +84,18 @@ function titleCase(s: string): string {
   return decodeHtmlEntities(s).replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function preferProductUrl(urls: Array<string | null | undefined>): string | null {
+  const valid = urls.filter((u): u is string => Boolean(u));
+  const deep = valid.find((u) => {
+    try {
+      return new URL(u).pathname.split("/").filter(Boolean).length >= 2;
+    } catch {
+      return false;
+    }
+  });
+  return deep ?? valid[0] ?? null;
+}
+
 async function embeddedSignalImageFor(
   productVariantId: string,
 ): Promise<{ url: string; sourceUrl: string; provenance: "official-page" } | null> {
@@ -222,7 +234,7 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
 
   for (const d of decisions) {
     const pv = d.productVariant;
-    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), pv.availabilityChecks[0]?.url ?? pv.evidence[0]?.url ?? pv.signals[0]?.url ?? null, pv.feedCard);
+    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), preferProductUrl([pv.availabilityChecks[0]?.url, pv.evidence[0]?.url, pv.signals[0]?.url]), pv.feedCard);
   }
   for (const v of releaseVariants) {
     push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? null, v.feedCard);
