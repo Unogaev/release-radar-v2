@@ -162,7 +162,6 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     // same way the adapter credits it.
     let priced = false;
     const catalogPrice = fetched?.priceUsd ?? null;
-    console.log("[imgdbg] price gate", JSON.stringify({ t: `${c.brand} ${c.model}`.slice(0, 60), needPrice, checkId: c.checkId, checkPriceUsd: c.checkPriceUsd, catalogPrice }));
     if (needPrice && catalogPrice != null) {
       if (c.checkId) {
         await prisma.availabilityCheck.update({
@@ -183,7 +182,6 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
               select: { id: true },
             })
           : null;
-        console.log("[imgdbg] price source", JSON.stringify({ origin, sourceId: source?.id ?? null }));
         if (source) {
           await prisma.availabilityCheck.create({
             data: {
@@ -222,8 +220,7 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
       update: data,
     });
     return { ok: true, img: Boolean(image), priced };
-  } catch (e) {
-    console.log("[imgdbg] resolve error", JSON.stringify({ t: `${c.brand} ${c.model}`.slice(0, 60), error: String(e) }));
+  } catch {
     return { ok: false, img: false, priced: false };
   }
 }
