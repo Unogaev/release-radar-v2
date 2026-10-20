@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n";
 import {
   LayoutDashboard,
@@ -13,7 +12,6 @@ import {
   ShoppingBag,
   Briefcase,
   Plus,
-  LogOut,
   Newspaper,
 } from "lucide-react";
 
@@ -68,13 +66,6 @@ export function Nav() {
             {t("add_signal")}
           </Link>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-2 px-2.5 py-2 text-[12px] text-rr-muted hover:text-rr-text text-left"
-        >
-          <LogOut size={14} />
-          {t("sign_out")}
-        </button>
       </nav>
 
       <nav className="md:hidden border-b border-rr-frame bg-rr-bg p-3 sticky top-0 z-20">
@@ -96,14 +87,6 @@ export function Nav() {
               </Link>
             );
           })}
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg bg-rr-surface px-3 py-1.5 text-[11px] text-rr-text-dim"
-          >
-            <LogOut size={13} />
-            {t("sign_out")}
-          </button>
         </div>
       </nav>
     </>
