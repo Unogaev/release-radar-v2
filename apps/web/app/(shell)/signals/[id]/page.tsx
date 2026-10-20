@@ -24,6 +24,54 @@ function statusKey(status: string): "buy" | "apply" | "prepare" | "client" | "wa
   return "watch";
 }
 
+const PLAYBOOK_PREP: string[] = [
+  "Account signed in and email + phone verified",
+  "Shipping address saved as default",
+  "Payment card saved as default — check its daily limit",
+  "Be online 10 minutes before the drop",
+  "Know your exit: where you will resell and what the fees take",
+];
+
+const RETAILER_NOTES: { match: string[]; note: string }[] = [
+  {
+    match: ["snkrs", "nike"],
+    note: "Nike / SNKRS: limited launches run as a Draw in the SNKRS app — enter once per account, and the account must have a verified phone number. A win charges your saved card automatically, so the card and default address have to be right before you enter.",
+  },
+  {
+    match: ["adidas", "confirmed"],
+    note: "adidas Confirmed: launches run as draws in the Confirmed app — enter before the window closes, keep notifications on, and confirm the win in the app when it lands; the saved card is charged on a win.",
+  },
+  {
+    match: ["kith"],
+    note: "Kith: limited launches usually run as draws on kith.com or in the Kith app — enter once with the exact size you want; for in-store draws, bring the ID that matches the entry.",
+  },
+  {
+    match: ["dover street market", "dsm"],
+    note: "Dover Street Market: launches sell online on the DSM store (DSMNY is the New York store) — be signed in before the time and move fast; there is no draw, sizes simply sell through.",
+  },
+  {
+    match: ["target"],
+    note: "Target: hot drops sell online — join the queue from the product page and stay on it; choose store pickup when it is offered, it skips shipping delays and holds the item at your store.",
+  },
+  {
+    match: ["walmart"],
+    note: "Walmart: hot drops sell online with a queue — join early, stay on the product page, and pick store pickup when offered; keep the saved card ready, popular items clear in minutes.",
+  },
+  {
+    match: ["bobs watches", "bobswatches", "watches"],
+    note: "Watch sellers (BobsWatches and similar): this is a pre-owned watch — before you pay, verify the authenticity paperwork, box and service history and check the return window. The papers are part of the resale value.",
+  },
+];
+
+function retailerNoteFor(store: string | null): string {
+  if (store) {
+    const key = store.toLowerCase();
+    const hit = RETAILER_NOTES.find((r) => r.match.some((m) => key.includes(m)));
+    if (hit) return hit.note;
+  }
+  return "Prepare on the retailer's own site: one account in your own name, verified email and phone, a saved default address and card — and read the launch rules on the product page before the window opens.";
+}
+
 export default async function SignalDetailPage({ params }: { params: { id: string } }) {
   await requireUserId();
   const decision = await getDecisionDetail(params.id);
@@ -55,6 +103,25 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
   const runnerParams = new URLSearchParams();
   runnerParams.set("brand", brand);
   runnerParams.set("model", modelLabel);
+
+  const playbookStore =
+    pv.availabilityChecks.find((c) => c.sellerOfRecord)?.sellerOfRecord ?? null;
+  const statusUpper = decision.status.toUpperCase();
+  const isFutureRelease = releaseEvent
+    ? new Date(releaseEvent.startAtUtc).getTime() > Date.now()
+    : false;
+  const releaseLine = statusUpper.includes("BUY")
+    ? "First come, first served — this can sell out in under a minute."
+    : statusUpper.includes("APPLY")
+      ? "Raffle / draw — enter once, correctly, before the window closes."
+      : statusKey(decision.status) === "prepare" && isFutureRelease
+        ? "Scheduled drop — preparation beats speed."
+        : "No fixed window is set for this one yet — the preparation below is the play either way.";
+  const retailerNote = retailerNoteFor(playbookStore);
+  const latestSale = pv.marketSales[0] ?? null;
+  const exitLine = latestSale
+    ? `Exit plan: completed sales are the reference — the most recent one on this page is ${formatMoneyMinor(latestSale.priceMinor, latestSale.currency)} on ${latestSale.platform}. Sell where those sales happen, and subtract that marketplace's fees and shipping before you count profit.`
+    : "Exit plan: check completed sales before you buy — never buy without a sold-price reference.";
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-4">
@@ -122,6 +189,33 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
           )}
         </section>
       )}
+
+      <section className="rounded-[16px] border border-[#e5e7eb] bg-white p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#16a34a]">
+          {"Speculator's Playbook"}
+        </div>
+        <h2 className="mb-2 mt-1 text-[14px] font-semibold text-[#1a1a1a]">
+          How an experienced reseller plays this drop
+        </h2>
+        <p className="text-[14px] font-medium leading-relaxed text-[#1a1a1a]">{releaseLine}</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-[#374151]">{retailerNote}</p>
+        {playbookStore && (
+          <p className="mt-2 text-[12px] text-[#6b7280]">Retailer: {playbookStore}</p>
+        )}
+        <div className="mt-3 text-[12px] font-semibold text-[#1a1a1a]">Prep checklist</div>
+        <ul className="mt-1.5 space-y-1.5">
+          {PLAYBOOK_PREP.map((item) => (
+            <li key={item} className="flex items-start gap-2 text-[13px] text-[#374151]">
+              <span aria-hidden="true" className="mt-[1px] text-[#9ca3af]">☐</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-[13px] leading-relaxed text-[#374151]">{exitLine}</p>
+        <Link href="/playbook" className="mt-3 inline-flex text-[13px] font-semibold text-[#16a34a] hover:underline">
+          Full playbook →
+        </Link>
+      </section>
 
       {decision.blockedReasons.length > 0 && (
         <section className="rounded-[16px] border border-[#e5e7eb] bg-white p-4">
