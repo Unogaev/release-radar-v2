@@ -105,8 +105,24 @@ export function FeedCard({ data, onAction }: { data: FeedCardData; onAction?: (i
         )}
         <div className="mt-4">
           <CTAButton
-            href={vm.cta === "buy" || vm.cta === "read" ? (data.purchaseUrl ?? data.sourceUrl ?? undefined) : undefined}
-            onClick={vm.cta !== "buy" && vm.cta !== "read" ? () => onAction?.(data.id, vm.cta) : undefined}
+            href={
+              vm.cta === "buy" || vm.cta === "read"
+                ? (data.purchaseUrl ?? data.sourceUrl ?? undefined)
+                : vm.cta === "client"
+                  ? (() => {
+                      const p = new URLSearchParams();
+                      if (data.brand) p.set("brand", data.brand);
+                      p.set("model", data.name);
+                      if (data.sku) p.set("sku", data.sku);
+                      if (data.retailUsd != null) p.set("price", String(data.retailUsd));
+                      const u = data.purchaseUrl ?? data.sourceUrl;
+                      if (u) p.set("url", u);
+                      return `/requests/new?${p.toString()}`;
+                    })()
+                  : vm.cta === "remind"
+                    ? "/calendar"
+                    : `/signals/${data.id}`
+            }
           >
             {vm.ctaLabel}
           </CTAButton>
