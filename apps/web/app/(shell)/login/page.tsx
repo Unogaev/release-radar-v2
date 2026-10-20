@@ -35,7 +35,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="font-display text-2xl text-rr-accent text-center mb-1 tracking-wide">
-          Release Radar
+          Alertyy
         </div>
         <div className="text-xs text-rr-text-dim text-center mb-10 tracking-widest uppercase">
           Private access
