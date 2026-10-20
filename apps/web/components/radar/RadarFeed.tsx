@@ -167,10 +167,10 @@ function PremiumOpportunityHero({ item, lang }: { item: NewsItem; lang: Lang }) 
       <div className="relative flex min-h-[470px] max-w-[720px] flex-col justify-center px-6 py-12 text-[#1b1916]">
         <div className="mb-6 inline-flex w-fit rounded-full border border-black/10 bg-white/60 px-4 py-2 text-[11px] font-bold uppercase tracking-[.16em]">{tr(lang, "Проверка BUY NOW", "BUY NOW gate", "بوابة الشراء")}</div>
         <h2 className="max-w-[610px] text-balance font-rr-editorial text-[42px] font-semibold leading-[.96] tracking-[-0.02em]">{decodeHtmlEntities(item.headline)}</h2>
-        <p className="mt-6 max-w-[520px] text-[15px] leading-6 text-black/60">{lang === "ru" ? "Release Radar — проверяем каждую позицию перед публикацией." : "Release Radar — every position is verified before publishing."}</p>
+        <p className="mt-6 max-w-[520px] text-[15px] leading-6 text-black/60">{lang === "ru" ? "Alertyy — проверяем каждую позицию перед публикацией." : "Alertyy — every position is verified before publishing."}</p>
         <div className="mt-8 flex flex-wrap gap-3"><a href={item.sourceUrl ?? "/news"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-[#1b1916] px-5 py-2.5 text-sm font-semibold text-white">{tr(lang, "Открыть", "Open", "فتح")}<ArrowUpRight size={14} /></a></div>
       </div>
-      <div className="absolute bottom-5 right-5 hidden w-[310px] rounded-[18px] border border-white/55 bg-white/80 p-4 text-[#1b1916] shadow-[0_18px_60px_rgba(0,0,0,.24)] backdrop-blur-xl md:block"><div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-black/45"><span>Release Radar</span><span>{lang === "ru" ? "только что" : "just now"}</span></div><div className="mt-3 text-sm font-bold leading-5">{decodeHtmlEntities(item.headline)}</div><div className="mt-2 text-xs text-black/50">{item.source} · {item.category}</div></div>
+      <div className="absolute bottom-5 right-5 hidden w-[310px] rounded-[18px] border border-white/55 bg-white/80 p-4 text-[#1b1916] shadow-[0_18px_60px_rgba(0,0,0,.24)] backdrop-blur-xl md:block"><div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-black/45"><span>Alertyy</span><span>{lang === "ru" ? "только что" : "just now"}</span></div><div className="mt-3 text-sm font-bold leading-5">{decodeHtmlEntities(item.headline)}</div><div className="mt-2 text-xs text-black/50">{item.source} · {item.category}</div></div>
     </article>
   );
 }
