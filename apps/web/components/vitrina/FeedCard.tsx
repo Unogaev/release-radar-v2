@@ -10,6 +10,7 @@ import { buildCardViewModel, type CardKind } from "@/lib/radar/cardViewModel";
 
 export interface FeedCardData {
   id: string;
+  detailId?: string | null;
   kind: CardKind;
   status?: string | null;
   brand?: string | null;
@@ -121,7 +122,7 @@ export function FeedCard({ data, onAction }: { data: FeedCardData; onAction?: (i
                     })()
                   : vm.cta === "remind"
                     ? "/calendar"
-                    : `/signals/${data.id}`
+                    : `/signals/${data.detailId ?? data.id}`
             }
           >
             {vm.ctaLabel}
