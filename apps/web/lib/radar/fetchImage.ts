@@ -204,7 +204,25 @@ export async function getPageImage(pageUrl?: string | null): Promise<ResolvedIma
   return pageUrl ? imageFromPage(pageUrl, "official-page") : null;
 }
 
+async function imageFromShopifyJson(pageUrl: string): Promise<ResolvedImage | null> {
+  try {
+    const u = new URL(pageUrl);
+    if (!/\/products\/[\w-]+/.test(u.pathname)) return null;
+    const res = await fetch(`${u.origin}${u.pathname}.json`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { product?: { images?: Array<{ src?: string }>; image?: { src?: string } } };
+    const src = data.product?.images?.[0]?.src ?? data.product?.image?.src;
+    if (!src || !isPublicHttpUrl(src) || REJECTED_IMAGE.test(src)) return null;
+    return { url: src, sourceUrl: pageUrl, provenance: "product-page" };
+  } catch {
+    return null;
+  }
+}
+
 export async function getProductImage(brand: string, model: string, officialPageUrl?: string | null): Promise<ResolvedImage | null> {
-  const direct = officialPageUrl ? await imageFromPage(officialPageUrl, "product-page") : null;
+  const direct = officialPageUrl ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
   return direct ?? imageFromOfficialSearch(brand, model, officialPageUrl);
 }
