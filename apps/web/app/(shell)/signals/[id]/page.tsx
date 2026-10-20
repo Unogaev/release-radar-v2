@@ -33,10 +33,11 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
   const releaseEvent = pv.releaseEvents[0];
   const modelLabel = titleCase(pv.product.normalizedModel);
   const resolvedImage = await getProductImage(pv.product.brand, modelLabel);
-  const imageUrl =
+  const searchImageUrl =
     typeof resolvedImage === "string"
       ? resolvedImage
       : ((resolvedImage as unknown as { url?: string } | null)?.url ?? null);
+  const imageUrl = pv.feedCard?.imageUrl ?? searchImageUrl;
   const brand = pv.product.brand;
 
   const evidenceItems: EvidenceItem[] = pv.evidence.map((e) => ({
