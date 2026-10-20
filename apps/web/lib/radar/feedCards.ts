@@ -117,7 +117,7 @@ async function embeddedSignalImageFor(
   return null;
 }
 
-async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
+async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: boolean }> {
   try {
     const existing = await prisma.feedCard.findUnique({
       where: { productVariantId: c.productVariantId },
@@ -149,9 +149,9 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
       create: { productVariantId: c.productVariantId, ...data },
       update: data,
     });
-    return { ok: true };
+    return { ok: true, img: Boolean(image) };
   } catch {
-    return { ok: false };
+    return { ok: false, img: false };
   }
 }
 
@@ -160,7 +160,7 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
  * Budget-conscious: a bounded slice per run, missing cards first, then the
  * stalest. Called from the hourly collector cron.
  */
-export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number; failed: number }> {
+export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number; failed: number; withImage: number; attempts: Array<{ t: string; u: string | null; img: boolean }> }> {
   await ensureFeedCardTable();
 
   const [decisions, releaseVariants] = await Promise.all([
@@ -252,7 +252,9 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
     if (o.ok) refreshed += 1;
     else failed += 1;
   }
-  return { refreshed, failed };
+  const withImage = outcomes.filter((o) => o.img).length;
+  const attempts = slice.map((c, i) => ({ t: `${c.brand} ${c.model}`.slice(0, 60), u: c.url, img: outcomes[i]?.img ?? false }));
+  return { refreshed, failed, withImage, attempts };
 }
 
 export type FeedCardRow = {
