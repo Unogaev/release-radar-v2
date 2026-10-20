@@ -51,7 +51,7 @@ async function createSignalAlert(input: CreateAlertInput, stage: NotificationSta
       userId,
       decisionId: input.decisionId,
       channel: "browser",
-      payload: JSON.stringify({ title, body }),
+      payload: JSON.stringify({ title, body, url: input.primaryUrl ?? null }),
       dedupeKey,
     },
   });
