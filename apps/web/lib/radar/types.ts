@@ -76,6 +76,7 @@ export interface SourceHealth {
 
 export interface NewsItem {
   id: string;
+  decisionId?: string | null;
   kind: "NEWS" | "MARKET" | "RELEASE" | "SIGNAL" | "ALERT";
   headline: string;
   brand?: string;
