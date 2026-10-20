@@ -279,7 +279,15 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
   }
 }
 
+function isDeepUrl(u: string): boolean {
+  try {
+    return new URL(u).pathname.split("/").filter(Boolean).length >= 2;
+  } catch {
+    return false;
+  }
+}
+
 export async function getProductImage(brand: string, model: string, officialPageUrl?: string | null): Promise<ResolvedImage | null> {
-  const direct = officialPageUrl ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
+  const direct = officialPageUrl && isDeepUrl(officialPageUrl) ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
   return direct ?? (officialPageUrl ? await imageFromShopifyCatalog(brand, model, officialPageUrl) : null) ?? imageFromOfficialSearch(brand, model, officialPageUrl);
 }
