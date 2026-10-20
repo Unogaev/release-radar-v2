@@ -548,6 +548,46 @@ export async function getRealFeed(): Promise<FeedPayload> {
     return null;
   });
 
+  // Completed sales live in the MarketSale table, but nothing turned them
+  // into feed items, so the Sold section only ever showed keyword-matched
+  // news stories. Build one MARKET news item per recent sale row, newest
+  // first: headline from the product name, the sold price in priceUsd and
+  // the sale date in observedAt — the fields news cards already render.
+  // Only real rows are used: an empty table adds nothing.
+  const recentSales = await prisma.marketSale.findMany({
+    orderBy: { observedAt: "desc" },
+    take: 10,
+    include: {
+      productVariant: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+  const saleCards = await readFeedCards([...new Set(recentSales.map((s) => s.productVariantId))]);
+  const marketSaleItems: NewsItem[] = recentSales.map((sale) => {
+    const pv = sale.productVariant;
+    const product = pv.product;
+    const card = saleCards.get(sale.productVariantId);
+    return {
+      id: "sale:" + sale.id,
+      kind: "MARKET" as const,
+      headline: product.brand + " " + titleCase(product.normalizedModel),
+      brand: product.brand,
+      model: titleCase(product.normalizedModel),
+      source: sale.platform,
+      retailer: sale.platform,
+      category: product.category,
+      priceUsd: sale.priceMinor / 100,
+      sourceUrl: card?.linkLive ? card.primaryUrl : null,
+      imageUrl: proxyImageUrl(card?.imageUrl),
+      imageSourceUrl: card?.imageSourceUrl ?? undefined,
+      observedAt: sale.observedAt.toISOString(),
+      launchAt: null,
+    };
+  });
+
   const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v) => {
       const card = releaseCards.get(v.id);
@@ -631,6 +671,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       observedAt: s.observedAt.toISOString(),
       launchAt: null,
     })),
+    ...marketSaleItems,
   ].sort((a, b) => new Date(b.observedAt).getTime() - new Date(a.observedAt).getTime());
 
   // Keep exceptional completed-sale stories visible instead of letting a single
