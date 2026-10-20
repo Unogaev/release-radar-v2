@@ -41,7 +41,7 @@ const rrArabic = Noto_Sans_Arabic({
 });
 
 export const metadata = {
-  title: "Release Radar",
+  title: "Alertyy",
   description: "Personal action-first release intelligence",
   manifest: "/manifest.json",
   icons: {
