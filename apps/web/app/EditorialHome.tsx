@@ -14,11 +14,11 @@ type ProofItem = {
   updatedAt: string;
 };
 
-const PAPER = "bg-[#f3eee4] text-[#1c1a15]";
+const PAPER = "bg-white text-[#1a1a1a]";
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-[#6f6656]">
+    <div className="font-rr-mono text-[10px] uppercase tracking-[0.24em] text-[#6b7280]">
       {children}
     </div>
   );
@@ -75,20 +75,20 @@ export function EditorialHome({
       `}</style>
 
       {/* MASTHEAD */}
-      <header className="border-b border-[#d8cfb9]">
+      <header className="border-b border-[#e5e7eb]">
         <div className="max-w-7xl mx-auto px-5 md:px-8">
           <div className="flex items-center justify-between py-5">
             <Link href="/" className="font-rr-display font-extrabold text-xl tracking-tight">
               RADAR<sup className="text-[10px] align-super">®</sup>
             </Link>
             <nav className="hidden sm:flex items-center gap-8 font-rr-mono text-[11px] uppercase tracking-[0.2em]">
-              <Link href="/now" className="border-b-2 border-[#1c1a15] pb-1">
+              <Link href="/now" className="border-b-2 border-[#1a1a1a] pb-1">
                 {t("ed_tab_discover")}
               </Link>
-              <span className="text-[#a89d88] cursor-default" title="Soon">
+              <span className="text-[#9ca3af] cursor-default" title="Soon">
                 {t("ed_tab_local")}
               </span>
-              <Link href="/earn" className="text-[#6f6656] hover:text-[#1c1a15] pb-1">
+              <Link href="/earn" className="text-[#6b7280] hover:text-[#1a1a1a] pb-1">
                 {t("ed_tab_earn")}
               </Link>
             </nav>
@@ -98,15 +98,15 @@ export function EditorialHome({
             </div>
           </div>
           <div className="sm:hidden flex items-center gap-6 pb-4 font-rr-mono text-[11px] uppercase tracking-[0.2em]">
-            <Link href="/now" className="border-b-2 border-[#1c1a15] pb-0.5">
+            <Link href="/now" className="border-b-2 border-[#1a1a1a] pb-0.5">
               {t("ed_tab_discover")}
             </Link>
-            <span className="text-[#a89d88]">{t("ed_tab_local")}</span>
-            <Link href="/earn" className="text-[#6f6656]">
+            <span className="text-[#9ca3af]">{t("ed_tab_local")}</span>
+            <Link href="/earn" className="text-[#6b7280]">
               {t("ed_tab_earn")}
             </Link>
           </div>
-          <div className="border-t border-[#d8cfb9] py-2 flex items-center justify-between font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6f6656]">
+          <div className="border-t border-[#e5e7eb] py-2 flex items-center justify-between font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6b7280]">
             <span>{today}</span>
             <span>{t("ed_edition")}</span>
           </div>
@@ -125,56 +125,56 @@ export function EditorialHome({
               <br />
               {t("ed_tagline_c")}
             </h2>
-            <p className="text-[13px] text-[#6f6656] mt-5 leading-relaxed max-w-[240px]">
+            <p className="text-[13px] text-[#6b7280] mt-5 leading-relaxed max-w-[240px]">
               {t("ed_tagline_sub")}
             </p>
           </div>
 
-          <div className="md:border-l md:border-r border-[#d8cfb9] md:px-8">
+          <div className="md:border-l md:border-r border-[#e5e7eb] md:px-8">
             <Kicker>{t("ed_ask_kicker")}</Kicker>
             <h1 className="font-rr-editorial text-[42px] md:text-[64px] leading-[1.02] mt-4 font-semibold">
               {t("ed_ask_headline")}
             </h1>
-            <div className="mt-8 flex items-center gap-4 border-b-2 border-[#1c1a15] pb-3">
+            <div className="mt-8 flex items-center gap-4 border-b-2 border-[#1a1a1a] pb-3">
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && ask()}
                 placeholder={t("ed_ask_placeholder")}
-                className="flex-1 bg-transparent text-lg md:text-xl placeholder:text-[#a89d88] outline-none font-rr-sans"
+                className="flex-1 bg-transparent text-lg md:text-xl placeholder:text-[#9ca3af] outline-none font-rr-sans"
               />
               <button
                 onClick={ask}
-                className="shrink-0 font-rr-mono text-[11px] uppercase tracking-[0.2em] text-[#2e5b3e] hover:text-[#1c1a15]"
+                className="shrink-0 font-rr-mono text-[11px] uppercase tracking-[0.2em] text-[#2e5b3e] hover:text-[#1a1a1a]"
               >
                 {t("ed_find_it")} →
               </button>
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6f6656]">
-              <button onClick={() => router.push("/now/add")} className="hover:text-[#1c1a15]">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6b7280]">
+              <button onClick={() => router.push("/now/add")} className="hover:text-[#1a1a1a]">
                 {t("ed_paste")}
               </button>
-              <button onClick={() => router.push("/now/add")} className="hover:text-[#1c1a15]">
+              <button onClick={() => router.push("/now/add")} className="hover:text-[#1a1a1a]">
                 {t("ed_upload")}
               </button>
-              <button onClick={() => router.push("/now/add")} className="hover:text-[#1c1a15]">
+              <button onClick={() => router.push("/now/add")} className="hover:text-[#1a1a1a]">
                 {t("ed_describe")}
               </button>
             </div>
           </div>
 
           <div>
-            <div className="border border-[#d8cfb9] bg-[#ece5d3] p-6">
+            <div className="border border-[#e5e7eb] bg-[#f8f9fa] p-6">
               <Kicker>{t("ed_desk")}</Kicker>
               <dl className="mt-5 space-y-4 text-[13px]">
-                <div className="flex justify-between gap-4 border-b border-[#d8cfb9] pb-3">
-                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6f6656] pt-0.5">
+                <div className="flex justify-between gap-4 border-b border-[#e5e7eb] pb-3">
+                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6b7280] pt-0.5">
                     {t("ed_desk_market")}
                   </dt>
                   <dd className="text-right font-medium">{t("ed_desk_market_v")}</dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-[#d8cfb9] pb-3">
-                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6f6656] pt-0.5">
+                <div className="flex justify-between gap-4 border-b border-[#e5e7eb] pb-3">
+                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6b7280] pt-0.5">
                     {t("ed_desk_network")}
                   </dt>
                   <dd className="text-right font-medium">
@@ -182,7 +182,7 @@ export function EditorialHome({
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6f6656] pt-0.5">
+                  <dt className="font-rr-mono text-[10px] uppercase tracking-[0.18em] text-[#6b7280] pt-0.5">
                     {t("ed_desk_rule")}
                   </dt>
                   <dd className="text-right font-medium">{t("ed_desk_rule_v")}</dd>
@@ -191,13 +191,13 @@ export function EditorialHome({
               <div className="grid grid-cols-2 gap-2 mt-6">
                 <Link
                   href="/requests/new"
-                  className="bg-[#1c1a15] text-[#f3eee4] font-rr-mono text-[10px] uppercase tracking-[0.14em] text-center px-3 py-3.5 hover:bg-[#2e5b3e] transition-colors"
+                  className="bg-[#1a1a1a] text-white font-rr-mono text-[10px] uppercase tracking-[0.14em] text-center px-3 py-3.5 hover:bg-[#2e5b3e] transition-colors"
                 >
                   + {t("ed_create_request")}
                 </Link>
                 <Link
                   href="/earn"
-                  className="border border-[#1c1a15] font-rr-mono text-[10px] uppercase tracking-[0.14em] text-center px-3 py-3.5 hover:bg-[#1c1a15] hover:text-[#f3eee4] transition-colors"
+                  className="border border-[#1a1a1a] font-rr-mono text-[10px] uppercase tracking-[0.14em] text-center px-3 py-3.5 hover:bg-[#1a1a1a] hover:text-white transition-colors"
                 >
                   {t("ed_im_here")}
                 </Link>
@@ -209,8 +209,8 @@ export function EditorialHome({
 
       {/* TICKER */}
       {tickerItems.length > 0 && (
-        <div className="border-y border-[#d8cfb9] bg-[#ece5d3] overflow-hidden py-2.5">
-          <div className="rr-ticker-track font-rr-mono text-[11px] uppercase tracking-[0.14em] text-[#6f6656]">
+        <div className="border-y border-[#e5e7eb] bg-[#f8f9fa] overflow-hidden py-2.5">
+          <div className="rr-ticker-track font-rr-mono text-[11px] uppercase tracking-[0.14em] text-[#6b7280]">
             {[0, 1].map((copy) => (
               <span key={copy} className="inline-flex">
                 {tickerItems.map((item, i) => (
@@ -231,23 +231,23 @@ export function EditorialHome({
           <h2 className="font-rr-editorial text-3xl md:text-[40px] font-semibold">
             {t("ed_moving_title")}
           </h2>
-          <div className="hidden md:block font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6f6656] pb-2">
+          <div className="hidden md:block font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6b7280] pb-2">
             {t("ed_moving_kicker")}
           </div>
         </div>
-        <div className="border-t-2 border-[#1c1a15]">
+        <div className="border-t-2 border-[#1a1a1a]">
           {signals.length === 0 ? (
-            <p className="py-10 text-sm text-[#6f6656]">{t("ed_moving_empty")}</p>
+            <p className="py-10 text-sm text-[#6b7280]">{t("ed_moving_empty")}</p>
           ) : (
             signals.map((s, i) => {
               const name = dedupeName(s);
               return (
-                <article key={s.id} className="grid grid-cols-[auto_1fr] md:grid-cols-[56px_120px_1fr_auto] gap-4 md:gap-6 py-6 border-b border-[#d8cfb9] items-start">
-                  <div className="font-rr-mono text-[11px] text-[#a89d88] pt-1">
+                <article key={s.id} className="grid grid-cols-[auto_1fr] md:grid-cols-[56px_120px_1fr_auto] gap-4 md:gap-6 py-6 border-b border-[#e5e7eb] items-start">
+                  <div className="font-rr-mono text-[11px] text-[#9ca3af] pt-1">
                     {String(i + 1).padStart(3, "0")}
                   </div>
                   {s.imageUrl && (
-                    <Link href={`/signals/${s.id}`} className="hidden md:block w-[120px] h-[120px] overflow-hidden bg-[#ece5d3]">
+                    <Link href={`/signals/${s.id}`} className="hidden md:block w-[120px] h-[120px] overflow-hidden bg-[#f8f9fa]">
                       <img src={s.imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
                     </Link>
                   )}
@@ -260,8 +260,8 @@ export function EditorialHome({
                         {name || s.kindLabel}
                       </Link>
                     </h3>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-[13px] text-[#6f6656]">
-                      {s.retail != null && <span className="font-medium text-[#1c1a15]">${s.retail}</span>}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-[13px] text-[#6b7280]">
+                      {s.retail != null && <span className="font-medium text-[#1a1a1a]">${s.retail}</span>}
                       <span className="font-rr-mono text-[10px] uppercase tracking-[0.18em] border border-[#2e5b3e] text-[#2e5b3e] px-2 py-0.5">
                         {String(s.status).toUpperCase()}
                       </span>
@@ -269,7 +269,7 @@ export function EditorialHome({
                     <div className="flex flex-wrap gap-3 mt-3">
                       <Link
                         href={`/signals/${s.id}`}
-                        className="font-rr-mono text-[10px] uppercase tracking-[0.18em] border border-[#1c1a15] px-4 py-2 hover:bg-[#1c1a15] hover:text-[#f3eee4] transition-colors"
+                        className="font-rr-mono text-[10px] uppercase tracking-[0.18em] border border-[#1a1a1a] px-4 py-2 hover:bg-[#1a1a1a] hover:text-white transition-colors"
                       >
                         {t("ed_open")} →
                       </Link>
@@ -290,14 +290,14 @@ export function EditorialHome({
       </section>
 
       {/* EARN */}
-      <section className="border-t border-[#d8cfb9]">
+      <section className="border-t border-[#e5e7eb]">
         <div className="max-w-7xl mx-auto px-5 md:px-8 py-12 md:py-16 grid md:grid-cols-2 gap-8 items-center">
           <div>
             <Kicker>{t("home_earn_kicker")}</Kicker>
             <h2 className="font-rr-editorial text-3xl md:text-[40px] font-semibold mt-3">
               {t("home_earn_title")}
             </h2>
-            <p className="text-sm text-[#6f6656] mt-4 max-w-md leading-relaxed">
+            <p className="text-sm text-[#6b7280] mt-4 max-w-md leading-relaxed">
               {openCount > 0
                 ? `${t("home_earn_open_label")} ${openCount}`
                 : t("home_earn_empty")}
@@ -306,7 +306,7 @@ export function EditorialHome({
           <div className="md:text-right">
             <Link
               href="/earn"
-              className="inline-block bg-[#1c1a15] text-[#f3eee4] font-rr-mono text-[11px] uppercase tracking-[0.2em] px-8 py-4 hover:bg-[#2e5b3e] transition-colors"
+              className="inline-block bg-[#1a1a1a] text-white font-rr-mono text-[11px] uppercase tracking-[0.2em] px-8 py-4 hover:bg-[#2e5b3e] transition-colors"
             >
               {t("home_earn_cta")} →
             </Link>
@@ -316,22 +316,22 @@ export function EditorialHome({
 
       {/* PROOF */}
       {proof.length > 0 && (
-        <section className="border-t border-[#d8cfb9]">
+        <section className="border-t border-[#e5e7eb]">
           <div className="max-w-7xl mx-auto px-5 md:px-8 py-12 md:py-16">
             <Kicker>{t("home_proof_kicker")}</Kicker>
             <h2 className="font-rr-editorial text-3xl md:text-[40px] font-semibold mt-3">
               {t("home_proof_title")}
             </h2>
-            <p className="text-sm text-[#6f6656] mt-2">{t("home_proof_sub")}</p>
+            <p className="text-sm text-[#6b7280] mt-2">{t("home_proof_sub")}</p>
             <div className="mt-6 space-y-3">
               {proof.map((p) => (
                 <Link
                   key={p.id}
                   href={`/requests/${p.id}`}
-                  className="block border border-[#d8cfb9] bg-[#ece5d3] p-5 hover:border-[#1c1a15] transition-colors"
+                  className="block border border-[#e5e7eb] bg-[#f8f9fa] p-5 hover:border-[#1a1a1a] transition-colors"
                 >
                   <div className="font-medium">{p.title}</div>
-                  <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#6f6656] mt-1.5">
+                  <div className="font-rr-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280] mt-1.5">
                     {[p.brand, p.model].filter(Boolean).join(" · ")}
                     {[p.brand, p.model].filter(Boolean).length > 0 ? " · " : ""}
                     {new Date(p.updatedAt).toLocaleDateString()}
@@ -344,17 +344,17 @@ export function EditorialHome({
       )}
 
       {/* FOOTER */}
-      <footer className="border-t-2 border-[#1c1a15]">
+      <footer className="border-t-2 border-[#1a1a1a]">
         <div className="max-w-7xl mx-auto px-5 md:px-8 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="font-rr-display font-extrabold text-lg tracking-tight">
             RADAR<sup className="text-[9px] align-super">®</sup>
           </div>
-          <div className="font-rr-editorial italic text-[#6f6656]">{t("ed_footer_tag")}</div>
-          <nav className="flex gap-6 font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6f6656]">
-            <Link href="/now" className="hover:text-[#1c1a15]">
+          <div className="font-rr-editorial italic text-[#6b7280]">{t("ed_footer_tag")}</div>
+          <nav className="flex gap-6 font-rr-mono text-[10px] uppercase tracking-[0.2em] text-[#6b7280]">
+            <Link href="/now" className="hover:text-[#1a1a1a]">
               {t("ed_tab_discover")}
             </Link>
-            <Link href="/earn" className="hover:text-[#1c1a15]">
+            <Link href="/earn" className="hover:text-[#1a1a1a]">
               {t("ed_tab_earn")}
             </Link>
           </nav>
