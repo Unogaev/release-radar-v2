@@ -154,7 +154,7 @@ export default function NotificationsPage() {
         <Link href="/now" className="mb-4 inline-flex text-xs font-semibold text-rr-accent">← Вернуться в центр действий</Link>
         <h1 className="font-rr-display text-2xl text-rr-text">Уведомления</h1>
         <p className="text-sm text-rr-text-dim mt-1">
-          Настоящий Web Push для BUY NOW, APPLY NOW, неожиданных рестоков и контрольных напоминаний. Работает при закрытом сайте; на iPhone Release Radar нужно добавить на главный экран.
+          Настоящий Web Push для BUY NOW, APPLY NOW, неожиданных рестоков и контрольных напоминаний. Работает при закрытом сайте; на iPhone Alertyy нужно добавить на главный экран.
         </p>
       </header>
 
