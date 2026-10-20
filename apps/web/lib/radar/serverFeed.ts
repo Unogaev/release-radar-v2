@@ -480,7 +480,10 @@ export async function getRealFeed(): Promise<FeedPayload> {
     where: { channel: "browser", NOT: { dedupeKey: { endsWith: ":first_detection" } } },
     orderBy: { createdAt: "desc" },
     take: 10,
+    include: { decision: { select: { productVariantId: true } } },
   });
+
+  const alertCards = await readFeedCards([...new Set(recentAlerts.map((a) => a.decision.productVariantId))]);
 
     // Release-variant and news images come from the materialized FeedCard rows
   // (built by the collector cron); news signals additionally carry their
@@ -544,19 +547,25 @@ export async function getRealFeed(): Promise<FeedPayload> {
     })),
     ...recentAlerts.map((a) => {
       let headline = "\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u0441\u0438\u0433\u043d\u0430\u043b\u0443";
+      let payloadUrl: string | null = null;
       try {
-        const parsed = JSON.parse(a.payload) as { title?: string };
+        const parsed = JSON.parse(a.payload) as { title?: string; url?: string };
         if (parsed.title) headline = parsed.title;
+        if (parsed.url) payloadUrl = parsed.url;
       } catch {
         /* keep honest fallback text */
       }
+      const card = alertCards.get(a.decision.productVariantId);
       return {
         id: "alert:" + a.id,
+        decisionId: a.decisionId,
         kind: "ALERT" as const,
         headline,
         source: "Release Radar",
         category: "alerts",
-        sourceUrl: null,
+        sourceUrl: card?.linkLive ? card.primaryUrl : payloadUrl,
+        imageUrl: proxyImageUrl(card?.imageUrl),
+        imageSourceUrl: card?.imageSourceUrl ?? undefined,
         observedAt: a.createdAt.toISOString(),
         launchAt: null,
       };
