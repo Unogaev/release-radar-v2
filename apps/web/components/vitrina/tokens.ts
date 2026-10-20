@@ -1,0 +1,26 @@
+export const tokens = {
+  color: {
+    bg: "#fafafa",
+    surface: "#ffffff",
+    border: "#e5e7eb",
+    text: "#1a1a1a",
+    textSecondary: "#6b7280",
+    textTertiary: "#9ca3af",
+    accent: "#16a34a",
+    accentHover: "#15803d",
+  },
+  status: {
+    buy: { bg: "#16a34a", text: "#ffffff", label: "BUY NOW" },
+    apply: { bg: "#7c3aed", text: "#ffffff", label: "APPLY NOW" },
+    prepare: { bg: "#d97706", text: "#ffffff", label: "PREPARE" },
+    client: { bg: "#2563eb", text: "#ffffff", label: "CLIENT FIRST" },
+    watch: { bg: "#64748b", text: "#ffffff", label: "WATCH" },
+    verify: { bg: "#64748b", text: "#ffffff", label: "VERIFY" },
+    skip: { bg: "#9ca3af", text: "#ffffff", label: "SKIP" },
+    risk: { bg: "#dc2626", text: "#ffffff", label: "RISK" },
+    release: { bg: "#f3f4f6", text: "#374151", label: "RELEASE" },
+    news: { bg: "#f3f4f6", text: "#374151", label: "NEWS" },
+  },
+  radius: { card: 16, button: 12, badge: 999 },
+  spacing: { card: 16 },
+} as const;
