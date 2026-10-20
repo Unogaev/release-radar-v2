@@ -166,6 +166,11 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
               take: 1,
               select: { url: true },
             },
+            evidence: {
+              orderBy: { observedAt: "desc" },
+              take: 1,
+              select: { url: true },
+            },
             feedCard: { select: { updatedAt: true, imageUrl: true } },
           },
         },
@@ -212,7 +217,7 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
 
   for (const d of decisions) {
     const pv = d.productVariant;
-    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), pv.availabilityChecks[0]?.url ?? null, pv.feedCard);
+    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), pv.availabilityChecks[0]?.url ?? pv.evidence[0]?.url ?? null, pv.feedCard);
   }
   for (const v of releaseVariants) {
     push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? null, v.feedCard);
