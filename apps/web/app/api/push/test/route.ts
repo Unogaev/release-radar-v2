@@ -5,7 +5,7 @@ import { sendPushToUser } from "@/lib/notifications/push";
 export async function POST() {
   const userId = await requireUserId();
   const result = await sendPushToUser(userId, {
-    title: "Release Radar · push работает",
+    title: "Alertyy · push работает",
     body: "Критические BUY NOW, APPLY NOW и напоминания смогут приходить при закрытом сайте.",
     url: "/now",
     tag: "release-radar-test",
