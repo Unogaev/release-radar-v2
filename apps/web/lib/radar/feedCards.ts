@@ -84,6 +84,27 @@ function titleCase(s: string): string {
   return decodeHtmlEntities(s).replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+async function embeddedSignalImageFor(
+  productVariantId: string,
+): Promise<{ url: string; sourceUrl: string; provenance: "official-page" } | null> {
+  const rows = await prisma.signal.findMany({
+    where: { productVariantId, rawText: { contains: "[rr:image=" } },
+    orderBy: { observedAt: "desc" },
+    take: 3,
+    select: { rawText: true, url: true },
+  });
+  for (const r of rows) {
+    const encoded = r.rawText?.match(/\[rr:image=([^\]]+)\]/i)?.[1];
+    if (!encoded) continue;
+    try {
+      return { url: decodeURIComponent(encoded), sourceUrl: r.url ?? "", provenance: "official-page" };
+    } catch {
+      // malformed encoding — try the next row
+    }
+  }
+  return null;
+}
+
 async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
   try {
     const existing = await prisma.feedCard.findUnique({
@@ -92,10 +113,12 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
     // Images barely change: only re-resolve when missing. Link liveness is
     // re-checked every run so dead store links stop being offered as actions.
     const needImage = !existing?.imageUrl;
-    const [image, linkState] = await Promise.all([
+    const [embedded, fetched, linkState] = await Promise.all([
+      needImage ? embeddedSignalImageFor(c.productVariantId).catch(() => null) : Promise.resolve(null),
       needImage ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
       isLiveExternalUrl(c.url).catch(() => null),
     ]);
+    const image = embedded ?? fetched;
     // linkState null = ambiguous (bot-protection 403): keep the previously
     // verified liveness. A browser-verified intake observation seeds
     // linkLive=true, which survives here until a definitive check says
@@ -125,7 +148,7 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean }> {
  * Budget-conscious: a bounded slice per run, missing cards first, then the
  * stalest. Called from the hourly collector cron.
  */
-export async function refreshFeedCards(limit = 12): Promise<{ refreshed: number; failed: number }> {
+export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number; failed: number }> {
   await ensureFeedCardTable();
 
   const [decisions, releaseVariants] = await Promise.all([
