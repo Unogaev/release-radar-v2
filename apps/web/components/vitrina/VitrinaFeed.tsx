@@ -44,13 +44,69 @@ function isFull(c: FeedCardData): boolean {
   );
 }
 
-function dedupeById(list: FeedCardData[]): FeedCardData[] {
-  const seen = new Set<string>();
-  return list.filter((c) => {
-    if (seen.has(c.id)) return false;
-    seen.add(c.id);
-    return true;
-  });
+function normalizeProductKeyText(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Cross-section dedupe key: normalized brand + model, lowercased and
+ * punctuation-stripped. The same product reaches the feed as cards with
+ * different ids (an ALERT from the alert payload, a SIGNAL from the
+ * decision pipeline), so id dedupe alone cannot catch it. Alert cards
+ * carry their headline as "<alert label> · <brand> <model>", so for
+ * ALERT cards the model part is what follows the "·". The brand field
+ * is prepended only when the name does not already start with it, and
+ * consecutive repeated tokens collapse — an alert headline embeds the
+ * brand twice ("Vaquera vaquera - women's…") while the same product's
+ * Watching card carries it once as the brand field and once at the
+ * start of the model, so both forms must land on the same key. Distinct
+ * models of one brand (e.g. two different Prada items) keep distinct
+ * keys. Returns "" when the key would be too weak (fewer than 2 tokens).
+ */
+function productKeyOf(c: FeedCardData): string {
+  let model = c.name ?? "";
+  if (c.kind === "ALERT") {
+    const sep = model.indexOf("·");
+    if (sep > 0) model = model.slice(sep + 1);
+  }
+  const brand = normalizeProductKeyText(c.brand);
+  const modelKey = normalizeProductKeyText(model);
+  const combined =
+    brand && modelKey && modelKey !== brand && !modelKey.startsWith(`${brand} `)
+      ? `${brand} ${modelKey}`
+      : modelKey || brand;
+  const tokens: string[] = [];
+  for (const token of combined.split(" ")) {
+    if (!token) continue;
+    if (tokens[tokens.length - 1] !== token) tokens.push(token);
+  }
+  return tokens.length >= 2 ? tokens.join(" ") : "";
+}
+
+const KIND_PRIORITY: Record<string, number> = { ALERT: 0, RELEASE: 1, SIGNAL: 2, NEWS: 3 };
+
+function dedupeByIdOrProduct(list: FeedCardData[]): FeedCardData[] {
+  const seenIds = new Set<string>();
+  const seenProducts = new Set<string>();
+  const keep = new Set<FeedCardData>();
+  // Decide keepers in section-priority order (an Urgent alert wins over
+  // the same product's Watching signal), then restore the input order.
+  const byPriority = [...list].sort(
+    (a, b) => (KIND_PRIORITY[a.kind] ?? 9) - (KIND_PRIORITY[b.kind] ?? 9),
+  );
+  for (const c of byPriority) {
+    if (seenIds.has(c.id)) continue;
+    const key = productKeyOf(c);
+    if (key && seenProducts.has(key)) continue;
+    seenIds.add(c.id);
+    if (key) seenProducts.add(key);
+    keep.add(c);
+  }
+  return list.filter((c) => keep.has(c));
 }
 
 export function VitrinaFeed({ cards }: VitrinaFeedInput) {
@@ -59,11 +115,15 @@ export function VitrinaFeed({ cards }: VitrinaFeedInput) {
 
   const sections = useMemo(() => {
     const seen = new Set<string>();
+    const seenProducts = new Set<string>();
     const take = (list: FeedCardData[]): FeedCardData[] => {
       const out: FeedCardData[] = [];
       for (const c of list) {
         if (seen.has(c.id)) continue;
+        const key = productKeyOf(c);
+        if (key && seenProducts.has(key)) continue;
         seen.add(c.id);
+        if (key) seenProducts.add(key);
         out.push(c);
       }
       return out;
@@ -89,19 +149,19 @@ export function VitrinaFeed({ cards }: VitrinaFeedInput) {
   const visible = useMemo(() => {
     switch (filter) {
       case "urgent":
-        return dedupeById(cards.filter((c) => c.kind === "ALERT"));
+        return dedupeByIdOrProduct(cards.filter((c) => c.kind === "ALERT"));
       case "releases":
-        return dedupeById(cards.filter((c) => c.kind === "RELEASE"));
+        return dedupeByIdOrProduct(cards.filter((c) => c.kind === "RELEASE"));
       case "restocks":
-        return dedupeById(
+        return dedupeByIdOrProduct(
           cards.filter(
             (c) => c.kind === "SIGNAL" || (c.name ?? "").toLowerCase().includes("restock"),
           ),
         );
       case "news":
-        return dedupeById(cards.filter((c) => c.kind === "NEWS"));
+        return dedupeByIdOrProduct(cards.filter((c) => c.kind === "NEWS"));
       default:
-        return dedupeById(cards);
+        return dedupeByIdOrProduct(cards);
     }
   }, [cards, filter]);
 
