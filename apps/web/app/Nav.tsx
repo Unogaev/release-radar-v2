@@ -38,7 +38,7 @@ export function Nav() {
       <nav className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-rr-frame bg-rr-bg p-4 justify-between">
         <div>
           <div className="text-rr-accent font-bold text-sm tracking-[0.15em] mb-8 px-2">
-            RELEASE RADAR
+            ALERTYY
           </div>
           <div className="space-y-0.5">
             {SECTIONS.map((s) => {
@@ -78,7 +78,7 @@ export function Nav() {
       </nav>
 
       <nav className="md:hidden border-b border-rr-frame bg-rr-bg p-3 sticky top-0 z-20">
-        <div className="text-rr-accent font-bold text-xs tracking-[0.12em] mb-2 px-1">RELEASE RADAR</div>
+        <div className="text-rr-accent font-bold text-xs tracking-[0.12em] mb-2 px-1">ALERTYY</div>
         <div className="flex gap-1 overflow-x-auto pb-1">
           {SECTIONS.map((s) => {
             const Icon = s.icon;
