@@ -253,7 +253,7 @@ async function imageFromShopifyCatalog(brand: string, model: string, storeUrl: s
     let best: { score: number; hits: number; img: ResolvedImage } | null = null;
     for (let page = 1; page <= 3; page++) {
       const res = await fetch(`${origin}/products.json?limit=250&page=${page}`, {
-        signal: AbortSignal.timeout(5_000),
+        signal: AbortSignal.timeout(15_000),
         headers: { "User-Agent": "Mozilla/5.0 ReleaseRadar/1.0", Accept: "application/json" },
       });
       if (!res.ok) break;
