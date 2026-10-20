@@ -181,12 +181,12 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
             evidence: {
               orderBy: { observedAt: "desc" },
               take: 1,
-              select: { url: true },
+              select: { url: true, source: { select: { url: true } } },
             },
             signals: {
               orderBy: { observedAt: "desc" },
               take: 1,
-              select: { url: true },
+              select: { url: true, source: { select: { url: true } } },
             },
             feedCard: { select: { updatedAt: true, imageUrl: true } },
           },
@@ -206,7 +206,7 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
         evidence: {
           orderBy: { observedAt: "desc" },
           take: 1,
-          select: { url: true },
+          select: { url: true, source: { select: { url: true } } },
         },
         feedCard: { select: { updatedAt: true, imageUrl: true } },
       },
@@ -234,10 +234,10 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
 
   for (const d of decisions) {
     const pv = d.productVariant;
-    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), preferProductUrl([pv.availabilityChecks[0]?.url, pv.evidence[0]?.url, pv.signals[0]?.url]), pv.feedCard);
+    push(d.productVariantId, pv.product.brand, titleCase(pv.product.normalizedModel), preferProductUrl([pv.availabilityChecks[0]?.url, pv.evidence[0]?.url, pv.signals[0]?.url]) ?? pv.evidence[0]?.source?.url ?? pv.signals[0]?.source?.url ?? null, pv.feedCard);
   }
   for (const v of releaseVariants) {
-    push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? null, v.feedCard);
+    push(v.id, v.product.brand, titleCase(v.product.normalizedModel), v.evidence[0]?.url ?? v.evidence[0]?.source?.url ?? null, v.feedCard);
   }
 
   candidates.sort((a, b) => a.rank - b.rank);
