@@ -84,6 +84,15 @@ function titleCase(s: string): string {
   return decodeHtmlEntities(s).replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function isRootUrl(u: string | null | undefined): boolean {
+  if (!u) return false;
+  try {
+    return new URL(u).pathname.split("/").filter(Boolean).length < 2;
+  } catch {
+    return false;
+  }
+}
+
 function preferProductUrl(urls: Array<string | null | undefined>): string | null {
   const valid = urls.filter((u): u is string => Boolean(u));
   const deep = valid.find((u) => {
@@ -124,7 +133,8 @@ async function resolveCandidate(c: CardCandidate): Promise<{ ok: boolean; img: b
     });
     // Images barely change: only re-resolve when missing. Link liveness is
     // re-checked every run so dead store links stop being offered as actions.
-    const needImage = !existing?.imageUrl || existing?.imageProvenance === "official-search";
+    const needImage =
+      !existing?.imageUrl || existing?.imageProvenance === "official-search" || isRootUrl(existing?.imageSourceUrl);
     const [embedded, fetched, linkState] = await Promise.all([
       needImage ? embeddedSignalImageFor(c.productVariantId).catch(() => null) : Promise.resolve(null),
       needImage ? getProductImage(c.brand, c.model, c.url).catch(() => null) : Promise.resolve(null),
