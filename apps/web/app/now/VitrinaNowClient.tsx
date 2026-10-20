@@ -122,7 +122,7 @@ function newsToCard(n: NewsItem): FeedCardData {
     launchAt: n.launchAt ?? null,
     store: n.retailer ?? n.source ?? null,
     region: regionOfStore(n.retailer ?? n.source ?? null),
-    isMarketStory: n.kind === "MARKET",
+    isMarketStory: n.kind === "MARKET" && n.priceUsd != null,
     checkedAt: n.observedAt,
     sourceUrl: n.sourceUrl ?? null,
   };
