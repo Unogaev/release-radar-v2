@@ -108,7 +108,7 @@ export async function getDecisionDetail(decisionId: string) {
           availabilityChecks: { orderBy: { checkedAt: "desc" }, take: 5 },
           marketSales: { orderBy: { observedAt: "desc" }, take: 10 },
           marketAsks: { orderBy: { observedAt: "desc" }, take: 10 },
-          releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
+          releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 }, feedCard: true,
         },
       },
     },
