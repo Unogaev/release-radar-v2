@@ -7,7 +7,73 @@ import { readFeedCards } from "./feedCards";
 import { VERIFIED_RELEASES } from "./verifiedReleases";
 
 function signalHeadline(rawText: string | null | undefined) {
-  return decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
+  const cleaned = decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
+  if (!cleaned || cleaned === "[object Object]" || /^\[object [^\]]+\]$/.test(cleaned)) return "";
+  const jsonProduct = extractJsonProduct(cleaned);
+  if (jsonProduct) return headlineFromJsonProduct(jsonProduct);
+  if (cleaned.startsWith("{") || cleaned.startsWith("[")) return "";
+  return cleaned;
+}
+
+/**
+ * Some signals store a serialized object in rawText instead of a headline:
+ * a Shopify product JSON blob from a store adapter, or a title value that
+ * was stringified from an object at ingest ("[object Object]"). Neither may
+ * ever be shown as a headline. Extract a human title when the payload
+ * carries one: a JSON `title` (with its `vendor`), or a title value that is
+ * itself an object with text/url fields. Returns null when rawText is not a
+ * JSON object at all, and empty fields when it is JSON without a title.
+ */
+function titleTextFromValue(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = titleTextFromValue(item);
+      if (text) return text;
+    }
+    return "";
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["text", "title", "headline", "name", "label", "value"]) {
+      const text = titleTextFromValue(record[key]);
+      if (text) return text;
+    }
+    for (const key of ["url", "href", "link"]) {
+      if (typeof record[key] === "string") return (record[key] as string).trim();
+    }
+  }
+  return "";
+}
+
+function extractJsonProduct(rawText: string | null | undefined): { title: string; vendor: string } | null {
+  const raw = (rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim();
+  if (!raw.startsWith("{")) return null;
+  let title = "";
+  let vendor = "";
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return null;
+    title = titleTextFromValue(parsed.title ?? parsed.name ?? parsed.headline);
+    vendor = typeof parsed.vendor === "string" ? parsed.vendor.trim() : typeof parsed.brand === "string" ? parsed.brand.trim() : "";
+  } catch {
+    /* truncated blob: salvage the title/vendor fields with a targeted match */
+    title = raw.match(/"title"\s*:\s*"([^"]+)"/)?.[1]?.trim() ?? "";
+    vendor = raw.match(/"(?:vendor|brand)"\s*:\s*"([^"]+)"/)?.[1]?.trim() ?? "";
+  }
+  if (!title && !vendor) return null;
+  return { title, vendor };
+}
+
+function headlineFromJsonProduct(product: { title: string; vendor: string }): string {
+  const title = product.title.trim();
+  if (!title) return "";
+  if (!product.vendor) return title;
+  return title.toLowerCase().startsWith(product.vendor.toLowerCase()) ? title : `${product.vendor} ${title}`;
+}
+
+function normalizeProductText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
 
 /**
@@ -28,7 +94,7 @@ function readableHeadline(rawText: string | null | undefined, url: string | null
   } catch {
     /* fall through to the honest fallback below */
   }
-  return (base || sourceName || "New signal detected").slice(0, 140);
+  return (sourceName ? `Update from ${sourceName}` : "New signal detected").slice(0, 140);
 }
 
 function embeddedSignalImage(rawText: string | null | undefined): string | null {
@@ -471,7 +537,26 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const seenNews = new Set<string>();
   const perSource = new Map<string, number>();
   const perCategory = new Map<string, number>();
+  // Product-JSON signals for a product that is already shown as a product
+  // card in the feed (the signals list above, e.g. in Watching) must not be
+  // duplicated as news rows. Match on the normalized product title, with
+  // and without the vendor/brand prefix on either side.
+  const feedProductKeys = new Set<string>();
+  for (const s of signals) {
+    feedProductKeys.add(normalizeProductText(`${s.brand} ${s.model}`));
+    feedProductKeys.add(normalizeProductText(s.model));
+  }
+  const isFeedProductJson = (rawText: string | null | undefined): boolean => {
+    const product = extractJsonProduct(rawText);
+    if (!product || !product.title) return false;
+    const keys = [
+      normalizeProductText(product.title),
+      normalizeProductText(`${product.vendor} ${product.title}`),
+    ];
+    return keys.some((key) => key && feedProductKeys.has(key));
+  };
   const newsSignals = rawNewsSignals.filter((signal) => {
+    if (isFeedProductJson(signal.rawText)) return false;
     const headline = signalHeadline(signal.rawText);
     if (!PRODUCT_NEWS.test(headline) && !COMMERCE_CATEGORIES.has(signal.source.category)) return false;
     if (ENTERTAINMENT_ONLY.test(headline) && !COMMERCE_CONTEXT.test(headline)) return false;
