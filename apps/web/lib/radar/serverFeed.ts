@@ -622,7 +622,19 @@ export async function getRealFeed(): Promise<FeedPayload> {
     where: { channel: "browser", NOT: { dedupeKey: { endsWith: ":first_detection" } } },
     orderBy: { createdAt: "desc" },
     take: 10,
-    include: { decision: { select: { productVariantId: true } } },
+    include: {
+      decision: {
+        select: {
+          productVariantId: true,
+          productVariant: {
+            select: {
+              product: { select: { brand: true, normalizedModel: true } },
+              availabilityChecks: { orderBy: { checkedAt: "desc" }, take: 1, select: { priceUsd: true } },
+            },
+          },
+        },
+      },
+    },
   });
 
   // Алерты по женской одежде (платья/юбки/туфли на каблуке) — оффтопик:
@@ -752,6 +764,14 @@ export async function getRealFeed(): Promise<FeedPayload> {
         /* keep honest fallback text */
       }
       const card = alertCards.get(a.decision.productVariantId);
+      // Alert rows resolve their price exactly like the signal cards above:
+      // the decision variant's own latest check first, then the product-group
+      // priced-check fallback. Without this the board's Top opportunities
+      // rendered alert rows price-less even when the system knows the price.
+      const alertProduct = a.decision.productVariant?.product ?? null;
+      const alertCheck = a.decision.productVariant?.availabilityChecks[0] ?? null;
+      const alertRetail = alertCheck?.priceUsd
+        ?? (alertProduct ? pricedCheckByProductKey.get(`${alertProduct.brand}::${alertProduct.normalizedModel}`.toLowerCase())?.priceUsd ?? null : null);
       return {
         id: "alert:" + a.id,
         decisionId: a.decisionId,
@@ -762,6 +782,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
         sourceUrl: card?.linkLive ? card.primaryUrl : payloadUrl,
         imageUrl: proxyImageUrl(card?.imageUrl),
         imageSourceUrl: card?.imageSourceUrl ?? undefined,
+        priceUsd: alertRetail,
         observedAt: a.createdAt.toISOString(),
         launchAt: null,
       };
