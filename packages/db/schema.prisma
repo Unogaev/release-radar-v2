@@ -11,6 +11,10 @@
 //   - purchase is only created after explicit user confirmation or a
 //     confirmed order event
 //
+// ResaleEstimate (Phase 1, resale-estimates data layer) is additive and
+// outside the original 21: approximate resale earnings, always labeled as
+// estimates. Estimates are NEVER written to MarketSale (verified sales only).
+//
 // Auth: email + password only (no magic link, no Telegram login) per the
 // user's explicit instruction — passwordHash on User, nothing else.
 
@@ -95,6 +99,7 @@ model ProductVariant {
   decisions          Decision[]
   marketSales        MarketSale[]
   marketAsks         MarketAsk[]
+  resaleEstimates    ResaleEstimate[]
   buyerRequests      BuyerRequest[]
   purchases          Purchase[]
   feedCard           FeedCard?
@@ -313,6 +318,32 @@ model MarketAsk {
   @@index([productVariantId, observedAt])
 }
 
+// ============================== Resale estimates (Phase 1: data only) ==============================
+//
+// ПРИБЛИЗИТЕЛЬНЫЕ оценки заработка на перепродаже — всегда с пометкой
+// "estimate" в фазе отображения. В отличие от MarketSale (только
+// верифицированные завершённые продажи — сюда оценки НЕ пишутся никогда),
+// каждая запись несёт источник, размер выборки, метку времени и
+// консервативный match score. Иммутабельны как Evidence: новый прогон
+// пишет новую строку; читатели берут свежайшую на вариант.
+// Деплой: таблица создаётся через `prisma db push` при сборке на Vercel
+// (см. build-скрипт apps/web) + идемпотентный ensureResaleEstimateTable()
+// в lib/radar/resaleEstimates.ts — как у FeedCard.
+model ResaleEstimate {
+  id               String         @id @default(cuid())
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  productVariantId String
+  valueUsd         Float
+  source           String // "ebay_sold" | "stockx"
+  sampleSize       Int
+  asOf             DateTime
+  matchScore       Float // 0..1, консервативная уверенность мэтчинга
+  detailJson       Json? // provenance: url источника, сырые цифры, пометка мэтча
+  createdAt        DateTime       @default(now())
+
+  @@index([productVariantId, asOf])
+}
+
 // ============================== Buyer requests / Purchases ==============================
 
 model BuyerRequest {
@@ -378,7 +409,7 @@ model SourceHealth {
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   actor      User?    @relation(fields: [actorId], references: [id])
   actorId    String?
   action     String
