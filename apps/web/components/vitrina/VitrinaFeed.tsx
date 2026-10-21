@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FeedCard, type FeedCardData } from "./FeedCard";
 import { CardSkeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { ListRow } from "./ListRow";
 import { BoardDesktop } from "./BoardDesktop";
 import { completenessOf } from "@/lib/radar/cardViewModel";
-import { LayoutGrid, List, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 export interface VitrinaFeedInput {
   cards: FeedCardData[];
@@ -112,7 +112,15 @@ function dedupeByIdOrProduct(list: FeedCardData[]): FeedCardData[] {
 
 export function VitrinaFeed({ cards, checkedAt }: VitrinaFeedInput) {
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [view, setView] = useState<"grid" | "list">("grid");
+
+  // The header's urgent pill links to /now?filter=urgent — honor the
+  // requested filter on mount so the link lands on the filtered view.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("filter");
+    if (requested && FILTERS.some((f) => f.key === requested)) {
+      setFilter(requested as FilterKey);
+    }
+  }, []);
 
   const sections = useMemo(() => {
     const seen = new Set<string>();
@@ -237,14 +245,6 @@ export function VitrinaFeed({ cards, checkedAt }: VitrinaFeedInput) {
             {f.label}
           </button>
         ))}
-        <div className="flex-1" />
-        <button
-          onClick={() => setView(view === "grid" ? "list" : "grid")}
-          aria-label="Toggle view"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#6b7280]"
-        >
-          {view === "grid" ? <List size={16} /> : <LayoutGrid size={16} />}
-        </button>
       </div>
 
       {cards.length === 0 ? (
