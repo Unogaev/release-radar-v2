@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/collect", "schedule": "0 13 * * *" },
-    { "path": "/api/cron/mowalola", "schedule": "0 14 * * *" }
+    { "path": "/api/cron/mowalola", "schedule": "0 14 * * *" },
+    { "path": "/api/cron/resale-estimates", "schedule": "0 15 * * *" }
   ]
 }
