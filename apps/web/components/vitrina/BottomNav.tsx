@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Eye, LayoutGrid, MoreHorizontal } from "lucide-react";
+import { Bell, CalendarDays, LayoutGrid, MoreHorizontal } from "lucide-react";
 
 const TABS = [
   { href: "/now", label: "Feed", icon: LayoutGrid },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/notifications", label: "Alerts", icon: Bell },
-  { href: "/watchlist", label: "Watchlist", icon: Eye },
   { href: "/menu", label: "More", icon: MoreHorizontal },
 ];
 
@@ -17,7 +16,7 @@ export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e7eb] bg-white/95 backdrop-blur sm:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-4">
         {TABS.map((t) => {
           const active = pathname === t.href || (t.href === "/now" && pathname === "/");
           const Icon = t.icon;
