@@ -86,6 +86,18 @@ export const VERIFIED_RELEASES = [
     sourceTimezone: "Asia/Tokyo",
     sourceNote: "Square Enix official announcement 2026-10-17: 200 pieces worldwide, ¥53,900.",
   },
+  {
+    brand: "Apple",
+    model: "iPhone Duo",
+    sku: null,
+    category: "tech",
+    retailer: "Apple",
+    url: "https://www.apple.com/iphone-duo/",
+    retailUsd: 1999,
+    startsAtUtc: "2026-10-23T12:00:00.000Z", // 8:00 AM EDT, Apple Store open
+    sourceTimezone: "America/New_York",
+    sourceNote: "Первый складной iPhone от Apple: запуск — пятница, 23 октября 2026 (первые доставки и продажи в магазинах), цена от $1 999 за 256 ГБ (512 ГБ — $2 199, 1 ТБ — $2 599, 2 ТБ — $3 199), цвета Star White / Night Sky. Предзаказы открылись 16 октября и распроданы за минуты; оценки доставки сдвинулись на середину/конец ноября; сотрудники розницы предупредили, что в день запуска, вероятно, не будет устройств в свободной продаже; поставки ограничены производством шарнира. Проверено 21.10.2026 по MacRumors, 9to5Mac, Hypebeast; страница apple.com/iphone-duo подтверждает доступность с 23 октября.",
+  },
 ] as const;
 
 export async function syncVerifiedReleases(now = new Date()): Promise<void> {
