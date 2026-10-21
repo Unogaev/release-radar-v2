@@ -24,6 +24,48 @@ function statusKey(status: string): "buy" | "apply" | "prepare" | "client" | "wa
   return "watch";
 }
 
+// Presentation-only English mapping for engine strings (this page only;
+// the engine and stored data stay untouched). Bracketed status codes and
+// E-level codes are preserved. Strings matching no pattern render unchanged.
+function enBlockedReason(reason: string): string {
+  let out = reason;
+  out = out.replace(
+    /Evidence level (E\d+_[A-Z0-9_]+) ниже требуемого (E\d+_[A-Z0-9_]+)/g,
+    "Evidence level $1 is below the required $2"
+  );
+  out = out.replace(/Deadline не сохранён\./g, "Deadline not saved.");
+  out = out.replace(
+    /Время TBA\s*[—–-]\s*допустим только WATCH, пока время не подтверждено\./g,
+    "Time TBA — only WATCH applies until the time is confirmed."
+  );
+  out = out.replace(
+    /Checkout price или полная стоимость неизвестны\./g,
+    "Checkout price or full cost unknown."
+  );
+  out = out.replace(/^checkout_unverified$/, "Checkout unverified");
+  out = out.replace(/^completed_sales_unverified$/, "Completed sales unverified");
+  return out;
+}
+
+function enSummary(summary: string | null): string | null {
+  if (!summary) return summary;
+  let out = summary;
+  out = out.replace(
+    /Интересно, но действие ещё не подтверждено\./g,
+    "Interesting, but the action is not yet confirmed."
+  );
+  out = out.replace(/Интересно, но/g, "Interesting, but");
+  return out;
+}
+
+function formatUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+  }).format(amount);
+}
+
 const PLAYBOOK_PREP: string[] = [
   "Account signed in and email + phone verified",
   "Shipping address saved as default",
@@ -121,6 +163,12 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
   const exitLine = latestSale
     ? `Exit plan: completed sales are the reference — the most recent one on this page is ${formatMoneyMinor(latestSale.priceMinor, latestSale.currency)} on ${latestSale.platform}. Sell where those sales happen, and subtract that marketplace's fees and shipping before you count profit.`
     : "Exit plan: check completed sales before you buy — never buy without a sold-price reference.";
+  const pricedCheck = pv.availabilityChecks.find((c) => c.priceUsd != null) ?? null;
+  const retailUsd = pricedCheck?.priceUsd ?? null;
+  const listedCurrency = pricedCheck?.currency?.trim()
+    ? pricedCheck.currency.trim().toUpperCase()
+    : null;
+  const showListedCurrency = listedCurrency !== null && listedCurrency !== "USD";
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-4">
@@ -129,7 +177,7 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
       </Link>
 
       <div className="overflow-hidden rounded-[16px] border border-[#e5e7eb] bg-white">
-        <ImageWithFallback src={imageUrl} alt={`${brand} ${modelLabel}`} className="aspect-[16/10] w-full" />
+        <ImageWithFallback src={imageUrl} alt={`${brand} ${modelLabel}`} className="aspect-[16/10] w-full" eager />
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -140,7 +188,7 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
             <Badge status={statusKey(decision.status)} />
           </div>
           {decision.rationale && (
-            <p className="mt-3 text-[14px] leading-relaxed text-[#374151]">{decision.rationale}</p>
+            <p className="mt-3 text-[14px] leading-relaxed text-[#374151]">{enSummary(decision.rationale)}</p>
           )}
           <div className="mt-2 text-[12px] tabular-nums text-[#9ca3af]">
             Evidence confidence {decision.evidenceConfidence}/100
@@ -148,18 +196,42 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
         </div>
       </div>
 
-      {releaseEvent && (
+      {retailUsd != null && (
         <section className="rounded-[16px] border border-[#e5e7eb] bg-white p-4">
-          <h2 className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-[#1a1a1a]">
-            <CalendarDays size={16} /> When
-          </h2>
-          {releaseEvent.timePrecision === "tba" ? (
-            <span className="text-[14px] text-[#6b7280]">Time to be announced</span>
-          ) : (
-            <div className="text-[15px] font-medium tabular-nums text-[#1a1a1a]">{formatDateEt(releaseEvent.startAtUtc)}</div>
+          <h2 className="mb-2 text-[14px] font-semibold text-[#1a1a1a]">Price</h2>
+          <div className="flex justify-between py-1 text-[14px]">
+            <span className="text-[#6b7280]">Retail price</span>
+            <span className="tabular-nums font-medium text-[#1a1a1a]">{formatUsd(retailUsd)}</span>
+          </div>
+          {showListedCurrency && (
+            <div className="flex justify-between py-1 text-[14px]">
+              <span className="text-[#6b7280]">Listed currency</span>
+              <span className="font-medium text-[#1a1a1a]">{listedCurrency}</span>
+            </div>
+          )}
+          {pricedCheck?.sellerOfRecord && (
+            <div className="flex justify-between py-1 text-[14px]">
+              <span className="text-[#6b7280]">Seller</span>
+              <span className="text-[#1a1a1a]">{pricedCheck.sellerOfRecord}</span>
+            </div>
           )}
         </section>
       )}
+
+      <section className="rounded-[16px] border border-[#e5e7eb] bg-white p-4">
+        <h2 className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-[#1a1a1a]">
+          <CalendarDays size={16} /> When
+        </h2>
+        {releaseEvent?.startAtUtc ? (
+          releaseEvent.timePrecision === "tba" ? (
+            <span className="text-[14px] text-[#6b7280]">Time to be announced</span>
+          ) : (
+            <div className="text-[15px] font-medium tabular-nums text-[#1a1a1a]">{formatDateEt(releaseEvent.startAtUtc)}</div>
+          )
+        ) : (
+          <p className="text-[14px] leading-relaxed text-[#6b7280]">No fixed window is set for this one yet — this is a live opportunity; watch for changes.</p>
+        )}
+      </section>
 
       {(pv.marketSales.length > 0 || pv.marketAsks.length > 0) && (
         <section className="rounded-[16px] border border-[#e5e7eb] bg-white p-4">
@@ -223,7 +295,7 @@ export default async function SignalDetailPage({ params }: { params: { id: strin
           </h2>
           <ul className="space-y-1">
             {decision.blockedReasons.map((r, i) => (
-              <li key={i} className="text-[13px] text-[#6b7280]">{r}</li>
+              <li key={i} className="text-[13px] text-[#6b7280]">{enBlockedReason(r)}</li>
             ))}
           </ul>
         </section>
