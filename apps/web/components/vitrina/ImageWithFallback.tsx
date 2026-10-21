@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ImageIcon } from "lucide-react";
-export function ImageWithFallback({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string }) {
+export function ImageWithFallback({ src, alt, className = "", eager = false }: { src?: string | null; alt: string; className?: string; eager?: boolean }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return (
@@ -10,5 +10,5 @@ export function ImageWithFallback({ src, alt, className = "" }: { src?: string |
       </div>
     );
   }
-  return <img src={src} alt={alt} className={`object-cover ${className}`} onError={() => setFailed(true)} loading="lazy" />;
+  return <img src={src} alt={alt} className={`object-cover ${className}`} onError={() => setFailed(true)} loading={eager ? "eager" : "lazy"} />;
 }
