@@ -235,7 +235,7 @@ function titleTokens(s: string): string[] {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9 ]/g, " ")
     .split(/\s+/)
     .filter((w) => w.length > 2);
@@ -296,7 +296,18 @@ function isDeepUrl(u: string): boolean {
   }
 }
 
+// Card and alert titles sometimes carry a status prefix ("Unexpected restock · …",
+// "Price or availability changed · …"). Those words never appear in a store catalog,
+// so strip them before matching — otherwise they dilute the token score.
+const STATUS_PREFIX_RE =
+  /^(unexpected restock|price or availability changed|price changed|availability changed|back in stock|new arrival|price drop|restocked|restock)\s*[·•\-–—:]\s*/i;
+
+function stripStatusPrefix(model: string): string {
+  return model.replace(STATUS_PREFIX_RE, "").trim();
+}
+
 export async function getProductImage(brand: string, model: string, officialPageUrl?: string | null): Promise<ResolvedImage | null> {
+  const cleanModel = stripStatusPrefix(model);
   const direct = officialPageUrl && isDeepUrl(officialPageUrl) ? (await imageFromShopifyJson(officialPageUrl)) ?? (await imageFromPage(officialPageUrl, "product-page")) : null;
-  return direct ?? (officialPageUrl ? await imageFromShopifyCatalog(brand, model, officialPageUrl) : null) ?? imageFromOfficialSearch(brand, model, officialPageUrl);
+  return direct ?? (officialPageUrl ? await imageFromShopifyCatalog(brand, cleanModel, officialPageUrl) : null) ?? imageFromOfficialSearch(brand, cleanModel, officialPageUrl);
 }
