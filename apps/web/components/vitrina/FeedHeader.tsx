@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, Radar, Search } from "lucide-react";
+import { Bell, Menu, Radar } from "lucide-react";
 
-export function FeedHeader({ urgentCount, checkedAt, onSearch }: {
+export function FeedHeader({ urgentCount, checkedAt }: {
   urgentCount: number;
   checkedAt?: string | null;
-  onSearch?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
@@ -33,9 +32,6 @@ export function FeedHeader({ urgentCount, checkedAt, onSearch }: {
             Alertyy checked {checkedAt}
           </span>
         )}
-        <button onClick={onSearch} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f3f4f6]">
-          <Search size={18} />
-        </button>
         <Link href="/notifications" aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f3f4f6]">
           <Bell size={18} />
         </Link>
