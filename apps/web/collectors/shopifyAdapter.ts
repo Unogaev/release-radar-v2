@@ -8,6 +8,7 @@ import {
   SourceHealth,
 } from "@adapters/SourceAdapter";
 import { AvailabilityEvidence } from "@domain/evidence/types";
+import { isWomenswearProduct } from "../lib/radar/womenswearExclusion";
 
 // Adapter for Shopify/Shopify Plus storefronts via the public products.json
 // catalog endpoint. Unlike homepage HTML scraping (which returns almost
@@ -65,6 +66,11 @@ function toPayload(origin: string, p: ShopifyProduct): ShopifySignalPayload | nu
   const title = String(p.title ?? "").trim();
   const handle = String(p.handle ?? "").trim();
   if (!title || !handle) return null;
+  // Женская одежда (платья/юбки/туфли на каблуке) — оффтопик для радара:
+  // такие товары каталога не становятся сигналами. Правило узкое и общее
+  // для обоих слоёв, см. ../lib/radar/womenswearExclusion.ts — кроссовки,
+  // худи, куртки, джинсы и прочий унисекс-стритвир проходят как раньше.
+  if (isWomenswearProduct(p.product_type, title)) return null;
   const variants = Array.isArray(p.variants) ? p.variants : [];
   const prices = variants
     .map((v) => parseFloat(v.price ?? ""))
