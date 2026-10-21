@@ -201,7 +201,9 @@ export function BoardDesktop({
     return urgent[0] ?? null;
   }, [pool, urgent, releases]);
 
-  // Top opportunities: FULL by profit desc → Urgent by recency → PRICED by recency.
+  // Top opportunities: FULL by profit desc → priced+photo → priced → bare urgent,
+  // the non-FULL tiers by recency. Bare alert rows used to lead the list, which
+  // made the block look empty next to cards that carry a price and a photo.
   const topOpportunities = useMemo(() => {
     const byRecency = (a: FeedCardData, b: FeedCardData) =>
       new Date(b.checkedAt ?? 0).getTime() - new Date(a.checkedAt ?? 0).getTime();
@@ -213,8 +215,9 @@ export function BoardDesktop({
             (b.profitUsd ?? Number.NEGATIVE_INFINITY) -
             (a.profitUsd ?? Number.NEGATIVE_INFINITY),
         ),
+      ...pool.filter((c) => isPriced(c) && c.imageUrl).sort(byRecency),
+      ...pool.filter((c) => isPriced(c)).sort(byRecency),
       ...pool.filter((c) => c.kind === "ALERT").sort(byRecency),
-      ...pool.filter((c) => !isFull(c) && isPriced(c)).sort(byRecency),
     ];
     const out: FeedCardData[] = [];
     const seen = new Set<string>();
