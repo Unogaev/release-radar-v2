@@ -263,11 +263,12 @@ export function BoardDesktop({
   );
   const urgentNoPhoto = useMemo(() => urgent.filter((c) => !c.imageUrl), [urgent]);
 
-  // Releases timeline: group by ET calendar day for the next 14 days.
+  // Releases timeline: group by ET calendar day for the next 14 days (inclusive
+  // of the boundary day, so a drop exactly 14 days out still gets a day cell).
   const dayGroups = useMemo<Array<[string, FeedCardData[]]>>(() => {
     const now = Date.now();
     const keys: string[] = [];
-    for (let i = 0; i < 14; i++) keys.push(etDayKey(new Date(now + i * 86400000).toISOString()));
+    for (let i = 0; i < 15; i++) keys.push(etDayKey(new Date(now + i * 86400000).toISOString()));
     const map = new Map<string, FeedCardData[]>();
     for (const c of releases) {
       if (!c.launchAt) continue;
