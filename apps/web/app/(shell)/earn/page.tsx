@@ -26,10 +26,27 @@ export default function EarnPage() {
   const filtered = (requests ?? []).filter((r) => regionFilter === "all" || r.region === regionFilter);
 
   useEffect(() => {
-    fetch("/api/requests")
+    // Hard timeout: a slow cold-start API must never leave this page stuck
+    // on the "…" placeholder. After ~15s the fetch aborts, the .catch below
+    // settles the page into the honest empty state, and a late response can
+    // no longer overwrite it (cancelled flag + cleanup abort).
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    fetch("/api/requests", { signal: controller.signal })
       .then((r) => r.json())
-      .then((d) => setRequests(Array.isArray(d.requests) ? d.requests : []))
-      .catch(() => setRequests([]));
+      .then((d) => {
+        if (!cancelled) setRequests(Array.isArray(d.requests) ? d.requests : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRequests([]);
+      })
+      .finally(() => clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, []);
 
   return (
