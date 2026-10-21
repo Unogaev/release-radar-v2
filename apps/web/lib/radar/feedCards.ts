@@ -404,7 +404,7 @@ export async function backfillMissingCardImages(limit = 40): Promise<{ backfille
 
   type BackfillRow = (typeof rows)[number];
   const isUrgent = (r: BackfillRow) =>
-    r.productVariant.decisions.some((d) => URGENT_STATUSES.includes(d.status));
+    r.productVariant.decisions.some((d) => (URGENT_STATUSES as readonly string[]).includes(d.status));
   const isPriced = (r: BackfillRow) => r.productVariant.availabilityChecks[0]?.priceUsd != null;
 
   const ranked = rows
