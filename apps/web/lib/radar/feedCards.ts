@@ -345,6 +345,106 @@ export async function refreshFeedCards(limit = 25): Promise<{ refreshed: number;
   return { refreshed, failed, withImage, withPrice, attempts };
 }
 
+/**
+ * Backfill pass for FeedCard rows that still lack an image.
+ *
+ * The regular refresh is bounded by its candidate sourcing (latest decisions /
+ * release variants), so image-less rows for priced or urgent variants can sit
+ * unmatched for many runs. This pass queries those rows directly — priced or
+ * urgent first, oldest first — and re-runs them through the same resolver.
+ * Bounded per run (default 40) to protect the cron's execution budget.
+ */
+export async function backfillMissingCardImages(limit = 40): Promise<{ backfilled: number; failed: number; withImage: number; attempts: Array<{ t: string; u: string | null; img: boolean }> }> {
+  await ensureFeedCardTable();
+
+  const URGENT_STATUSES = [
+    DecisionStatus.BUY_NOW,
+    DecisionStatus.APPLY_NOW,
+    DecisionStatus.SOURCE_NOW,
+    DecisionStatus.CONTACT_DEALER,
+    DecisionStatus.WATCH_RESTOCK,
+    DecisionStatus.CLIENT_FIRST,
+  ];
+
+  const rows = await prisma.feedCard.findMany({
+    where: { imageUrl: null },
+    select: {
+      productVariantId: true,
+      updatedAt: true,
+      productVariant: {
+        select: {
+          product: { select: { brand: true, normalizedModel: true } },
+          decisions: {
+            where: { status: { in: FEED_STATUSES } },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: { status: true },
+          },
+          availabilityChecks: {
+            orderBy: { checkedAt: "desc" },
+            take: 1,
+            select: { id: true, url: true, priceUsd: true },
+          },
+          evidence: {
+            orderBy: { observedAt: "desc" },
+            take: 1,
+            select: { url: true, source: { select: { url: true } } },
+          },
+          signals: {
+            orderBy: { observedAt: "desc" },
+            take: 1,
+            select: { url: true, source: { select: { url: true } } },
+          },
+        },
+      },
+    },
+    orderBy: { updatedAt: "asc" },
+    take: 200,
+  });
+
+  type BackfillRow = (typeof rows)[number];
+  const isUrgent = (r: BackfillRow) =>
+    r.productVariant.decisions.some((d) => URGENT_STATUSES.includes(d.status));
+  const isPriced = (r: BackfillRow) => r.productVariant.availabilityChecks[0]?.priceUsd != null;
+
+  const ranked = rows
+    .filter((r) => isUrgent(r) || isPriced(r))
+    .sort(
+      (a, b) =>
+        Number(isUrgent(b)) - Number(isUrgent(a)) ||
+        Number(isPriced(b)) - Number(isPriced(a)) ||
+        a.updatedAt.getTime() - b.updatedAt.getTime(),
+    )
+    .slice(0, Math.max(1, limit));
+
+  const candidates: CardCandidate[] = ranked.map((r) => {
+    const pv = r.productVariant;
+    const check = pv.availabilityChecks[0] ?? null;
+    return {
+      productVariantId: r.productVariantId,
+      brand: pv.product.brand,
+      model: titleCase(pv.product.normalizedModel),
+      url:
+        preferProductUrl([check?.url, pv.evidence[0]?.url, pv.signals[0]?.url]) ??
+        pv.evidence[0]?.source?.url ?? pv.signals[0]?.source?.url ?? null,
+      rank: 0,
+      checkId: check?.id ?? null,
+      checkPriceUsd: check?.priceUsd ?? null,
+    };
+  });
+
+  let backfilled = 0;
+  let failed = 0;
+  const outcomes = await Promise.all(candidates.map(resolveCandidate));
+  for (const o of outcomes) {
+    if (o.ok) backfilled += 1;
+    else failed += 1;
+  }
+  const withImage = outcomes.filter((o) => o.img).length;
+  const attempts = candidates.map((c, i) => ({ t: `${c.brand} ${c.model}`.slice(0, 60), u: c.url, img: outcomes[i]?.img ?? false }));
+  return { backfilled, failed, withImage, attempts };
+}
+
 export type FeedCardRow = {
   productVariantId: string;
   imageUrl: string | null;
