@@ -5,10 +5,11 @@ import { runSourcePipeline } from "../../../../collectors/pipeline";
 import { createDueReleaseReminders } from "@/lib/notifications/alerts";
 import { ensureRadarSourceRegistry } from "@/lib/sources/registry";
 import { fetchRssItems } from "../../../../collectors/rss";
-import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";import { createShopifyAdapter } from "../../../../collectors/shopifyAdapter";
+import { fetchPageDiscoveries } from "../../../../collectors/pageDiscovery";
+import { createShopifyAdapter } from "../../../../collectors/shopifyAdapter";
 import { syncVerifiedReleases } from "@/lib/radar/verifiedReleases";
 import { syncVerifiedVintageDemand } from "@/lib/radar/verifiedVintageDemand";
-import { refreshFeedCards } from "@/lib/radar/feedCards";
+import { refreshFeedCards, backfillMissingCardImages } from "@/lib/radar/feedCards";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   await syncVerifiedVintageDemand();
   const sources = await prisma.source.findMany({
     where: { isEnabled: true },
-        orderBy: [{ lastCheckedAt: { sort: "asc", nulls: "first" } }, { trustLevel: "desc" }],
+    orderBy: [{ lastCheckedAt: { sort: "asc", nulls: "first" } }, { trustLevel: "desc" }],
     // Rotate through the registry on every hourly run without risking the
     // platform timeout. Oldest sources are always selected first.
     take: 80,
@@ -46,8 +47,8 @@ export async function GET(req: NextRequest) {
   };
 
   const dueSources = sources.filter((source) =>
-      !source.lastCheckedAt ||
-      Date.now() - source.lastCheckedAt.getTime() > (source.checkIntervalMinutes ?? 60) * 60_000
+    !source.lastCheckedAt ||
+    Date.now() - source.lastCheckedAt.getTime() > (source.checkIntervalMinutes ?? 60) * 60_000
   );
 
   async function collectSource(source: (typeof sources)[number]) {
@@ -143,5 +144,13 @@ export async function GET(req: NextRequest) {
     failed: 0,
     error: error instanceof Error ? error.message : String(error),
   }));
-  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, skippedSources, remindersCreated, feedCards, results });
+  // Second pass: image-less cards for priced/urgent variants that the bounded
+  // refresh above did not reach. Same budget rules as the refresh; failures
+  // never break the collection report.
+  const imageBackfill = await backfillMissingCardImages().catch((error) => ({
+    backfilled: 0,
+    failed: 0,
+    error: error instanceof Error ? error.message : String(error),
+  }));
+  return NextResponse.json({ ranAt: new Date().toISOString(), sources: results.length, skippedSources, remindersCreated, feedCards, imageBackfill, results });
 }
