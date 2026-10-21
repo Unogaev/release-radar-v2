@@ -11,7 +11,7 @@
 //    product_type каталога Shopify (clothing, dresses, shoes, sneakers,
 //    outerwear и т.п.);
 //  - заведомо женские категории исключаются и без маркера: платья,
-//    вечерние наряды, юбки, туфли на каблуке, балетки, бельё, купальники,
+//    вечерние наряды, юбки, туфли на каблуке, бельё, купальники,
 //    корсеты, а также женские линейки обуви (Mayze, Air Rift и т.п.).
 //
 // ЖЁСТКИЕ ИСКЛЮЧЕНИЯ — не исключаются никогда, даже с женским маркером:
@@ -33,13 +33,13 @@ const INHERENTLY_FEMALE_RE =
 const WOMENS_ONLY_SHOE_RE = /(mayze|air rift|air max excee|air max bella|zoom bella|puma cali|fenty)/i;
 
 const FOOTWEAR_RE =
-  /\b(sneakers?|trainers?|shoes?|footwear|boots?|booties|sandals?|flats?|loafers?|mules?|clogs?|wedges?|espadrilles?|slippers?|runners?)\b/i;
+  /\b(sneakers?|trainers?|shoes?|footwear|boots?|booties|sandals?|flats?|loafers?|mules?|clogs?|wedges?|espadrilles?|slippers?|runners?|ballet)\b/i;
 
 const KNOWN_UNISEX_SNEAKER_RE =
   /(air force 1|air jordan|jordan \d|jordan retro|\bdunk\b|samba|gazelle|superstar|stan smith|chuck taylor|chuck 70|old skool|sk8-hi|air max|vapormax|blazer mid|\bcortez\b|pegasus|vomero|ultra ?boost|\bnmd\b|yeezy|\bforum\b|\bcampus\b|spezial|gel-kayano|gel-1130|gel nimbus|asics gel|\b990v?\d?\b|\b991\b|\b992\b|\b993\b|2002r|\b1906[rd]?\b|\b550\b|\b574\b|\b327\b|suede classic|fresh foam|fuelcell)/i;
 
 const APPAREL_RE =
-  /\b(clothing|apparel|outerwear|activewear|loungewear|swimwear|tops?|blouses?|shirts?|t-shirts?|tees?|hoodies?|sweatshirts?|sweaters?|cardigans?|jackets?|coats?|blazers?|vests?|knitwear|pants?|trousers?|jeans|denim|shorts|leggings|tights|joggers|sweatpants|jumpsuits?|rompers?|overalls|tracksuits?|tanks?|underwear|dresses|gowns?|skirts?)\b/i;
+  /\b(clothing|apparel|outerwear|activewear|loungewear|swimwear|tops?|blouses?|shirts?|t-shirts?|tees?|hoodies?|sweatshirts?|sweaters?|cardigans?|jackets?|coats?|blazers?|vests?|knitwear|pants?|trousers?|jeans|denim|shorts|leggings|tights|joggers|sweatpants|jumpsuits?|rompers?|overalls|tracksuits?|tanks?|underwear|dresses|gowns?|skirts?|jumpers?|wraps?)\b/i;
 
 function evaluateWomenswear(text: string): boolean {
   if (!text) return false;
@@ -69,13 +69,13 @@ export function isWomenswearTitle(title: string | null | undefined): boolean {
 }
 
 /**
- * Правило уровня инжеста: product_type каталога Shopify и название товара
+ * Правило уровня инжеста: product_type и название товара
  * из products.json оцениваются вместе (маркер может быть в одном поле,
- * а тип одежды — в другом).
+ * а тип одежды/обуви — в другом). Порядок аргументов: (productType, title).
  */
 export function isWomenswearProduct(
   productType: string | null | undefined,
-  title: string | null | undefined
+  title: string | null | undefined,
 ): boolean {
   return evaluateWomenswear(`${productType ?? ""} ${title ?? ""}`);
 }
