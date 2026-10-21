@@ -5,6 +5,7 @@ import { FeedCard, type FeedCardData } from "./FeedCard";
 import { CardSkeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { ListRow } from "./ListRow";
+import { BoardDesktop } from "./BoardDesktop";
 import { completenessOf } from "@/lib/radar/cardViewModel";
 import { LayoutGrid, List, SearchX } from "lucide-react";
 
@@ -109,7 +110,7 @@ function dedupeByIdOrProduct(list: FeedCardData[]): FeedCardData[] {
   return list.filter((c) => keep.has(c));
 }
 
-export function VitrinaFeed({ cards }: VitrinaFeedInput) {
+export function VitrinaFeed({ cards, checkedAt }: VitrinaFeedInput) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -278,12 +279,18 @@ export function VitrinaFeed({ cards }: VitrinaFeedInput) {
         )
       ) : (
         <>
-          {renderCardSection("Earn now", sections.earn)}
-          {renderCardSection("Urgent", sections.urgent, URGENT_GRID)}
-          {renderCardSection("Upcoming releases", sections.releases)}
-          {renderCardSection("Sold — real flips", sections.sold)}
-          {renderCardSection("Watching", sections.watching)}
-          {renderNewsSection(sections.news)}
+          {/* Desktop (lg+): the board composition. Mobile (<lg) keeps the stacked layout. */}
+          <div className="hidden lg:block">
+            <BoardDesktop sections={sections} checkedAt={checkedAt ?? null} />
+          </div>
+          <div className="lg:hidden">
+            {renderCardSection("Earn now", sections.earn)}
+            {renderCardSection("Urgent", sections.urgent, URGENT_GRID)}
+            {renderCardSection("Upcoming releases", sections.releases)}
+            {renderCardSection("Sold — real flips", sections.sold)}
+            {renderCardSection("Watching", sections.watching)}
+            {renderNewsSection(sections.news)}
+          </div>
         </>
       )}
     </div>
