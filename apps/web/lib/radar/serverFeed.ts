@@ -5,6 +5,7 @@ import type { NewsItem } from "./types";
 import { decodeHtmlEntities } from "./text";
 import { readFeedCards } from "./feedCards";
 import { VERIFIED_RELEASES } from "./verifiedReleases";
+import { isWomenswearTitle } from "./womenswearExclusion";
 
 function signalHeadline(rawText: string | null | undefined) {
   const cleaned = decodeHtmlEntities((rawText ?? "").replace(/\n\[rr:image=[^\]]+\]\s*$/i, "").trim());
@@ -372,6 +373,11 @@ export async function getRealFeed(): Promise<FeedPayload> {
   const cardByVariantId = await readFeedCards([...new Set(decisions.map((d) => d.productVariantId))]);
   const signals: Signal[] = decisions
     .filter((d) => STATUS_MAP[d.status])
+    // Женская одежда (платья/юбки/туфли на каблуке) — оффтопик для радара:
+    // такие товары не показываем в /now. Узкое правило, общее для обоих
+    // слоёв: ./womenswearExclusion.ts. Вердикты движка решений не меняются —
+    // это только слой отображения фида.
+    .filter((d) => !isWomenswearTitle(`${d.productVariant.product.brand} ${d.productVariant.product.normalizedModel}`))
     .filter((d) => {
       if (seenVariants.has(d.productVariantId)) return false;
       seenVariants.add(d.productVariantId);
@@ -598,6 +604,8 @@ export async function getRealFeed(): Promise<FeedPayload> {
     const key = `${v.product.brand}::${v.product.normalizedModel}`.toLowerCase();
     if (seenProducts.has(key)) return false;
     seenProducts.add(key);
+    // Женская одежда — оффтопик: то же узкое правило, что и для сигналов.
+    if (isWomenswearTitle(`${v.product.brand} ${v.product.normalizedModel}`)) return false;
     return true;
   });
 
@@ -610,11 +618,22 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const signalNewsSource = signals.filter((s) => s.status === "buy" || s.status === "apply").slice(0, 10);
 
-  const recentAlerts = await prisma.alert.findMany({
+  const rawRecentAlerts = await prisma.alert.findMany({
     where: { channel: "browser", NOT: { dedupeKey: { endsWith: ":first_detection" } } },
     orderBy: { createdAt: "desc" },
     take: 10,
     include: { decision: { select: { productVariantId: true } } },
+  });
+
+  // Алерты по женской одежде (платья/юбки/туфли на каблуке) — оффтопик:
+  // убираем их из секции Urgent. Заголовок алерта хранится в payload.title.
+  const recentAlerts = rawRecentAlerts.filter((a) => {
+    try {
+      const parsed = JSON.parse(a.payload) as { title?: string };
+      return !isWomenswearTitle(parsed.title);
+    } catch {
+      return true;
+    }
   });
 
   const alertCards = await readFeedCards([...new Set(recentAlerts.map((a) => a.decision.productVariantId))]);
@@ -651,27 +670,30 @@ export async function getRealFeed(): Promise<FeedPayload> {
     },
   });
   const saleCards = await readFeedCards([...new Set(recentSales.map((s) => s.productVariantId))]);
-  const marketSaleItems: NewsItem[] = recentSales.map((sale) => {
-    const pv = sale.productVariant;
-    const product = pv.product;
-    const card = saleCards.get(sale.productVariantId);
-    return {
-      id: "sale:" + sale.id,
-      kind: "MARKET" as const,
-      headline: product.brand + " " + titleCase(product.normalizedModel),
-      brand: product.brand,
-      model: titleCase(product.normalizedModel),
-      source: sale.platform,
-      retailer: sale.platform,
-      category: product.category,
-      priceUsd: sale.priceMinor / 100,
-      sourceUrl: card?.linkLive ? card.primaryUrl : null,
-      imageUrl: proxyImageUrl(card?.imageUrl),
-      imageSourceUrl: card?.imageSourceUrl ?? undefined,
-      observedAt: sale.observedAt.toISOString(),
-      launchAt: null,
-    };
-  });
+  const marketSaleItems: NewsItem[] = recentSales
+    // Женская одежда — оффтопик: то же узкое правило, что и для сигналов.
+    .filter((sale) => !isWomenswearTitle(`${sale.productVariant.product.brand} ${sale.productVariant.product.normalizedModel}`))
+    .map((sale) => {
+      const pv = sale.productVariant;
+      const product = pv.product;
+      const card = saleCards.get(sale.productVariantId);
+      return {
+        id: "sale:" + sale.id,
+        kind: "MARKET" as const,
+        headline: product.brand + " " + titleCase(product.normalizedModel),
+        brand: product.brand,
+        model: titleCase(product.normalizedModel),
+        source: sale.platform,
+        retailer: sale.platform,
+        category: product.category,
+        priceUsd: sale.priceMinor / 100,
+        sourceUrl: card?.linkLive ? card.primaryUrl : null,
+        imageUrl: proxyImageUrl(card?.imageUrl),
+        imageSourceUrl: card?.imageSourceUrl ?? undefined,
+        observedAt: sale.observedAt.toISOString(),
+        launchAt: null,
+      };
+    });
 
   const chronologicalNews: NewsItem[] = [
     ...releaseVariants.map((v) => {
@@ -708,7 +730,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
     ...signalNewsSource.map((s) => ({
       id: "signal:" + s.id,
       kind: "SIGNAL" as const,
-      headline: s.brand + " " + s.model + " \u2014 " + (BUCKET_LABEL[s.status] ?? s.status.toUpperCase()),
+      headline: s.brand + " " + s.model + " — " + (BUCKET_LABEL[s.status] ?? s.status.toUpperCase()),
       brand: s.brand,
       model: s.model,
       source: s.store,
@@ -720,7 +742,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
       launchAt: s.launchAt,
     })),
     ...recentAlerts.map((a) => {
-      let headline = "\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u0441\u0438\u0433\u043d\u0430\u043b\u0443";
+      let headline = "Обновление по сигналу";
       let payloadUrl: string | null = null;
       try {
         const parsed = JSON.parse(a.payload) as { title?: string; url?: string };
