@@ -22,6 +22,26 @@ function clean(v: string | null | undefined): string | null {
   return v;
 }
 
+/**
+ * Ячейка бренда иногда хранит слово бренда слитно несколько раз
+ * ("Ceaseceasecease"), а заголовок карточки уже начинается с него
+ * ("Cease - Men's …"). Схлопываем лейбл до одного слова бренда, чтобы
+ * карточка читалась как все остальные. Остальные бренды не меняются.
+ */
+function dedupeBrandLabel(brand: string | null | undefined, title: string): string | null {
+  const b = clean(brand);
+  if (!b) return null;
+  const lower = b.toLowerCase();
+  for (let len = 2; len <= lower.length / 2; len++) {
+    if (lower.length % len !== 0) continue;
+    const word = lower.slice(0, len);
+    if (word.repeat(lower.length / len) !== lower) continue;
+    if (title.toLowerCase().startsWith(word)) return b.slice(0, len);
+    break;
+  }
+  return b;
+}
+
 const STORE_REGION: Record<string, string> = {
   kith: "USA",
   "bobs watches": "USA",
@@ -85,12 +105,13 @@ function signalToCard(s: Signal): FeedCardData {
   const isAlert = status === "buy" || status === "apply" || status === "prepare" || status === "client";
   const futureLaunch = s.launchAt ? new Date(s.launchAt).getTime() > Date.now() : false;
   const hasFull = s.retail != null && s.completedSalesCount > 0 && s.expectedResale != null;
+  const name = translateHeadline(s.model);
   return {
     id: s.id,
     kind: futureLaunch ? "RELEASE" : isAlert ? "ALERT" : "SIGNAL",
     status,
-    brand: clean(s.brand),
-    name: translateHeadline(s.model),
+    brand: dedupeBrandLabel(s.brand, name),
+    name,
     sku: clean(s.sku) ?? clean(s.reference),
     imageUrl: s.imageUrl ?? null,
     retailUsd: s.retail,
@@ -110,13 +131,14 @@ function signalToCard(s: Signal): FeedCardData {
 
 function newsToCard(n: NewsItem): FeedCardData {
   const kind = n.kind === "RELEASE" ? "RELEASE" : n.kind === "ALERT" ? "ALERT" : n.kind === "SIGNAL" ? "SIGNAL" : "NEWS";
+  const name = translateHeadline(n.headline);
   return {
     id: n.id,
     detailId: n.decisionId ?? null,
     kind,
     status: null,
-    brand: n.brand ?? null,
-    name: translateHeadline(n.headline),
+    brand: dedupeBrandLabel(n.brand, name),
+    name,
     imageUrl: n.imageUrl ?? null,
     retailUsd: n.priceUsd ?? null,
     launchAt: n.launchAt ?? null,
