@@ -100,10 +100,25 @@ function translateHeadline(h: string): string {
   return h;
 }
 
+/**
+ * Релиз считается «предстоящим» до конца своих ET-суток запуска:
+ * вышедший сегодня утром дроп остаётся в таймлайне весь день,
+ * а не исчезает в минуту запуска.
+ */
+function etDayKey(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
 function signalToCard(s: Signal): FeedCardData {
   const status = normStatus(s.status);
   const isAlert = status === "buy" || status === "apply" || status === "prepare" || status === "client";
-  const futureLaunch = s.launchAt ? new Date(s.launchAt).getTime() > Date.now() : false;
+  const todayKey = etDayKey(new Date().toISOString());
+  const futureLaunch = s.launchAt ? etDayKey(s.launchAt) >= todayKey : false;
   const hasFull = s.retail != null && s.completedSalesCount > 0 && s.expectedResale != null;
   const name = translateHeadline(s.model);
   return {
