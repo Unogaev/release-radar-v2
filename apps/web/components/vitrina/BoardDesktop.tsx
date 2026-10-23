@@ -268,14 +268,16 @@ export function BoardDesktop({
 
   // Releases timeline: group by ET calendar day for the next 14 days (inclusive
   // of the boundary day, so a drop exactly 14 days out still gets a day cell).
+  // A drop launched earlier today (ET) stays visible till the end of its ET day.
   const dayGroups = useMemo<Array<[string, FeedCardData[]]>>(() => {
     const now = Date.now();
+    const todayKey = etDayKey(new Date(now).toISOString());
     const keys: string[] = [];
     for (let i = 0; i < 15; i++) keys.push(etDayKey(new Date(now + i * 86400000).toISOString()));
     const map = new Map<string, FeedCardData[]>();
     for (const c of releases) {
       if (!c.launchAt) continue;
-      if (new Date(c.launchAt).getTime() < now) continue;
+      if (etDayKey(c.launchAt) < todayKey) continue;
       const key = etDayKey(c.launchAt);
       if (!keys.includes(key)) continue;
       const arr = map.get(key) ?? [];
