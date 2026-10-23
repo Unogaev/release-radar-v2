@@ -289,13 +289,27 @@ function buildFactors(downgraded: boolean, missing: string[], confidence: number
   return { ru: [`Уверенность ${confidence}%`], en: [`Confidence ${confidence}%`] };
 }
 
+/**
+ * ET calendar day key (YYYY-MM-DD). A release counts as "upcoming" through
+ * the end of its ET launch day, so a drop that went live this morning stays
+ * visible for the rest of the day instead of vanishing at launch minute.
+ */
+function etDayKey(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
 export async function getRealFeed(): Promise<FeedPayload> {
   // The hourly collector (app/api/cron/collect) owns the source registry and
   // the verified fixtures. The page render path stays read-only: no network
   // calls and no writes, so a slow retailer can never break the feed.
   const statuses = Object.keys(STATUS_MAP);
 
-  const decisions = await prisma.decision.findMany({
+  let decisions = await prisma.decision.findMany({
     where: { status: { in: statuses } },
     orderBy: { createdAt: "desc" },
     take: 120,
@@ -312,6 +326,47 @@ export async function getRealFeed(): Promise<FeedPayload> {
       },
     },
   });
+
+  // Release decisions (PREPARE for a confirmed future drop) are created once
+  // and sink below the 120 newest as hourly scans accumulate. A variant with
+  // an upcoming release event must stay in the feed even when its decision
+  // is older than the window: fetch the latest decision per such variant and
+  // merge it in if not already present.
+  const upcomingReleaseVariantIds = (
+    await prisma.productVariant.findMany({
+      where: { releaseEvents: { some: { startAtUtc: { gte: new Date() } } } },
+      select: { id: true },
+    })
+  ).map((v) => v.id);
+  const seenDecisionVariantIds = new Set(decisions.map((d) => d.productVariantId));
+  const missingReleaseVariantIds = upcomingReleaseVariantIds.filter(
+    (id) => !seenDecisionVariantIds.has(id),
+  );
+  if (missingReleaseVariantIds.length > 0) {
+    const backfill = await prisma.decision.findMany({
+      where: { productVariantId: { in: missingReleaseVariantIds }, status: { in: statuses } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        productVariant: {
+          include: {
+            product: true,
+            identifiers: true,
+            releaseEvents: { orderBy: { startAtUtc: "desc" }, take: 1 },
+            availabilityChecks: { orderBy: { checkedAt: "desc" }, take: 1 },
+            marketSales: { orderBy: { observedAt: "desc" }, take: 30 },
+            marketAsks: { orderBy: { observedAt: "desc" }, take: 20 },
+          },
+        },
+      },
+    });
+    const seenBackfill = new Set<string>();
+    const latestPerVariant = backfill.filter((d) => {
+      if (seenBackfill.has(d.productVariantId)) return false;
+      seenBackfill.add(d.productVariantId);
+      return true;
+    });
+    decisions = [...decisions, ...latestPerVariant];
+  }
 
   // A priced availability check can sit on a sibling or duplicate product
   // row — the same product ingested twice with different brand/model casing,
@@ -611,7 +666,7 @@ export async function getRealFeed(): Promise<FeedPayload> {
 
   const upcomingReleases = releaseVariants.filter((v) => {
     const launchAt = v.releaseEvents[0]?.startAtUtc;
-    return launchAt && new Date(launchAt).getTime() > Date.now();
+    return launchAt && etDayKey(launchAt.toISOString()) >= etDayKey(new Date().toISOString());
   }).length;
 
   const BUCKET_LABEL: Record<string, string> = { buy: "BUY NOW", apply: "APPLY NOW" };
